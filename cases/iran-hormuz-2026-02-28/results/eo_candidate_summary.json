@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0.0",
+  "case_id": "iran-hormuz-2026-02-28",
+  "status": "exploratory_candidates_only",
+  "anchor_date": "2026-02-28",
+  "assessment": {
+    "pre_anchor_eo_precursor_status": "not_assessable_insufficient_pre_anchor_samples",
+    "reason": "Only one strictly pre-anchor observation was analysed for each completed Sentinel series, so no pre-anchor EO trend can be established.",
+    "post_anchor_observation": "Sentinel-1 R166 broad-area raw bright-scatterer candidates declined by about 19-24% from 2026-02-28 to 2026-03-12 across three tested CFAR thresholds. Pair-specific static-like suppression gives about 22-26%, but those retained counts are not one unified three-date series.",
+    "event_time_alignment": "The 2026-02-28 Sentinel acquisitions are aligned only to the anchor date, not to a verified exact event time; no within-day before/after ordering is claimed.",
+    "not_supported": [
+      "confirmed vessel counts",
+      "vessel identity or IMO",
+      "continuous tracks",
+      "dark-vessel attribution",
+      "physical closure of the strait"
+    ]
+  },
+  "sentinel_1_r166": {
+    "sensor": "Sentinel-1 SAR",
+    "relative_orbit": 166,
+    "orbit_direction": "descending",
+    "polarisation": "VV",
+    "analysis_grid": {
+      "crs": "EPSG:32640",
+      "resolution_m": 20,
+      "common_valid_area_km2_approx": 21500
+    },
+    "default_threshold": {
+      "cfar_z": 5.0,
+      "raw_candidate_counts": [
+        {"date": "2026-02-16", "count": 489},
+        {"date": "2026-02-28", "count": 515},
+        {"date": "2026-03-12", "count": 398}
+      ],
+      "changes_pct": {
+        "2026-02-16_to_2026-02-28": 5.3,
+        "2026-02-28_to_2026-03-12": -22.7
+      }
+    },
+    "pair_specific_static_like_suppression_at_z5": [
+      {
+        "pair": "2026-02-16_to_2026-02-28",
+        "static_like_pairs": 45,
+        "retained_counts": [444, 470],
+        "change_pct": 5.9
+      },
+      {
+        "pair": "2026-02-28_to_2026-03-12",
+        "static_like_pairs": 49,
+        "retained_counts": [466, 349],
+        "change_pct": -25.1
+      }
+    ],
+    "threshold_sensitivity": [
+      {
+        "cfar_z": 4.5,
+        "counts": [565, 581, 471],
+        "pre_to_anchor_change_pct": 2.8,
+        "anchor_to_post_change_pct": -18.9
+      },
+      {
+        "cfar_z": 5.0,
+        "counts": [489, 515, 398],
+        "pre_to_anchor_change_pct": 5.3,
+        "anchor_to_post_change_pct": -22.7
+      },
+      {
+        "cfar_z": 5.5,
+        "counts": [445, 477, 362],
+        "pre_to_anchor_change_pct": 7.2,
+        "anchor_to_post_change_pct": -24.1
+      }
+    ],
+    "interpretation": "The anchor date did not show a broad-area candidate collapse; a moderate decline appeared by 2026-03-12. Counts are not confirmed vessels and are not directly comparable to daily chokepoint AIS counts."
+  },
+  "sentinel_2_40rep": {
+    "sensor": "Sentinel-2 optical",
+    "relative_orbit": 120,
+    "tile": "40REP",
+    "assets": ["8-bit visual", "SCL"],
+    "strict_common_buffered_water_area_km2": 6411.6672,
+    "bright_candidate_counts": [
+      {"date": "2026-02-23", "count": 16},
+      {"date": "2026-02-28", "count": 11}
+    ],
+    "static_like_pairs": 3,
+    "suppress_static": false,
+    "interpretation": "The 16-to-11 difference must not be interpreted as a vessel-count decline because visual is a rendered 8-bit product, 10 m pixels miss or merge targets, and glint, waves, wakes, clouds, platforms and rendering drift can change detections."
+  },
+  "highest_priority_pending_test": {
+    "sensor": "Sentinel-1 SAR",
+    "relative_orbit": 57,
+    "orbit_direction": "ascending",
+    "dates": ["2026-02-14", "2026-02-26", "2026-03-10"],
+    "reason": "The 2026-02-26 acquisition is approximately 34 hours before the anchor and is the closest independent EO observation to the AIS fleet-composition anomaly."
+  },
+  "global_fishing_watch": {
+    "dataset": "public-global-sar-presence:latest",
+    "status": "not_acquired_not_used",
+    "reason": "The 2026 window requires an authenticated account/token; the anonymous ArcGIS mirror ended at 2025-12-31."
+  },
+  "reproducibility_status": "result_snapshot_only; raw rasters, complete analysis programs, AOI masks and content SHA-256 values are not committed in this case package",
+  "source_manifest": "../data/source_manifest.json"
+}
