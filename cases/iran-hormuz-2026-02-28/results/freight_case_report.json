@@ -1,0 +1,680 @@
+{
+  "report_metadata": {
+    "report_id": "hormuz_freight_case_20260228",
+    "title_zh": "霍尔木兹海峡货运态势与预警案例报告",
+    "language": "zh-CN",
+    "schema_version": "1.0.0",
+    "generated_date": "2026-08-05",
+    "status": "retrospective_exploratory_case_study",
+    "anchor_date": "2026-02-28",
+    "observation_window": {
+      "start": "2026-02-14",
+      "end": "2026-03-14",
+      "inclusive_days": 29
+    },
+    "focus_window": {
+      "start": "2026-02-23",
+      "end": "2026-02-27",
+      "inclusive_days": 5
+    },
+    "repository_case_path": "cases/iran-hormuz-2026-02-28"
+  },
+  "executive_assessment": {
+    "main_conclusion": "2月23日至27日呈现跌、涨、跌、跌的锯齿波动。该五日形状及2月25日至26日的单日船型切换在历史上均有少量类比，单独使用会产生较高假警。本次真正异常之处是2月26日至27日连续处于低吨位尾部，并在随后数日继续演化为接近归零的AIS派生过峡指标断崖。",
+    "earliest_nondirectional_anomaly_reference_date": "2026-02-19",
+    "earliest_strong_joint_anomaly_reference_date": "2026-02-22",
+    "earliest_fleet_composition_anomaly_reference_date": "2026-02-26",
+    "earliest_cross_indicator_anomaly_reference_date": "2026-02-27",
+    "earliest_cross_indicator_observable_at": "2026-02-28T17:00:00+01:00",
+    "ais_derived_collapse_reference_start": "2026-03-01",
+    "time_semantics": "Dates before the availability timestamp are source reference dates, not guaranteed real-time alert times. Historical PortWatch publication timestamps are not versioned in the current snapshot.",
+    "recommended_wording": "2月22日源日期可标记为非定向高波动，2月26日源日期可标记为异常船型切换；标记为2月27日的WTO原油/LNG联合低尾通常到2月28日17:00 CET才可见，只能作为回溯性弱领先或同期异常。仅凭2月25日至26日一次转换，不能预测随后封锁式下降。"
+  },
+  "metric_definitions": {
+    "n_total": "PortWatch产品口径下每日AIS可见的霍尔木兹海峡通行船舶或航次总数。",
+    "n_tanker": "其中油轮船舶或航次计数。",
+    "n_cargo": "其中货船船舶或航次计数。",
+    "capacity": "相关AIS可见船舶的名义合计运力字段，不等于实际载货量或实际贸易吨数。",
+    "capacity_unit": "portwatch_capacity_native；源产品未在本报告中验证为实际载货吨单位。",
+    "capacity_per_ship": "capacity除以n_total，用作船队大船或小船构成的代理指标。",
+    "tanker_capacity_per_tanker": "capacity_tanker除以n_tanker，用作油轮吨位构成的代理指标。",
+    "percentile": "Pxx表示该值在指定历史基线中的经验百分位；例如P99表示高于约99%的历史观测，P2表示处于历史底部约2%。",
+    "wto_index": "以2025年1月至3月平均日货量等于100构造的商品运输指数。"
+  },
+  "daily_observations": [
+    {
+      "date": "2026-02-23",
+      "portwatch": {
+        "n_total": 88,
+        "n_tanker": 58,
+        "n_cargo": 30,
+        "capacity": 2451468,
+        "capacity_tanker": 1893516,
+        "capacity_cargo": 557952,
+        "capacity_per_ship": 27857.5909,
+        "tanker_capacity_per_tanker": 32646.8276,
+        "capacity_per_ship_percentile": 7.01,
+        "tanker_capacity_per_tanker_percentile": 12.18
+      },
+      "wto": {
+        "crude_oil_export_index": 122.3936,
+        "lng_export_index": 91.3353,
+        "fertilizer_export_index": 170.8221,
+        "agricultural_import_index": 161.7268
+      }
+    },
+    {
+      "date": "2026-02-24",
+      "portwatch": {
+        "n_total": 42,
+        "n_tanker": 20,
+        "n_cargo": 22,
+        "capacity": 2092252,
+        "capacity_tanker": 1418323,
+        "capacity_cargo": 673929,
+        "capacity_per_ship": 49815.5238,
+        "tanker_capacity_per_tanker": 70916.15,
+        "capacity_per_ship_percentile": 88.89,
+        "tanker_capacity_per_tanker_percentile": 95.36
+      },
+      "wto": {
+        "crude_oil_export_index": 139.848,
+        "lng_export_index": 92.8382,
+        "fertilizer_export_index": 65.241,
+        "agricultural_import_index": 152.7036
+      },
+      "change_from_previous_day_pct": {
+        "n_total": -52.3,
+        "capacity": -14.7,
+        "crude_oil_export_index": 14.3,
+        "lng_export_index": 1.6
+      }
+    },
+    {
+      "date": "2026-02-25",
+      "portwatch": {
+        "n_total": 112,
+        "n_tanker": 57,
+        "n_cargo": 55,
+        "capacity": 5545881,
+        "capacity_tanker": 4168541,
+        "capacity_cargo": 1377339,
+        "capacity_per_ship": 49516.7946,
+        "tanker_capacity_per_tanker": 73132.2982,
+        "n_total_percentile": 97.72,
+        "n_tanker_percentile": 82.08,
+        "n_cargo_percentile": 99.69,
+        "capacity_percentile": 99.43,
+        "capacity_tanker_percentile": 99.08,
+        "capacity_cargo_percentile": 95.98,
+        "capacity_per_ship_percentile": 88.51,
+        "tanker_capacity_per_tanker_percentile": 96.82
+      },
+      "wto": {
+        "crude_oil_export_index": 51.9702,
+        "lng_export_index": 129.7254,
+        "fertilizer_export_index": 81.6638,
+        "agricultural_import_index": 0
+      },
+      "change_from_previous_day_pct": {
+        "n_total": 166.7,
+        "capacity": 165.1,
+        "crude_oil_export_index": -62.8,
+        "lng_export_index": 39.7
+      }
+    },
+    {
+      "date": "2026-02-26",
+      "portwatch": {
+        "n_total": 86,
+        "n_tanker": 44,
+        "n_cargo": 42,
+        "capacity": 1823647,
+        "capacity_tanker": 909158,
+        "capacity_cargo": 914488,
+        "capacity_per_ship": 21205.1977,
+        "tanker_capacity_per_tanker": 20662.6818,
+        "n_total_percentile": 70.52,
+        "n_tanker_percentile": 48.14,
+        "n_cargo_percentile": 90.74,
+        "capacity_percentile": 12.9,
+        "capacity_tanker_percentile": 6.58,
+        "capacity_cargo_percentile": 63.67,
+        "capacity_per_ship_percentile": 1.61,
+        "tanker_capacity_per_tanker_percentile": 2.72
+      },
+      "wto": {
+        "crude_oil_export_index": 174.6473,
+        "lng_export_index": 119.8071,
+        "fertilizer_export_index": 158.1165,
+        "agricultural_import_index": 158.2427
+      },
+      "change_from_previous_day_pct": {
+        "n_total": -23.2143,
+        "n_tanker": -22.807,
+        "n_cargo": -23.6364,
+        "capacity": -67.1171,
+        "capacity_tanker": -78.19,
+        "capacity_cargo": -33.6047,
+        "capacity_per_ship": -57.1757,
+        "tanker_capacity_per_tanker": -71.7462,
+        "crude_oil_export_index": 236.1,
+        "lng_export_index": -7.6
+      }
+    },
+    {
+      "date": "2026-02-27",
+      "portwatch": {
+        "n_total": 53,
+        "n_tanker": 30,
+        "n_cargo": 23,
+        "capacity": 1207186,
+        "capacity_tanker": 581713,
+        "capacity_cargo": 625473,
+        "capacity_per_ship": 22777.0943,
+        "tanker_capacity_per_tanker": 19390.4333,
+        "capacity_percentile": 3.14,
+        "capacity_tanker_percentile": 2.45,
+        "capacity_per_ship_percentile": 2.3,
+        "tanker_capacity_per_tanker_percentile": 2.07
+      },
+      "wto": {
+        "crude_oil_export_index": 43.6146,
+        "lng_export_index": 29.4249,
+        "fertilizer_export_index": 103.5578,
+        "agricultural_import_index": 0
+      },
+      "change_from_previous_day_pct": {
+        "n_total": -38.4,
+        "capacity": -33.8,
+        "crude_oil_export_index": -75,
+        "lng_export_index": -75.4
+      }
+    }
+  ],
+  "critical_transition_2026_02_25_to_26": {
+    "interpretation": "总船数和油轮数仅下降约23%，但总运力下降67%、油轮运力下降78%、单艘油轮平均名义运力下降72%。这更像大吨位油轮快速减少或运力元数据构成突变，而不是船舶数量已经全面消失。",
+    "historical_baseline": {
+      "start": "2019-01-01",
+      "end": "2026-02-24",
+      "valid_daily_transitions": 2611,
+      "future_target_data_excluded": true
+    },
+    "fixed_historical_thresholds": {
+      "capacity_p99": 5301197.58,
+      "capacity_per_ship_p5": 26232.11,
+      "tanker_capacity_p99": 4132405.83,
+      "tanker_capacity_per_tanker_p5": 25744.47
+    },
+    "target_extreme_switch": {
+      "capacity_before_percentile": 99.43,
+      "capacity_per_ship_after_percentile": 1.61,
+      "tanker_capacity_before_percentile": 99.08,
+      "tanker_capacity_per_tanker_after_percentile": 2.72,
+      "prior_matches_under_fixed_p99_to_p5_rule": 0
+    },
+    "change_similarity_frequency": {
+      "wide": {
+        "matches": 40,
+        "eligible_transitions": 2611,
+        "frequency_pct": 1.532
+      },
+      "medium": {
+        "matches": 8,
+        "eligible_transitions": 2611,
+        "frequency_pct": 0.306
+      },
+      "strict": {
+        "matches": 3,
+        "eligible_transitions": 2611,
+        "frequency_pct": 0.115,
+        "approximate_recurrence": "about once per 2.4 years"
+      }
+    },
+    "strict_historical_analogs": [
+      {
+        "transition": "2020-10-03_to_2020-10-04",
+        "n_total": [
+          107,
+          86
+        ],
+        "capacity": [
+          5243000,
+          2059000
+        ],
+        "capacity_per_ship": [
+          48996,
+          23938
+        ],
+        "n_tanker": [
+          65,
+          51
+        ],
+        "capacity_tanker": [
+          4027000,
+          1203000
+        ],
+        "tanker_capacity_per_tanker": [
+          61954,
+          23589
+        ],
+        "following_7_day_n_total_mean": 80.57,
+        "following_14_day_n_total_mean": 77.71,
+        "minimum_7_day_n_total_mean_within_14_days": 70,
+        "collapsed": false
+      },
+      {
+        "transition": "2019-11-01_to_2019-11-02",
+        "n_total": [
+          68,
+          49
+        ],
+        "capacity": [
+          3045000,
+          829000
+        ],
+        "capacity_per_ship": [
+          44774,
+          16912
+        ],
+        "n_tanker": [
+          43,
+          31
+        ],
+        "capacity_tanker": [
+          2357000,
+          314000
+        ],
+        "tanker_capacity_per_tanker": [
+          54808,
+          10118
+        ],
+        "following_7_day_n_total_mean": 53.43,
+        "following_14_day_n_total_mean": 49.29,
+        "minimum_7_day_n_total_mean_within_14_days": 45.14,
+        "collapsed": false
+      },
+      {
+        "transition": "2019-12-26_to_2019-12-27",
+        "n_total": [
+          56,
+          41
+        ],
+        "capacity": [
+          2005000,
+          741000
+        ],
+        "capacity_per_ship": [
+          35806,
+          18070
+        ],
+        "n_tanker": [
+          37,
+          26
+        ],
+        "capacity_tanker": [
+          1413000,
+          182000
+        ],
+        "tanker_capacity_per_tanker": [
+          38194,
+          7005
+        ],
+        "following_7_day_n_total_mean": 58.57,
+        "following_14_day_n_total_mean": 58.07,
+        "minimum_7_day_n_total_mean_within_14_days": 46,
+        "collapsed": false
+      }
+    ],
+    "historical_neighbor_validation": {
+      "nearest_transition": "2020-10-03_to_2020-10-04",
+      "top_10_following_7_day_collapse_count": 0,
+      "top_10_following_14_day_collapse_count": 0,
+      "top_25_following_7_day_collapse_count": 0,
+      "top_25_following_14_day_collapse_count": 0,
+      "conclusion": "历史近邻通常回归事前水平，说明两日船型切换本身预测力弱。"
+    }
+  },
+  "five_day_zigzag_historical_test": {
+    "target_n_total_sequence": [
+      88,
+      42,
+      112,
+      86,
+      53
+    ],
+    "target_capacity_sequence": [
+      2451468,
+      2092252,
+      5545881,
+      1823647,
+      1207186
+    ],
+    "joint_change_sign_pattern": [
+      -1,
+      1,
+      -1,
+      -1
+    ],
+    "variables_with_same_sign_pattern": [
+      "n_total",
+      "n_tanker",
+      "n_cargo",
+      "capacity"
+    ],
+    "historical_candidate_windows": 2606,
+    "exact_joint_sign_matches": 13,
+    "exact_joint_sign_frequency_pct": 0.49885,
+    "amplitude_constrained_matches": 6,
+    "amplitude_constrained_frequency_pct": 0.23024,
+    "historical_analog_collapse_count": 0,
+    "selected_analogs": [
+      {
+        "window": "2023-07-18_to_2023-07-22",
+        "n_total_sequence": [
+          83,
+          50,
+          115,
+          98,
+          69
+        ],
+        "capacity_sequence": [
+          3197000,
+          2135000,
+          4956000,
+          2950000,
+          2306000
+        ],
+        "following_7_day_n_total_mean": 69.43,
+        "following_14_day_n_total_mean": 80.14,
+        "minimum_7_day_n_total_mean_within_14_days": 69.43
+      },
+      {
+        "window": "2025-07-31_to_2025-08-04",
+        "n_total_sequence": [
+          101,
+          53,
+          103,
+          77,
+          40
+        ],
+        "capacity_sequence": [
+          3090000,
+          1870000,
+          4780000,
+          3430000,
+          1160000
+        ],
+        "following_7_day_n_total_mean": 66.86,
+        "following_14_day_n_total_mean": 74.57,
+        "minimum_7_day_n_total_mean_within_14_days": 62.14
+      },
+      {
+        "window": "2021-03-09_to_2021-03-13",
+        "n_total_sequence": [
+          79,
+          43,
+          80,
+          68,
+          59
+        ],
+        "capacity_sequence": [
+          3070000,
+          1380000,
+          4840000,
+          2220000,
+          2160000
+        ],
+        "following_7_day_n_total_mean": 64,
+        "following_14_day_n_total_mean": 63.21,
+        "minimum_7_day_n_total_mean_within_14_days": 54.14
+      }
+    ],
+    "target_following_outcome": {
+      "following_7_day_n_total_mean": 11.43,
+      "following_14_day_n_total_mean": 6.29,
+      "minimum_7_day_n_total_mean_within_14_days": 1.143,
+      "interpretation": "锯齿形态并非唯一，但锯齿后继续接近归零在历史类比中没有出现。"
+    }
+  },
+  "post_anchor_outcome": {
+    "comparison_periods": {
+      "pre_anchor": "2026-02-14_to_2026-02-27",
+      "anchor_day": "2026-02-28",
+      "post_anchor": "2026-03-01_to_2026-03-14"
+    },
+    "portwatch": {
+      "n_total": {
+        "pre_anchor_mean": 79.07,
+        "anchor_day": 51,
+        "post_anchor_mean": 2.64,
+        "post_vs_pre_change_pct": -96.7
+      },
+      "n_tanker": {
+        "pre_anchor_mean": 44.36,
+        "anchor_day": 33,
+        "post_anchor_mean": 0.64,
+        "post_vs_pre_change_pct": -98.6
+      },
+      "n_cargo": {
+        "pre_anchor_mean": 34.71,
+        "anchor_day": 18,
+        "post_anchor_mean": 2,
+        "post_vs_pre_change_pct": -94.2
+      },
+      "capacity": {
+        "pre_anchor_mean": 3002673.5,
+        "anchor_day": 2839159,
+        "post_anchor_mean": 66087.79,
+        "post_vs_pre_change_pct": -97.8
+      }
+    },
+    "relative_to_2026_02_25_26_two_day_mean": {
+      "following_7_day_window": {
+        "start": "2026-02-27",
+        "end": "2026-03-05",
+        "days": 7
+      },
+      "following_7_day_n_total_mean": 19,
+      "following_7_day_n_total_ratio": 0.1919,
+      "following_7_day_capacity_mean": 675827.71,
+      "following_7_day_capacity_ratio": 0.1834,
+      "following_14_day_window": {
+        "start": "2026-02-27",
+        "end": "2026-03-12",
+        "days": 14
+      },
+      "minimum_7_day_n_total_mean_within_14_days": 1.143,
+      "minimum_7_day_n_total_ratio": 0.0115,
+      "minimum_7_day_capacity_mean_within_14_days": 31619.14,
+      "minimum_7_day_capacity_ratio": 0.0086
+    }
+  },
+  "wto_cross_check": {
+    "assessment": "2月27日原油与LNG指数首次形成同步强低尾，但没有形成连续两日低值。",
+    "key_dates": [
+      {
+        "date": "2026-02-25",
+        "crude_oil_export_index": 51.9702,
+        "interpretation": "原油单项弱低尾，LNG仍高，未形成联合异常。"
+      },
+      {
+        "date": "2026-02-26",
+        "crude_oil_export_index": 174.6473,
+        "lng_export_index": 119.8071,
+        "interpretation": "商品指数反弹或维持高位，与PortWatch运力结构下降不同步。"
+      },
+      {
+        "date": "2026-02-27",
+        "crude_oil_export_index": 43.6146,
+        "lng_export_index": 29.4249,
+        "crude_z_score_range_30_60_90_day": [
+          -2.012,
+          -2.072,
+          -2.06
+        ],
+        "lng_z_score_range_30_60_90_day": [
+          -2.411,
+          -2.245,
+          -2.107
+        ],
+        "interpretation": "原油与LNG同时低于30、60、90日基线P05，是最早的跨商品同步异常。"
+      }
+    ],
+    "availability_limit": {
+      "dashboard_update_time": "17:00 CET daily",
+      "outbound_data_lag": "reported through the previous day",
+      "operational_implication": "标记为2月27日的外运异常通常要到2月28日17:00 CET才可见，因此属于回溯性弱领先或同期异常，不是可靠的事件前实时预警。"
+    }
+  },
+  "eo_cross_check": {
+    "status": "insufficient_pre_anchor_sampling",
+    "sentinel_1_r166": {
+      "dates": [
+        "2026-02-16",
+        "2026-02-28",
+        "2026-03-12"
+      ],
+      "raw_bright_scatterer_candidates": [
+        489,
+        515,
+        398
+      ],
+      "limitation": "严格早于锚点只有2月16日一个时点；2月28日影像实际位于锚点日之后，无法建立事前趋势。"
+    },
+    "sentinel_2_40rep": {
+      "dates": [
+        "2026-02-23",
+        "2026-02-28"
+      ],
+      "visual_bright_candidates": [
+        16,
+        11
+      ],
+      "limitation": "8位visual不是定标反射率，且只有一个严格前置时点，不能将16至11解释为船舶数量下降。"
+    },
+    "highest_priority_pending_test": {
+      "track": "Sentinel-1 R57",
+      "dates": [
+        "2026-02-14",
+        "2026-02-26",
+        "2026-03-10"
+      ],
+      "reason": "2月26日距锚点约34小时，是验证AIS船型结构异常是否具有独立EO表现的关键前置时相。"
+    }
+  },
+  "warning_timeline": [
+    {
+      "date": "2026-02-19",
+      "level": "watch",
+      "signal": "过去7日总船均值相对此前90日均值上升40.56%。",
+      "directional_prediction": false
+    },
+    {
+      "date": "2026-02-22",
+      "level": "watch_plus",
+      "signal": "单日125艘，过去7日均值80.429，较此前90日上升46.00%，方差比4.48；为全历史唯一同日满足相对换挡、高尾单日和显著波动的候选。",
+      "directional_prediction": false
+    },
+    {
+      "date": "2026-02-25",
+      "level": "high_activity",
+      "signal": "总运力与油轮运力分别达到历史P99.43和P99.08。",
+      "directional_prediction": false
+    },
+    {
+      "date": "2026-02-26",
+      "level": "yellow",
+      "signal": "总船数下降23%，但总运力下降67%、油轮运力下降78%；单船运力和单油轮运力分别落至P1.61和P2.72。",
+      "directional_prediction": false,
+      "recommended_action": "标记异常船型切换，要求次日延续确认并调取EO、港口和文本证据。"
+    },
+    {
+      "date": "2026-02-28",
+      "source_reference_date": "2026-02-27",
+      "available_at": "2026-02-28T17:00:00+01:00",
+      "level": "orange_retrospective",
+      "signal": "单船运力继续处于P2.30、单油轮运力处于P2.07，同时原油与LNG指数同步低于多基线P05。",
+      "directional_prediction": false,
+      "recommended_action": "记录为回溯性跨指标联合异常；由于WTO发布滞后，不得将其记为2月27日实时告警。"
+    },
+    {
+      "date": "2026-03-01",
+      "level": "red_ais_observed",
+      "signal": "PortWatch总船数降至18，随后3月2日至3日均为4，3月4日为0。",
+      "directional_prediction": "ais_derived_observed_outcome"
+    }
+  ],
+  "recommended_operational_rule": {
+    "purpose": "降低仅凭单日船型切换产生的假警。",
+    "stage_1_watch": "过去7日船流相对90日基线显著换挡，或单日船流、运力、波动率进入历史极端区。",
+    "stage_2_structure_warning": "capacity_per_ship或tanker_capacity_per_tanker低于历史P5，并较前日下降超过50%，但船数下降不超过40%。",
+    "stage_3_confirmation": "结构异常连续至少两日，且总船、总运力或独立证据族中至少两项同步转弱。",
+    "stage_4_red": "未来1至3日内通航计数和运力继续跌破前90日均值50%，或出现连续接近零值。",
+    "independence_requirement": "PortWatch与WTO都依赖AIS，不能作为两个完全独立证据票；红色预警应尽量加入SAR、光学、港口公告、NAVTEX、GNSS干扰或其他独立模态。"
+  },
+  "limitations": [
+    "PortWatch与WTO均为AIS派生产品，AIS关闭、接收缺口或干扰可能同时压低两者。",
+    "capacity是名义运力字段，不是实际装载货量；空载船舶仍可具有高名义运力。",
+    "船舶DWT或船型元数据缺失、零编码和估算误差可能造成单日capacity_per_ship异常。",
+    "n_total等于n_tanker加n_cargo，capacity也近似等于分项之和，多个字段高度相关，不能视为相互独立的多票证据。",
+    "当前官方ArcGIS历史是2026年8月时点的可修订快照，没有2月每日数据版本，无法证明所有历史值在当时已经以相同数值实时可见。",
+    "历史相似性阈值与案例窗口是在事件发生后定义；用于生产前必须预先冻结规则并做无前视滚动回测。",
+    "WTO外运指数按装货港离港日期记录，并在次日17:00 CET更新；其日期不等同于实时过峡日期。",
+    "现有EO严格前置时相不足，尚不能独立确认2月26日的大型油轮减少。",
+    "本报告为探索性历史案例，不构成封航事实认定、单船身份识别或未来事件预测。"
+  ],
+  "data_sources": [
+    {
+      "name": "IMF PortWatch Daily Chokepoints",
+      "type": "AIS-derived daily aggregate",
+      "url": "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/ArcGIS/rest/services/Daily_Chokepoints_Data/FeatureServer/0",
+      "retrieved_utc": "2026-08-05T04:22:50.3008088Z",
+      "raw_data_committed": false,
+      "repository_source_manifest": "../data/source_manifest.json"
+    },
+    {
+      "name": "WTO-AXSMarine Strait of Hormuz Trade Tracker",
+      "type": "AIS and proprietary commodity-flow indices",
+      "url": "https://datalab.wto.org/Strait-of-Hormuz-Trade-Tracker",
+      "raw_data_committed": false,
+      "repository_source_manifest": "../data/source_manifest.json"
+    },
+    {
+      "name": "WTO tracker methodological notes",
+      "type": "methodology",
+      "url": "https://datalab.wto.org/sites/default/files/2026-03/methodological_notes.pdf",
+      "raw_data_committed": false,
+      "repository_source_manifest": "../data/source_manifest.json"
+    },
+    {
+      "name": "Sentinel analysis summaries",
+      "type": "independent EO candidate analysis",
+      "raw_data_committed": false,
+      "repository_source_manifest": "../data/source_manifest.json"
+    }
+  ],
+  "reproducibility": {
+    "portwatch_full_history_available_range": {
+      "start": "2019-01-01",
+      "end": "2026-08-02",
+      "continuous_daily_rows": 2771
+    },
+    "historical_candidate_cutoff_for_five_day_test": "2026-02-22",
+    "historical_candidate_cutoff_for_two_day_test": "2026-02-24",
+    "percentile_baseline_end": "2026-02-24",
+    "future_outcomes_used_for_ranking": false,
+    "formulas": {
+      "capacity_per_ship": "capacity / n_total",
+      "tanker_capacity_per_tanker": "capacity_tanker / n_tanker",
+      "day_change_pct": "(value_t / value_t_minus_1 - 1) * 100",
+      "post_vs_pre_change_pct": "(post_mean / pre_mean - 1) * 100"
+    },
+    "supporting_local_reports": [
+      "../README.md",
+      "../DATA_SOURCES.md",
+      "eo_candidate_summary.json"
+    ],
+    "source_manifest": "../data/source_manifest.json"
+  }
+}

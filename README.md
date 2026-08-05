@@ -12,6 +12,12 @@
 ## Repository Layout
 
 ```text
+cases/
+  iran-hormuz-2026-02-28/
+    README.md
+    DATA_SOURCES.md
+    data/
+    results/
 skills/
   igs-cddis-api-download/
     SKILL.md
@@ -20,6 +26,10 @@ skills/
 PROJECT_PROGRESS.md
 README.md
 ```
+
+## Case Studies
+
+- [Iran / Strait of Hormuz, 2026-02-28](cases/iran-hormuz-2026-02-28/README.md)：整理 IMF PortWatch、WTO–AXSMarine、Sentinel-1/2 与 GFW 可用性，包含下载入口、货运历史类比、预警时间线和 EO 探索结果；仓库不保存原始大数据或凭据。
 
 ## IGS / CDDIS Download Skill
 

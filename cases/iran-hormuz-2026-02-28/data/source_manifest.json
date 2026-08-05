@@ -1,0 +1,162 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at_utc": "2026-08-05T08:18:43.4746663Z",
+  "case_id": "iran-hormuz-2026-02-28",
+  "anchor_date": "2026-02-28",
+  "observation_window": {
+    "start": "2026-02-14",
+    "end": "2026-03-14"
+  },
+  "repository_policy": {
+    "raw_data_committed": false,
+    "credentials_committed": false,
+    "contents": "download endpoints, exact EO asset identifiers, and derived analysis results only"
+  },
+  "sources": [
+    {
+      "id": "imf_portwatch_hormuz",
+      "publisher": "International Monetary Fund",
+      "collaborator": "University of Oxford",
+      "classification": "public intergovernmental aggregate derived from AIS; underlying AIS supply chain includes commercial providers",
+      "feed_specificity": "UN Global Platform documentation identifies possible commercial AIS providers, but the provider mix for this PortWatch layer is not publicly confirmed",
+      "status": "used",
+      "service_url": "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/ArcGIS/rest/services/Daily_Chokepoints_Data/FeatureServer/0",
+      "query": {
+        "where": "portid='chokepoint6' AND date >= DATE '2026-02-14' AND date <= DATE '2026-03-14'",
+        "outFields": "*",
+        "orderByFields": "date",
+        "returnGeometry": false,
+        "f": "json"
+      },
+      "rows_retrieved": 29,
+      "retrieved_at_utc": "2026-08-05T04:22:50.3008088Z",
+      "available_range_seen_at_retrieval": {
+        "start": "2019-01-01",
+        "end": "2026-08-02"
+      },
+      "raw_file_committed": false
+    },
+    {
+      "id": "imf_portwatch_iran_ports",
+      "publisher": "International Monetary Fund",
+      "classification": "public intergovernmental aggregate derived from AIS",
+      "status": "downloaded_but_excluded_from_core_assessment_due_quality_outlier",
+      "service_url": "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/ArcGIS/rest/services/Daily_Ports_Data/FeatureServer/0",
+      "query": {
+        "where": "ISO3='IRN' AND date >= DATE '2026-02-14' AND date <= DATE '2026-03-14'",
+        "outFields": "*",
+        "orderByFields": "date,portid",
+        "returnGeometry": false,
+        "f": "json"
+      },
+      "rows_retrieved": 435,
+      "ports_retrieved": 15,
+      "raw_file_committed": false
+    },
+    {
+      "id": "wto_axsmarine_hormuz_tracker",
+      "publisher": "World Trade Organization",
+      "underlying_provider": "AXSMarine (Signal Group)",
+      "classification": "public intergovernmental dashboard backed by commercial AIS and proprietary commodity-flow modelling",
+      "status": "used",
+      "dashboard_url": "https://datalab.wto.org/Strait-of-Hormuz-Trade-Tracker",
+      "methodology_url": "https://datalab.wto.org/sites/default/files/2026-03/methodological_notes.pdf",
+      "files": [
+        {
+          "indicator": "crude_oil_export",
+          "date_field": "voy_load_date",
+          "url": "https://wtomais.blob.core.windows.net/strait-of-hormuz-tracker/voy_intake_index_curde_oil_export.csv"
+        },
+        {
+          "indicator": "lng_export",
+          "date_field": "voy_load_date",
+          "url": "https://wtomais.blob.core.windows.net/strait-of-hormuz-tracker/voy_intake_index_lng_export.csv"
+        },
+        {
+          "indicator": "fertilizer_export",
+          "date_field": "voy_load_date",
+          "url": "https://wtomais.blob.core.windows.net/strait-of-hormuz-tracker/voy_intake_index_fertilizer_export.csv"
+        },
+        {
+          "indicator": "agricultural_product_import",
+          "date_field": "voy_disch_date",
+          "url": "https://wtomais.blob.core.windows.net/strait-of-hormuz-tracker/voy_intake_index_agricultural_product_import.csv"
+        }
+      ],
+      "raw_files_committed": false
+    },
+    {
+      "id": "copernicus_sentinel",
+      "publisher": "European Union Copernicus Programme",
+      "implementing_agency": "European Space Agency",
+      "classification": "public-sector satellite Earth observation",
+      "physical_sources": [
+        "Sentinel-1 synthetic aperture radar",
+        "Sentinel-2 multispectral optical instrument"
+      ],
+      "status": "partially_used",
+      "official_catalog": "https://catalogue.dataspace.copernicus.eu/odata/v1/Products",
+      "official_download_documentation": "https://documentation.dataspace.copernicus.eu/APIs/OData.html",
+      "open_stac_mirror": "https://earth-search.aws.element84.com/v1",
+      "selected_product_manifest": "sentinel_selected_products.csv",
+      "analysis_asset_manifest": "sentinel_analysis_assets.csv",
+      "analysed_series": [
+        {
+          "sensor": "Sentinel-1",
+          "relative_orbit": 166,
+          "polarisation": "VV",
+          "dates": ["2026-02-16", "2026-02-28", "2026-03-12"]
+        },
+        {
+          "sensor": "Sentinel-2",
+          "relative_orbit": 120,
+          "tile": "40REP",
+          "assets": ["visual", "SCL"],
+          "dates": ["2026-02-23", "2026-02-28"]
+        }
+      ],
+      "pending_series": [
+        {
+          "sensor": "Sentinel-1",
+          "relative_orbit": 57,
+          "dates": ["2026-02-14", "2026-02-26", "2026-03-10"],
+          "priority_reason": "the 2026-02-26 acquisition is approximately 34 hours before the anchor"
+        },
+        {
+          "sensor": "Sentinel-2",
+          "relative_orbit": 120,
+          "tiles": ["40REP", "40REQ"],
+          "date": "2026-03-05",
+          "priority_reason": "post-anchor optical comparison after local cloud/SCL validation"
+        }
+      ],
+      "raw_assets_committed": false
+    },
+    {
+      "id": "natural_earth_land_mask",
+      "publisher": "Natural Earth",
+      "classification": "public-domain cartographic data",
+      "status": "used_as_coarse_exclusion_mask",
+      "source_page": "https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-land/",
+      "download_url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_land.geojson",
+      "sha256_at_retrieval": "1ac90796408bc6ad6911d69448485d3c4dbf2190370080368a09976e1c9f7416",
+      "raw_file_committed": false
+    },
+    {
+      "id": "global_fishing_watch_sar_presence",
+      "publisher": "Global Fishing Watch",
+      "classification": "nonprofit SAR-derived detection product",
+      "status": "not_acquired_not_used",
+      "dataset": "public-global-sar-presence:latest",
+      "api_documentation": "https://globalfishingwatch.org/our-apis/documentation",
+      "download_portal": "https://globalfishingwatch.org/data-download/",
+      "reason": "2026 records require account/token; anonymous ArcGIS time dimension ended at 2025-12-31"
+    },
+    {
+      "id": "raw_historical_ais",
+      "classification": "commercial/restricted vessel-level trajectory data",
+      "status": "not_acquired_not_used",
+      "reason": "no historical vessel-level AIS entitlement was available"
+    }
+  ]
+}
