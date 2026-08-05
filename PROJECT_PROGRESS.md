@@ -2,9 +2,23 @@
 
 Last updated: 2026-08-05
 
+Status snapshot: the public-data Iran / Strait of Hormuz case package has been merged into `main`. The repository now records source endpoints and derived results without committing raw AIS, satellite rasters, credentials or server paths.
+
 ## 1. Project Goal
 
 本项目目标是构建一个面向军政行动早期态势感知的多源异动预警与根因分析 Agent。核心原则是：LLM Core 不直接参与信号计算，只负责读取信号处理前端的结构化报告，完成流程编排、工具选择、反证逻辑和证据卡输出。
+
+### Current Status Snapshot
+
+| Workstream | Status | Current evidence / gap |
+|---|---|---|
+| Topic monitoring | Partial | GDELT / 新闻可用于 topic heat；结构化 mini-GDELT 输出仍待固化 |
+| GNSS ground observations | Implemented / case-tested | IGS / CDDIS下载skill已入库；哈尔科夫、伊朗和委内瑞拉案例已完成不同强度的CNR验证 |
+| Maritime public aggregates | Case-integrated | IMF PortWatch与WTO–AXSMarine已用于霍尔木兹历史回溯，但二者同属AIS依赖家族 |
+| EO maritime cross-check | Partial | Sentinel-1 R166和Sentinel-2 `40REP`已完成探索性分析；S1 R57仍待处理 |
+| GFW SAR presence | Source identified / data unavailable | 2026窗口需要账户或token，当前未取得记录 |
+| Vessel-level AIS / ADS-B / NOTAM | Pending | 尚无逐船、逐航班的完整历史权限或稳定历史API |
+| Production warning harness | Pending | 阈值冻结、无前视回测、证据卡schema和自动编排尚未完成 |
 
 ## 2. Current Harness / Loop Design
 
@@ -24,9 +38,11 @@ Last updated: 2026-08-05
    - 检查 CNR、载波相位、伪距和多普勒之间的一致性。
    - 用于区分单一 CNR 低尾下探、接收机链路问题、传播扰动和更复杂的人为干扰可能性。
 
-4. SP Tool 4: AIS / ADS-B / NOTAM Check
-   - 当前仍处于待完善阶段。
-   - 目标是补充行动侧证据，包括航路/海路管制、船机密度变化、NOTAM 限制空域等。
+4. SP Tool 4: Maritime / Aviation / EO Check
+   - 已接入 IMF PortWatch 与 WTO–AXSMarine 的公开宏观指标，并加入 Sentinel-1/2 独立EO旁证流程。
+   - PortWatch与WTO均依赖AIS，只能作为一个依赖家族，不能重复计为两票独立确认。
+   - 逐船历史AIS、ADS-B原始/历史接口、NOTAM与NAVTEX等行动侧数据仍待接入。
+   - EO输出目前是亮散射或亮像素候选，不是确认船舶、单船身份或连续航迹。
 
 LLM Core 的职责是读取每个工具输出的 summary、manifest、evidence card 和反证项，决定是否继续监控、扩大范围、执行反证或生成最终结论。
 
@@ -47,11 +63,32 @@ LLM Core 的职责是读取每个工具输出的 summary、manifest、evidence c
   - 主要提供民航 ADS-B 侧推导的 GNSS 干扰强度栅格。
   - 更适合事后验证和区域态势佐证，不宜单独作为事前强预警。
 
+- IMF PortWatch
+  - 已获取霍尔木兹海峡 `2026-02-14` 至 `2026-03-14` 的29条日度记录，并使用2019年以来历史序列进行类比回测。
+  - 产品是公开的AIS派生聚合指标，不是逐船历史AIS；底层商业馈源的具体组合未公开确认。
+  - 伊朗15港口的435条港口日记录已下载，但存在 `Bandar-E Pars Terminal` 集中尖峰，未用于核心结论。
+
+- WTO–AXSMarine Strait of Hormuz Trade Tracker
+  - 已获取原油、LNG、化肥相关产品和农产品四类公开指数。
+  - WTO公开发布，AXSMarine（Signal Group）提供AIS与专有货流模型；与PortWatch不是独立证据家族。
+  - 标记为2月27日的外运数据通常到2月28日17:00 CET才可见，因此只能作为回溯性弱领先或同期异常。
+
+- Copernicus Sentinel-1 / Sentinel-2
+  - 欧盟Copernicus/ESA公共卫星数据；已编目21景官方产品及其下载URL。
+  - 已分析3个S1 R166 VV资产，以及S2 `40REP` 两期visual与SCL共4个资产。
+  - S1 R57的2月14日、2月26日和3月10日同轨序列仍待完成，其中2月26日距锚点约34小时。
+
+- Natural Earth
+  - 使用1:10m陆地多边形作为粗岸线排除掩膜。
+  - 不能替代精细港池、平台、浮标、防波堤和填海边界。
+
 待完善：
 
-- AIS
+- 逐船历史 AIS
 - ADS-B 原始/历史接口
 - NOTAM 实时与历史 API
+- Global Fishing Watch 2026窗口SAR presence
+- NAVTEX / 港口公告等行动侧公开信息
 - 空间天气/太阳活动反证数据源
 
 ## 4. New Skill: IGS / CDDIS API Download
@@ -105,6 +142,8 @@ skills/igs-cddis-api-download/
 - 3月1日后AIS派生的可见船流指标出现持续断崖；锚点前14日与后14日相比，总船数均值下降96.7%、总运力下降97.8%，但尚非独立物理确认。
 - Sentinel-1 R166广域原始亮散射候选在锚点当日未断崖、到3月12日出现约19%–24%的阈值稳健下降；这些是探索性候选，不是确认船舶。
 - 当前没有确认的EO事前预兆；最关键的待处理序列是S1 R57的2月14日、2月26日和3月10日同轨数据。
+- WTO的2月27日低尾值存在发布滞后，最早通常在2月28日17:00 CET可见，不应回填为2月27日实时告警。
+- 当前案例状态为 `retrospective_exploratory_case_study`，不构成封航事实、暗船数量、单船身份或未来事件预测。
 - 详细数据源、结构化报告与限制见 [cases/iran-hormuz-2026-02-28/README.md](cases/iran-hormuz-2026-02-28/README.md)。
 
 ### Venezuela / Maduro
@@ -130,11 +169,29 @@ skills/igs-cddis-api-download/
 
 注意：处理代码中仍可能出现 `snr_p10` 字段名，这是因为 RINEX 中 C/N0 类观测量以 `S*` 字段存储。汇报和物理解释中统一称为 CNR 或 C/N0，单位为 dB-Hz。
 
-## 7. Next Steps
+## 7. Repository Deliverables
+
+当前已经进入仓库的主要可复用产物：
+
+- `skills/igs-cddis-api-download/`
+  - IGS / CDDIS RINEX/CRINEX索引、下载、认证与校验能力。
+- `cases/iran-hormuz-2026-02-28/`
+  - `README.md`：多模态案例结论、历史类比和解释边界。
+  - `DATA_SOURCES.md`：公开发布者、底层提供者、商业/公共属性和下载入口。
+  - `data/source_manifest.json`：机器可读数据源与访问状态。
+  - `data/sentinel_selected_products.csv`：21景CDSE官方产品清单。
+  - `data/sentinel_analysis_assets.csv`：7个实际分析开放资产的精确URL与ETag。
+  - `results/freight_case_report.json`：货运异常、历史类比和预警时间语义。
+  - `results/eo_candidate_summary.json`：S1/S2探索性候选及不可判定边界。
+
+## 8. Next Steps
 
 1. 将 IGS / CDDIS download skill 接入 harness，作为 SP Tool 2 的数据获取前端。
 2. 固化 evidence card schema，统一正例、弱例、负例的判读字段。
-3. 扩展空间天气/太阳活动反证模块。
-4. 接入 NOTAM、AIS、ADS-B，用于行动侧先兆验证。
-5. 将 mini-GDELT topic mining 输出标准化为 JSONL / CSV 双格式。
-6. 在 Qwen3-4B LLM Core 中只保留编排、摘要、反证选择和证据卡生成逻辑。
+3. 完成 Sentinel-1 R57 `2026-02-14 / 02-26 / 03-10` 同轨分析，并建立接近PortWatch空间定义的固定门区。
+4. 取得 GFW 访问权限，下载2026窗口SAR presence，并按实际成像覆盖面积归一化matched/unmatched检测。
+5. 为PortWatch/WTO案例补齐可重复运行的下载、全历史近邻扫描和无前视滚动回测程序；冻结阈值后再进入生产告警规则。
+6. 接入逐船历史AIS、ADS-B、NOTAM、NAVTEX和港口公告，用于行动侧先兆与反证验证。
+7. 扩展空间天气/太阳活动反证模块。
+8. 将 mini-GDELT topic mining 输出标准化为 JSONL / CSV 双格式。
+9. 在 Qwen3-4B LLM Core 中只保留编排、摘要、反证选择和证据卡生成逻辑。
