@@ -39,6 +39,8 @@ class Store:
         self.material_dir = directory / 'materials'
         self.material_dir.mkdir(exist_ok=True)
         self.database = directory / 'demo.sqlite3'
+        self._transaction_db = None
+        self._pending_material_files = {}
         with self.connect() as db:
             db.executescript('''
                 CREATE TABLE IF NOT EXISTS records (
@@ -60,6 +62,9 @@ class Store:
 
     @contextmanager
     def connect(self):
+        if self._transaction_db is not None:
+            yield self._transaction_db
+            return
         db = sqlite3.connect(self.database)
         db.row_factory = sqlite3.Row
         try:
@@ -68,11 +73,62 @@ class Store:
         finally:
             db.close()
 
+    @contextmanager
+    def atomic(self):
+        """Group synchronous store calls into one commit; do not await inside."""
+        if self._transaction_db is not None:
+            yield self._transaction_db
+            return
+        db = sqlite3.connect(self.database)
+        db.row_factory = sqlite3.Row
+        self._transaction_db = db
+        self._pending_material_files = {}
+        committed = False
+        try:
+            db.execute('BEGIN IMMEDIATE')
+            yield db
+            db.commit()
+            committed = True
+        except BaseException:
+            db.rollback()
+            raise
+        finally:
+            files = self._pending_material_files if committed else {}
+            self._transaction_db = None
+            self._pending_material_files = {}
+            db.close()
+        for material in files.values():
+            self._write_material_file(material)
+
+    def _write_material_file(self, material):
+        if self._transaction_db is not None:
+            self._pending_material_files[material['id']] = dict(material)
+            return
+        (self.material_dir / (material['id'] + '.json')).write_text(
+            json.dumps(material, ensure_ascii=False, indent=2), encoding='utf-8')
+
     def save(self, kind, record):
         with self.connect() as db:
+            if kind == 'work':
+                previous = db.execute('SELECT data FROM records WHERE kind=? AND id=?',
+                                      (kind, record['id'])).fetchone()
+                if previous:
+                    record = dict(record, created_at=json.loads(previous['data'])['created_at'])
             db.execute('INSERT OR REPLACE INTO records VALUES (?, ?, ?)',
                        (kind, record['id'], json.dumps(record, ensure_ascii=False)))
         return record
+
+    def insert_once(self, kind, record):
+        """Return the existing durable work without resetting its state."""
+        record = dict(record)
+        record.setdefault('created_at', now())
+        with self.connect() as db:
+            cursor = db.execute('INSERT OR IGNORE INTO records VALUES (?, ?, ?)',
+                                (kind, record['id'], json.dumps(record, ensure_ascii=False)))
+            created = cursor.rowcount == 1
+            row = db.execute('SELECT data FROM records WHERE kind=? AND id=?',
+                             (kind, record['id'])).fetchone()
+        return json.loads(row['data']), created
 
     def get(self, kind, record_id):
         with self.connect() as db:
@@ -85,6 +141,35 @@ class Store:
             rows = db.execute('SELECT data FROM records WHERE kind=? ORDER BY rowid DESC',
                               (kind,)).fetchall()
         return [json.loads(row['data']) for row in rows]
+
+    def recent(self, kind, limit=50):
+        with self.connect() as db:
+            rows = db.execute('''SELECT data FROM records WHERE kind=?
+                ORDER BY COALESCE(julianday(json_extract(data, '$.updated_at')),
+                    julianday(json_extract(data, '$.created_at')),
+                    julianday(json_extract(data, '$.started_at')),
+                    julianday(json_extract(data, '$.published_at')),
+                    julianday(json_extract(data, '$.detected_at')), 0) DESC, rowid DESC
+                LIMIT ?''', (kind, limit)).fetchall()
+        return [json.loads(row['data']) for row in rows]
+
+    def due_work(self, timestamp, limit=50):
+        with self.connect() as db:
+            rows = db.execute('''SELECT data FROM records WHERE kind='work'
+                AND json_extract(data, '$.status') IN ('queued', 'retry_wait')
+                AND (json_extract(data, '$.next_retry_at') IS NULL
+                    OR julianday(json_extract(data, '$.next_retry_at')) <= julianday(?))
+                ORDER BY julianday(json_extract(data, '$.created_at')) ASC, rowid ASC
+                LIMIT ?''', (timestamp, limit)).fetchall()
+        return [json.loads(row['data']) for row in rows]
+
+    def work_counts(self):
+        counts = dict.fromkeys(('queued', 'running', 'completed', 'retry_wait', 'failed'), 0)
+        with self.connect() as db:
+            rows = db.execute('''SELECT json_extract(data, '$.status') AS status, COUNT(*) AS count
+                FROM records WHERE kind='work' GROUP BY json_extract(data, '$.status')''').fetchall()
+        counts.update({row['status']: row['count'] for row in rows if row['status']})
+        return counts
 
     def add_material(self, monitor_id, run_id, material):
         from urllib.parse import urlsplit, urlunsplit
@@ -107,15 +192,15 @@ class Store:
                 existing = dict(material, id=uuid4().hex, monitor_id=monitor_id, url=url,
                                 version=max((item['version'] for item in previous), default=0) + 1,
                                 analysis_status=material.get('analysis_status', 'pending'),
-                                analysis=None, error=None)
+                                analysis=None, error=None,
+                                first_seen_at=material.get('first_seen_at') or material.get('fetched_at') or now())
                 db.execute('INSERT INTO materials VALUES (?, ?, ?, ?, ?, ?)',
                            (existing['id'], monitor_id, url, existing['version'], existing['analysis_status'],
                             json.dumps(existing, ensure_ascii=False)))
             db.execute('INSERT OR IGNORE INTO run_materials VALUES (?, ?)',
                        (run_id, existing['id']))
         if created:
-            (self.material_dir / (existing['id'] + '.json')).write_text(
-                json.dumps(existing, ensure_ascii=False, indent=2), encoding='utf-8')
+            self._write_material_file(existing)
         return existing, created
 
     def get_material(self, material_id):
@@ -177,11 +262,14 @@ class Store:
         with self.connect() as db:
             if run_id:
                 rows = db.execute('SELECT m.data FROM materials m JOIN run_materials r '
-                                  'ON r.material_id=m.id WHERE m.monitor_id=? AND r.run_id=? '
+                                  "ON r.material_id=m.id JOIN records run ON run.kind='run' AND run.id=r.run_id "
+                                  "WHERE json_extract(run.data, '$.monitor_id')=? AND r.run_id=? "
                                   'ORDER BY m.rowid DESC', (monitor_id, run_id)).fetchall()
             else:
-                rows = db.execute('SELECT data FROM materials WHERE monitor_id=? '
-                                  'ORDER BY rowid DESC', (monitor_id,)).fetchall()
+                rows = db.execute('''SELECT m.data FROM materials m WHERE m.monitor_id=? OR EXISTS (
+                    SELECT 1 FROM run_materials r JOIN records run ON run.kind='run' AND run.id=r.run_id
+                    WHERE r.material_id=m.id AND json_extract(run.data, '$.monitor_id')=?)
+                    ORDER BY m.rowid DESC''', (monitor_id, monitor_id)).fetchall()
         return [json.loads(row['data']) for row in rows]
 
     def attach(self, run_id, material_id):

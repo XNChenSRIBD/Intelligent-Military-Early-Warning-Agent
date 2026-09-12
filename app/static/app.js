@@ -1,6 +1,14 @@
 const $ = (id) => document.getElementById(id);
 const ui = {
-  mode: localStorage.getItem('workspace-mode') || 'online',
+  mode: 'online',
+  onlineView: 'pipeline',
+  pipeline: null,
+  pipelineFormLoaded: false,
+  pipelineFormDirty: false,
+  pipelineAlert: null,
+  pipelineDetailSignature: '',
+  pipelineListSignature: '',
+  runDetails: {},
   monitorId: localStorage.getItem('workspace-monitor') || '',
   runId: localStorage.getItem('workspace-run') || '',
   materialId: null,
@@ -30,6 +38,8 @@ const labels = {
   not_required: '无需自动分析', evaluate: '规则判定', evaluating: '规则判定', explaining: '生成提醒解释', explanation: '提醒解释',
   insufficient_reference: '参考不足', not_triggered: '未命中当前规则', candidate: '单日偏低', active: '持续提醒', recovering: '恢复中', resolved: '已解除', revoked: '因数据修订撤销', missing_data: '观测缺失',
   initialization: '初始化发现', update: '后续更新', revision: '来源修订', stale: '旧证据版本',
+  paused: '已暂停', enabled: '已启用', retry_wait: '等待自动重试', insufficient_evidence: '证据不足', new: '新增', ongoing: '持续', revised: '修订',
+  numeric_rule: '数值规则异常', news_clue: '公开报道线索', no_anomaly: '本批未形成异常线索', monitoring: '持续监测中',
 };
 const label = (value) => labels[value] || value || '—';
 const isRunning = (run) => run && ['running', 'queued', 'cancelling'].includes(run.status);
@@ -61,9 +71,10 @@ function remember() {
   localStorage.setItem('workspace-run', ui.runId);
 }
 function currentMonitor() { return ui.state?.monitors.find((item) => String(item.id) === String(ui.monitorId)); }
-function currentRun() { return ui.runs.find((item) => String(item.id) === String(ui.runId)) || ui.runs[0] || null; }
+function currentRun() { const run = ui.runs.find((item) => String(item.id) === String(ui.runId)) || ui.runs[0] || null; return run && ui.runDetails[run.id] ? {...run,...ui.runDetails[run.id]} : run; }
 function activeRun() { return ui.state?.runs.find((item) => String(item.id) === String(ui.state.active_run_id)); }
 function isPortWatch() { return (currentMonitor()?.source || $('source').value) === 'portwatch'; }
+function isPipeline() { return ui.mode === 'online' && ui.onlineView === 'pipeline'; }
 function renderSourceSettings() {
   const portwatch = $('source').value === 'portwatch';
   $('topic-label').textContent = portwatch ? '监测名称' : '主题 / 关键词';
@@ -95,6 +106,7 @@ function setMode(mode) {
   $('mode-badge').textContent = history ? '历史 · 结果快照' : currentRun()?.mode === 'replay' ? '原始材料回放' : '在线资料';
   ui.detail = null;
   if (history) loadHistory(); else renderOnline();
+  renderPipelineStatus();
 }
 function fillForm(monitor) {
   $('topic').value = monitor?.topic || 'shipping';
@@ -108,6 +120,7 @@ function fillForm(monitor) {
   renderSourceSettings();
 }
 function renderSourceStatus() {
+  if (isPipeline()) { renderPipelineStatus(); return; }
   const portwatch = currentMonitor()?.source === 'portwatch';
   const latest = ui.state?.runs.find((run) => String(run.monitor_id) === String(ui.monitorId) && (!portwatch || run.mode !== 'explanation'));
   const metrics = String(ui.metrics?.monitor_id) === String(ui.monitorId) ? ui.metrics : null;
@@ -118,16 +131,16 @@ function renderSourceStatus() {
 function renderState() {
   const state = ui.state;
   const model = state.model || {name:'Qwen',status:'unknown'};
-  $('model-status').textContent = `${model.name || 'Qwen'} · ${label(model.status)}`;
+  $('model-status').textContent = `${model.name || 'Qwen'} · 最近调用${model.last_call_at ? label(model.status) : '尚无记录'}`;
   $('model-status').title = model.last_error || (model.last_call_at ? `最近调用：${date(model.last_call_at)}` : '尚无模型调用记录');
-  $('model-status').className = `status-item ${['ready','available','ok','online'].includes(model.status) ? 'good' : ['failed','error','unavailable'].includes(model.status) ? 'bad' : ''}`;
+  $('model-status').className = `status-item ${['failed','error','unavailable'].includes(model.status) ? 'bad' : ''}`;
   const selected = currentMonitor();
   const latest = state.runs.find((run) => String(run.monitor_id) === String(ui.monitorId));
   renderSourceStatus();
   $('last-success').textContent = selected?.last_success_at ? date(selected.last_success_at) : '尚无记录';
   const monitorSelect = $('monitor-select');
   monitorSelect.replaceChildren(new Option('新建主题', ''));
-  state.monitors.forEach((monitor) => monitorSelect.add(new Option(monitor.topic, monitor.id)));
+  state.monitors.filter((monitor) => !monitor.pipeline_owned).forEach((monitor) => monitorSelect.add(new Option(monitor.topic, monitor.id)));
   monitorSelect.value = ui.monitorId;
   const sourceSelect = $('source');
   const previousSource = sourceSelect.value;
@@ -157,16 +170,19 @@ function renderState() {
     $('replay-button').disabled = !replay.available || Boolean(isRunning(active));
     $('replay-description').textContent = replay.available ? `${replay.label} · ${replay.count} 条可用材料，按顺序分批处理。` : replay.label || '当前案例仅提供既有结果快照，暂无可回放的原始材料。';
   }
+  renderPipelineStatus();
 }
 async function refresh() {
-  if (ui.refreshing) return;
+  if (ui.refreshing || document.hidden) return;
   ui.refreshing = true;
   try {
-    ui.state = await api('/api/state');
-    if (ui.monitorId && !currentMonitor()) { ui.monitorId = ''; ui.runId = ''; }
-    if (!ui.monitorId && !ui.formLoaded && ui.state.monitors.length) ui.monitorId = String(ui.state.monitors[0].id);
+    [ui.state, ui.pipeline] = await Promise.all([api('/api/state'), api('/api/pipeline')]);
+    if (ui.monitorId && (!currentMonitor() || currentMonitor().pipeline_owned)) { ui.monitorId = ''; ui.runId = ''; }
+    const manualMonitors = ui.state.monitors.filter((monitor) => !monitor.pipeline_owned);
+    if (!ui.monitorId && !ui.formLoaded && manualMonitors.length) ui.monitorId = String(manualMonitors[0].id);
     renderState();
-    if (ui.monitorId) await loadMaterials();
+    if (isPipeline()) await loadPipeline();
+    else if (ui.mode === 'online' && ui.monitorId) await loadMaterials();
     else { ui.materials = []; ui.runs = []; ui.metrics = null; ui.alerts = []; if (ui.mode === 'online') renderOnline(); }
     remember();
   } catch (error) { notify(error.message); }
@@ -210,7 +226,223 @@ async function action(callback) {
   catch (error) { notify(error.message); }
   finally { ui.saving = false; if (ui.state) renderState(); }
 }
+function renderPipelineStatus() {
+  const pipeline = ui.pipeline;
+  if (!pipeline) return;
+  const paused = pipeline.paused || !pipeline.enabled;
+  $('pipeline-status').textContent = `流水线 · ${!pipeline.enabled ? '未启用' : pipeline.paused ? '已暂停' : label(pipeline.status || 'monitoring')}`;
+  $('pipeline-status').className = `status-item ${paused ? '' : 'busy'}`;
+  $('pipeline-enabled').textContent = !pipeline.enabled ? '未启用' : pipeline.paused ? '已暂停' : '已启用';
+  $('pipeline-pause').textContent = pipeline.paused ? '恢复自动监测' : '暂停自动监测';
+  $('pipeline-pause').disabled = !pipeline.enabled || ui.saving;
+  const scope = pipeline.scope;
+  $('pipeline-scope').textContent = typeof scope === 'string' ? scope : scope?.name || scope?.label || '霍尔木兹海峡 · 民用航运公开资料';
+  const counts = pipeline.counts || {};
+  const backlog = (counts.queued || 0) + (counts.running || 0) + (counts.retry_wait || 0);
+  $('pipeline-backlog').textContent = `待分析 ${backlog} · 重试 ${counts.retry_wait || 0}`;
+  $('last-analysis').textContent = pipeline.last_analyzed_at ? date(pipeline.last_analyzed_at) : '尚无记录';
+  if (isPipeline()) {
+    $('mode-badge').textContent = '自动监测';
+    $('last-success').textContent = pipeline.last_collected_at ? date(pipeline.last_collected_at) : '尚无记录';
+    const dated = (pipeline.sources || []).filter((source) => source.latest_observed_date);
+    $('source-status').textContent = dated.length ? dated.map((source) => `${source.name || source.source} · 数据截至 ${date(source.latest_observed_date)}`).join(' / ') : '来源数据日期 · 尚无记录';
+    $('source-status').title = $('source-status').textContent;
+  }
+  if (!ui.pipelineFormLoaded || !ui.pipelineFormDirty && document.activeElement?.closest('#pipeline-form') == null) {
+    $('pipeline-news-topic').value = pipeline.config?.news_topic || '';
+    $('pipeline-rss-terms').value = (pipeline.config?.rss_terms || []).join('\n');
+    const parent = $('pipeline-sources');
+    parent.replaceChildren();
+    (pipeline.sources || []).forEach((source) => {
+      const group = el('fieldset', 'pipeline-source');
+      group.dataset.sourceId = source.id;
+      group.append(el('legend', '', source.name || source.source));
+      const enabledLabel = el('label', 'checkbox-label');
+      const enabled = el('input'); enabled.type = 'checkbox'; enabled.checked = Boolean(source.enabled); enabled.dataset.field = 'enabled';
+      enabledLabel.append(enabled, el('span', '', '自动检查'));
+      const intervalLabel = el('label', '', '检查间隔（分钟）');
+      const interval = el('input'); interval.type = 'number'; interval.min = '1'; interval.step = '1'; interval.value = Math.max(1, (source.interval_seconds || 300) / 60); interval.required = true; interval.dataset.field = 'interval';
+      intervalLabel.append(interval);
+      group.append(enabledLabel, intervalLabel);
+      if (source.source === 'rss') group.append(el('p', 'micro muted', '仅覆盖已配置 feed 中实际返回的条目。'));
+      parent.append(group);
+    });
+    ui.pipelineFormLoaded = true;
+  }
+}
+async function loadPipeline() {
+  const source = ui.pipeline?.sources?.find((item) => item.source === 'portwatch');
+  ui.metrics = source?.monitor_id ? await api(`/api/monitors/${encodeURIComponent(source.monitor_id)}/metrics`) : null;
+  ui.alerts = (ui.pipeline?.alerts || []).filter((alert) => alert.origin_type === 'numeric_rule' || alert.rule);
+  if (!isPipeline()) return;
+  renderOnline();
+  if (ui.detail === 'pipeline-alert' && ui.alertId) {
+    const summary = (ui.pipeline.alerts || []).find((alert) => String(alert.id) === String(ui.alertId));
+    const signature = summary ? JSON.stringify(summary) : '';
+    if (signature && signature !== ui.pipelineDetailSignature) await openPipelineAlert(ui.alertId, false, signature);
+  }
+}
+function renderPipeline() {
+  const pipeline = ui.pipeline;
+  $('content-kicker').textContent = '持续监测 / 自动更新';
+  $('content-title').textContent = '霍尔木兹海峡 · 公开资料异常动态';
+  renderPipelineStatus();
+  $('portwatch-content').hidden = !(pipeline?.sources || []).some((source) => source.source === 'portwatch');
+  $('pw-alert-heading').hidden = true;
+  $('pw-alert-list').hidden = true;
+  if (!$('portwatch-content').hidden) renderPortWatch();
+  const counts = pipeline?.counts || {};
+  $('pipeline-summary').textContent = !pipeline ? '正在读取监测进度…' : !pipeline.enabled ? '自动流水线未启用。' : pipeline.paused ? '自动监测已暂停；已保存的资料和结果继续可查看。' : pipeline.summary || '持续监测中，本轮未发布新异常';
+  $('pipeline-queue-info').textContent = `排队 ${counts.queued || 0} · 分析中 ${counts.running || 0} · 等待自动重试 ${counts.retry_wait || 0} · 已处理 ${counts.completed || 0}${pipeline?.model_retry_at ? ` · 模型下次重试 ${date(pipeline.model_retry_at)}` : ''}${pipeline?.last_published_at ? ` · 最近发布 ${date(pipeline.last_published_at)}` : ''}`;
+  const sources = $('pipeline-source-dates'); sources.replaceChildren();
+  (pipeline?.sources || []).forEach((source) => {
+    const row = el('div', 'pipeline-source-status');
+    row.append(el('strong', '', source.name || source.source), badge(source.enabled ? label(source.status) : '已停用', source.error ? 'waiting' : ''), el('p', '', `数据截至 ${source.latest_observed_date ? date(source.latest_observed_date) : '未知'} · 最近检查 ${date(source.last_checked_at)}`));
+    row.append(el('p', '', `最近成功获取 ${date(source.last_success_at)} · 下次检查 ${date(source.next_check_at)}`));
+    if (source.coverage) row.append(el('p', '', typeof source.coverage === 'string' ? source.coverage : source.coverage.summary || source.coverage.detail || format(source.coverage)));
+    if (source.coverage_gaps?.length) row.append(el('p', 'source-error', `累计未完整覆盖 ${source.coverage_gaps.length} 个时间窗口；最近记录：${source.coverage_gaps.slice(-3).map((gap) => typeof gap === 'string' ? gap : `${date(gap.start || gap.range_start || gap.start_at)} 至 ${date(gap.end || gap.range_end || gap.end_at)}`).join('；')}`));
+    if (source.error) row.append(el('p', 'source-error', `来源检查：${source.error}`));
+    sources.append(row);
+  });
+  const all = pipeline?.alerts || [], filter = $('pipeline-alert-filter').value;
+  const alerts = all.filter((alert) => filter === 'all' || (filter === 'unread' ? !alert.read_at : filter === 'ended' ? ['resolved','revoked'].includes(alert.status) : !['resolved','revoked'].includes(alert.status)));
+  $('pipeline-alert-count').textContent = all.length;
+  const signature = JSON.stringify([alerts,ui.alertId,filter,pipeline?.paused,counts]);
+  if (signature !== ui.pipelineListSignature) {
+    ui.pipelineListSignature = signature;
+    const list = $('pipeline-alert-list'); list.replaceChildren();
+    if (!alerts.length) {
+      const empty = el('div', 'empty-state compact-empty');
+      empty.append(el('h3', '', filter === 'all' ? '本轮未发布新异常' : '暂无符合筛选的动态'), el('p', '', (counts.queued || counts.running || counts.retry_wait) ? '仍有资料待分析或等待重试，处理进度见上方。' : pipeline?.paused || !pipeline?.enabled ? '已保存的异常会保留；启用后继续自动处理新资料。' : '后台继续检查来源。未发布异常不代表资料覆盖之外没有变化。'));
+      list.append(empty);
+    }
+    alerts.forEach((alert) => {
+      const card = el('button', `material-card alert-card${String(alert.id) === String(ui.alertId) ? ' active' : ''}`); card.type = 'button';
+      const top = el('div', 'card-top');
+      top.append(el('span', 'publisher', label(alert.origin_type || (alert.rule ? 'numeric_rule' : 'news_clue'))), badge(label(alert.display_status || alert.status), ['resolved','revoked'].includes(alert.status) ? '' : 'waiting'));
+      const meta = el('div','card-meta');
+      meta.append(el('span','',alert.read_at ? '已读' : '未读'),el('span','',`Qwen · ${label(alert.analysis_status || 'queued')}`));
+      card.append(top, el('h3','',alert.title || 'PortWatch 可见通行量持续偏低提醒'), el('p','card-excerpt',(!alert.analysis_stale && alert.analysis?.statement) || alert.statement || alert.summary || (alert.origin_type === 'numeric_rule' ? '程序规则已触发，Qwen 待分析。' : '查看公开报道与分析依据。')), meta, el('p','alert-time',`所指数据 / 报道时间 ${date(alert.observed_at || alert.latest_observed_date || alert.started_on || alert.available_at)}\n系统发现 ${date(alert.detected_at)} · 发布 ${date(alert.published_at)}`));
+      card.addEventListener('click', () => openPipelineAlert(alert.id, true, JSON.stringify(alert)).catch((error) => notify(error.message)));
+      list.append(card);
+    });
+  }
+  const recent = $('pipeline-recent-runs'); recent.replaceChildren();
+  const works = pipeline?.recent_work || [];
+  works.forEach((work) => {
+    const button = el('button','summary-preview',`${work.kind === 'portwatch' ? '数值证据分析' : '公开报道分析'} · ${label(work.decision || work.status)}\n${work.statement || work.error || `入队 ${date(work.created_at)}${work.next_retry_at ? ` · 下次重试 ${date(work.next_retry_at)}` : ''}`}`); button.type = 'button';
+    button.addEventListener('click',async () => {
+      ui.detail = 'pipeline-work'; ui.pipelineWorkId = work.id;
+      try {
+        const result = await api(`/api/work/${encodeURIComponent(work.id)}`);
+        if (ui.detail !== 'pipeline-work' || ui.pipelineWorkId !== work.id) return;
+        $('detail-content').replaceChildren(badge('自动分析工作','accent'),el('h2','detail-heading',label(work.decision || work.status)));
+        facts([['工作 ID',result.id],['状态',label(result.status)],['入队',date(result.created_at)],['分析完成',date(result.completed_at)],['尝试次数',result.attempts],['下次重试',date(result.next_retry_at)]],section('处理记录'));
+        section('本批结果').append(el('p','',work.statement || result.error || label(result.status)));
+        const fold = el('details','asset-block'); fold.append(el('summary','','完整输入、结论与补读记录')); const raw = el('pre','work-record'); raw.textContent = format(result); fold.append(raw); $('detail-content').append(fold);
+        document.querySelector('.details-panel').scrollTop = 0;
+      } catch (error) { notify(error.message); }
+    });
+    recent.append(button);
+  });
+  const runs = works.length ? [] : (ui.state?.runs || []).filter((run) => run.mode === 'pipeline_analysis' || run.mode === 'pipeline_collection').slice(0, 8);
+  if (!runs.length && !works.length) recent.append(el('p','small muted','尚无自动处理记录。'));
+  runs.forEach((run) => {
+    const button = el('button','summary-preview',`${run.mode === 'pipeline_analysis' ? '自动分析' : '来源检查'} · ${label(run.stage || run.status)} · ${date(run.started_at)}\n${run.error || (run.summary ? format(run.summary) : '处理进行中')}`); button.type = 'button';
+    button.addEventListener('click',async () => {
+      ui.detail = 'pipeline-run'; ui.pipelineRunId = run.id;
+      try {
+        const result = await api(`/api/runs/${encodeURIComponent(run.id)}`);
+        if (ui.detail !== 'pipeline-run' || ui.pipelineRunId !== run.id) return;
+        $('detail-content').replaceChildren(badge('自动处理记录','accent'),el('h2','detail-heading',run.mode === 'pipeline_analysis' ? '本批 Qwen 自动分析' : '本次来源检查'));
+        facts([['状态',label(result.status)],['阶段',label(result.stage)],['开始',date(result.started_at)],['结束',date(result.finished_at)]],section('处理时间'));
+        section('处理结果').append(el('p','',result.error || format(result.summary)));
+        renderSteps(result,section('处理步骤'));
+        const fold = el('details','asset-block'); fold.append(el('summary','','查看完整输入、输出与工具结果')); const raw = el('pre','work-record'); raw.textContent = format(result); fold.append(raw); $('detail-content').append(fold);
+        document.querySelector('.details-panel').scrollTop = 0;
+      } catch (error) { notify(error.message); }
+    });
+    recent.append(button);
+  });
+  if (!ui.detail) emptyDetail();
+}
+async function openPipelineAlert(id, scroll = true, signature = '') {
+  ui.alertId = id; ui.detail = 'pipeline-alert';
+  const alert = await api(`/api/alerts/${encodeURIComponent(id)}`);
+  if (ui.detail !== 'pipeline-alert' || String(ui.alertId) !== String(id) || !isPipeline()) return;
+  ui.pipelineAlert = alert; ui.pipelineDetailSignature = signature;
+  const panel = document.querySelector('.details-panel'), previousScroll = panel.scrollTop;
+  renderPipelineAlert(alert);
+  panel.scrollTop = scroll ? 0 : previousScroll;
+  renderPipeline();
+}
+function automaticReferences(refs, parent) {
+  (refs || []).forEach((ref) => {
+    const entry = typeof ref === 'string' ? {id:ref} : ref;
+    const block = el('div', 'analysis-reference');
+    if (entry.title) block.append(el('p','small',entry.title));
+    appendMaterialLink({material_id:entry.material_id || entry.id,material_version:entry.material_version || entry.version,url:entry.url},block);
+    if (entry.observed_at || entry.available_at || entry.first_seen_at) block.append(el('p','micro muted',`观测 ${date(entry.observed_at)} · 发布 ${date(entry.available_at)} · 首次获取 ${date(entry.first_seen_at)}`));
+    parent.append(block);
+  });
+}
+function renderAutomaticAnalysis(alert) {
+  const analysis = alert.analysis || {};
+  const stale = Boolean(alert.analysis_stale || alert.analysis_status === 'stale');
+  const block = section('Qwen 自动分析');
+  block.append(el('p','small muted',`分析状态：${label(alert.analysis_status || 'queued')}`));
+  const statement = analysis.statement || analysis.text;
+  if (statement && !stale) block.append(el('p','',statement));
+  else block.append(el('p','',alert.analysis_status === 'insufficient_evidence' ? '当前资料不足以形成有效判断；处理记录已保存，后续新资料将自动进入分析。' : alert.origin_type === 'numeric_rule' ? '程序规则状态已保存，Qwen 待自动分析。' : '资料已进入自动分析流程。'));
+  if (statement && stale) { const fold = el('details','asset-block'); fold.dataset.fold = 'stale-analysis'; fold.append(el('summary','','旧证据的 Qwen 结论（待自动更新）'),el('p','stale-explanation',statement)); block.append(fold); }
+  const limitations = Array.isArray(analysis.limitations) ? analysis.limitations : analysis.limitations ? [analysis.limitations] : [];
+  limitations.forEach((item) => block.append(el('p','small muted',item)));
+  if (alert.analysis_error || analysis.error) block.append(el('p','source-error',alert.analysis_error || analysis.error));
+  facts([['模型',analysis.model],['该次分析完成',date(analysis.completed_at)],['分析配置版本',analysis.analysis_version],['该次证据版本',analysis.evidence_version || (stale ? '旧证据，见版本变化' : alert.evidence_version)]],block);
+  automaticReferences(alert.evidence_refs?.length ? alert.evidence_refs : analysis.evidence_refs,section(stale ? '旧结论引用（本次分析尚未完成）' : '分析引用与来源版本'));
+  const workId = alert.queued_work_id || analysis.work_id || alert.work_id || alert.analysis_work_id;
+  if (workId) {
+    const fold = el('details','asset-block'); fold.dataset.fold = `work-${workId}`;
+    fold.append(el('summary','','展开本批输入、输出与补读记录'));
+    fold.addEventListener('toggle', async () => {
+      if (!fold.open || fold.dataset.loaded) return;
+      fold.dataset.loaded = 'loading';
+      try {
+        const work = await api(`/api/work/${encodeURIComponent(workId)}`);
+        facts([['工作 ID',work.id],['状态',label(work.status)],['入队时间',date(work.created_at)],['尝试次数',work.attempts ?? work.attempt_count],['下次重试',date(work.next_retry_at)],['失败原因',work.error]],fold);
+        const records = el('pre','work-record'); records.textContent = format(work); fold.append(records); fold.dataset.loaded = 'true';
+      } catch (error) { delete fold.dataset.loaded; fold.append(el('p','source-error',error.message)); }
+    });
+    block.append(fold);
+  }
+}
+function renderPipelineAlert(alert) {
+  const parent = $('detail-content');
+  if (alert.origin_type === 'numeric_rule' || alert.rule) renderAlert(alert);
+  else {
+    parent.replaceChildren(badge('公开报道线索','accent'),el('h2','detail-heading',alert.title || '公开报道线索'),el('p','detail-meta',`${label(alert.display_status || alert.status)} · ${alert.id}`));
+    const source = section('资料支持的陈述');
+    source.append(el('p','',alert.analysis_stale ? '来源已有新版本，当前结论待自动更新。' : alert.statement || alert.summary || alert.analysis?.statement || '查看下方本次分析与原始资料。'));
+    if (alert.origin === 'initialization' || alert.initialization) source.append(el('p','small muted','初始化回填中发现的线索，所指报道时间与系统发现时间分别列出。'));
+    renderAutomaticAnalysis(alert);
+    if (alert.changes?.length || alert.previous_analysis || alert.analysis_history?.length) {
+      const fold = el('details','asset-block'); fold.dataset.fold = 'analysis-history'; fold.append(el('summary','','既有结论与修订依据'));
+      const prior = el('pre','work-record'); prior.textContent = format({changes:alert.changes,previous_analysis:alert.previous_analysis,analysis_history:alert.analysis_history}); fold.append(prior); section('版本变化').append(fold);
+    }
+  }
+  facts([['业务状态',label(alert.status)],['所指观测日期',date(alert.observed_at || alert.started_on)],['来源发布时间',date(alert.available_at)],['系统首次获取',date(alert.first_seen_at)],['系统发现',date(alert.detected_at)],['异常发布',date(alert.published_at)],['最近变化',date(alert.updated_at)],['已读时间',date(alert.read_at)]],section('资料与系统时间'));
+  const read = el('button','full subtle',alert.read_at ? '已读' : '标为已读'); read.type = 'button'; read.disabled = Boolean(alert.read_at);
+  read.addEventListener('click',async () => {
+    try { await api(`/api/alerts/${encodeURIComponent(alert.id)}/read`,{read:true}); ui.pipelineDetailSignature = ''; await refresh(); }
+    catch (error) { notify(error.message); }
+  });
+  parent.append(read);
+}
 function renderOnline() {
+  $('pipeline-content').hidden = !isPipeline();
+  $('maintenance-content').hidden = isPipeline();
+  $('pipeline-view').hidden = isPipeline();
+  if (isPipeline()) { renderPipeline(); return; }
   const run = currentRun();
   const portwatch = isPortWatch();
   $('portwatch-content').hidden = !portwatch;
@@ -221,6 +453,8 @@ function renderOnline() {
   $('online-list-title').textContent = portwatch ? '运行记录' : '资料列表';
   $('content-kicker').textContent = portwatch ? '民用航运 / PORTWATCH' : '资料流';
   $('content-title').textContent = portwatch ? `${ui.state?.portwatch?.name || '霍尔木兹海峡'} · ${currentMonitor()?.topic || '可见通行量监测'}` : currentMonitor()?.topic || '从主题开始，持续整理公开资料';
+  $('pw-alert-heading').hidden = false;
+  $('pw-alert-list').hidden = false;
   if (portwatch) renderPortWatch();
   $('new-count').textContent = run?.new_count ?? '—';
   $('analyzed-count').textContent = run?.analyzed_count ?? '—';
@@ -274,7 +508,7 @@ function renderOnline() {
 }
 function emptyDetail() {
   const empty = el('div', 'empty-state detail-empty');
-  empty.append(el('span', 'empty-symbol', '≡'), el('h3', '', '查看资料细节'), el('p', '', '选择一条资料，查看模型摘要、原始摘录与引用来源。'));
+  empty.append(el('span', 'empty-symbol', '≡'), el('h3', '', isPipeline() ? '查看异常依据' : '查看资料细节'), el('p', '', isPipeline() ? '选择一条动态，查看程序规则、Qwen 结论、资料版本和原始链接。' : '选择一条资料，查看模型摘要、原始摘录与引用来源。'));
   $('detail-content').replaceChildren(empty);
 }
 function section(title, parent = $('detail-content')) {
@@ -302,7 +536,7 @@ function renderMaterial(material) {
   const parent = $('detail-content');
   parent.replaceChildren(badge(material.mode === 'replay' ? '原始材料回放' : '在线资料', 'accent'), el('h2', 'detail-heading', material.title), el('p', 'detail-meta', `${material.publisher || material.source} · ${label(material.content_kind)} · 版本 ${material.version || 1}`));
   const analysis = section(material.analysis_status === 'not_required' ? '数值材料' : 'Qwen 资料摘要');
-  analysis.append(el('p', '', material.analysis_status === 'not_required' ? '该记录用于结构化数值监测；提醒详情可按需生成解释。' : material.analysis?.summary ? format(material.analysis.summary) : `当前状态：${label(material.analysis_status)}`));
+  analysis.append(el('p', '', material.analysis_status === 'not_required' ? '该记录用于结构化数值监测；自动流水线将数值证据变化交给 Qwen 分析。' : material.analysis?.summary ? format(material.analysis.summary) : `当前状态：${label(material.analysis_status)}`));
   if (material.error) analysis.append(el('p', '', material.error));
   if (material.analysis) {
     facts([['模型', material.analysis.model], ['调用耗时', duration(material.analysis.elapsed_ms)]], analysis);
@@ -317,7 +551,7 @@ function renderMaterial(material) {
   const times = section('时间信息');
   facts([['观测时间', material.observed_at], ['来源发布时间', material.available_at], ['本次获取时间', material.fetched_at]], times);
   if (material.time_note) times.append(el('p', '', material.time_note));
-  renderSteps(currentRun(), section('本轮处理步骤'));
+  if (!isPipeline()) renderSteps(currentRun(), section('本轮处理步骤'));
 }
 function renderReferences(ids, parent) {
   const container = el('div');
@@ -350,6 +584,15 @@ function renderRunDetail(run) {
   renderSteps(run, section('真实处理步骤与耗时'));
 }
 function renderSteps(run, parent) {
+  if (run && !Object.prototype.hasOwnProperty.call(run, 'steps')) {
+    const button = el('button','full subtle','展开本轮完整处理记录'); button.type = 'button';
+    button.addEventListener('click',async () => {
+      button.disabled = true;
+      try { const result = await api(`/api/runs/${encodeURIComponent(run.id)}`); ui.runDetails[run.id] = result; parent.replaceChildren(el('h3','','真实处理步骤与耗时')); renderSteps(result,parent); }
+      catch (error) { button.disabled = false; notify(error.message); }
+    });
+    parent.append(button); return;
+  }
   if (!run?.steps?.length) { parent.append(el('p', 'muted', '尚无处理步骤记录。')); return; }
   const list = el('ul', 'step-list');
   run.steps.forEach((step) => {
@@ -407,7 +650,7 @@ function renderPortWatch() {
   const state = metrics?.state;
   const rule = metrics?.rule || ui.state?.portwatch?.rule;
   const frozen = ['candidate','active','recovering','resolved'].includes(state?.current_status) || Boolean(state?.active_alert_id);
-  $('portwatch-current-note').hidden = !ui.runId;
+  $('portwatch-current-note').hidden = isPipeline() || !ui.runId;
   $('pw-latest').textContent = number(state?.latest_value);
   $('pw-observed-date').textContent = metrics?.latest_observed_date || '尚无观测';
   $('pw-baseline-label').textContent = frozen ? '冻结参考中位数' : '近期参考中位数';
@@ -417,7 +660,7 @@ function renderPortWatch() {
   $('pw-status').className = `metric-status ${['active','recovering'].includes(state?.current_status) ? 'lowflow-text' : ''}`;
   $('pw-data-date').textContent = `数据截至 ${metrics?.latest_observed_date || '—'}`;
   $('pw-freshness').textContent = `数据截至 ${metrics?.latest_observed_date || '—'} · 最近获取时间：${date(metrics?.last_success_at)}${metrics?.days_since_observation > 0 ? ` · 尚未收到后续观测（距该观测 ${metrics.days_since_observation} 天）` : ''}${state?.data_gaps?.length ? ` · 观测缺口：${state.data_gaps.join('、')}` : ''}`;
-  $('pw-source-info').textContent = metrics?.error ? `本次来源更新未完成：${metrics.error}。当前显示已保存结果。` : metrics?.last_checked_at ? `最近检查：${date(metrics.last_checked_at)} · 来源状态：${label(metrics.source_status)}` : '点击立即更新获取数值序列。';
+  $('pw-source-info').textContent = metrics?.error ? `本次来源更新未完成：${metrics.error}。当前显示已保存结果。` : metrics?.last_checked_at ? `最近检查：${date(metrics.last_checked_at)} · 该次来源状态：${label(metrics.source_status)}` : isPipeline() ? '等待后台按配置获取数值序列。' : '点击立即更新获取数值序列。';
   $('pw-rule-summary').textContent = `${state?.summary || ''}${rule ? ` 规则 ${rule.id}：候选日前 ${rule.baseline_days} 个自然日中位数；连续 ${rule.trigger_days} 日 < ${rule.trigger_ratio * 100}% 触发，连续 ${rule.recovery_days} 日 ≥ ${rule.recovery_ratio * 100}% 解除。工程默认参数，未校准，非 IMF 官方阈值。` : ''}`;
   const signature = JSON.stringify([metrics, ui.alerts, $('pw-alert-filter').value, ui.alertId]);
   if (signature === ui.portwatchSignature) return;
@@ -469,7 +712,7 @@ function renderPortWatchChart(metrics) {
   const x = (index) => left + index / Math.max(days.length - 1, 1) * (width - left - right);
   const y = (value) => height - bottom - value / max * (height - top - bottom);
   const position = (day) => (Date.parse(`${day}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / 86400000;
-  ui.alerts.filter((alert) => alert.status !== 'revoked').forEach((alert) => {
+  ui.alerts.filter((alert) => alert.status !== 'revoked' && alert.started_on).forEach((alert) => {
     const from = Math.max(0, position(alert.started_on));
     const to = Math.min(days.length - 1, position(alert.resolved_on || metrics.latest_observed_date || end));
     if (to < from) return;
@@ -592,6 +835,9 @@ function renderAlert(alert) {
       if (change.previous_evidence) savedEvidenceFold('查看本次修订前的证据',change.previous_evidence,changes,`previous-evidence-${index}`);
     });
   }
+  if (isPipeline() || alert.origin_type === 'numeric_rule') {
+    renderAutomaticAnalysis(alert);
+  } else {
   const explain = section('Qwen 按需解释');
   const explanation = alert.explanation;
   const currentEvidence = explanation?.evidence_version === alert.evidence_version && explanation?.status !== 'stale';
@@ -612,6 +858,7 @@ function renderAlert(alert) {
   }));
   explain.append(button);
   if (ui.state?.active_run_id && explanation?.status !== 'running') explain.append(el('p','small muted','当前已有任务运行，完成后可生成解释。'));
+  }
   parent.querySelectorAll('details').forEach((node) => { node.open = openFolds.includes(node.dataset.fold); });
 }
 function renderArticleChart() {
@@ -762,20 +1009,38 @@ function renderAssets() {
     });
   });
 }
-$('online-tab').addEventListener('click',()=>setMode('online'));
+async function setOnlineView(view) {
+  ui.onlineView = view; ui.detail = null; ui.alertId = null; ui.metrics = null; ui.alerts = []; ui.portwatchSignature = ''; ui.materialSignature = '';
+  setMode('online'); await refresh();
+}
+$('online-tab').addEventListener('click',()=>setOnlineView('pipeline'));
 $('history-tab').addEventListener('click',()=>setMode('history'));
-$('new-monitor').addEventListener('click',()=>{ui.monitorId='';ui.runId='';ui.materialId=null;ui.alertId=null;ui.detail=null;ui.materials=[];ui.runs=[];ui.metrics=null;ui.alerts=[];fillForm(null);remember();renderState();renderOnline();$('topic').focus();});
-$('monitor-select').addEventListener('change',async(event)=>{ui.monitorId=event.target.value;ui.runId='';ui.materialId=null;ui.alertId=null;ui.detail=null;ui.metrics=null;ui.alerts=[];fillForm(currentMonitor());remember();await refresh();});
+$('maintenance-view').addEventListener('click',()=>setOnlineView('maintenance'));
+$('pipeline-view').addEventListener('click',()=>setOnlineView('pipeline'));
+$('pipeline-alert-filter').addEventListener('change',renderPipeline);
+$('pipeline-form').addEventListener('input',()=>{ui.pipelineFormDirty = true;});
+$('pipeline-form').addEventListener('submit',(event)=>{
+  event.preventDefault();
+  action(async()=>{
+    const sources = [...$('pipeline-sources').querySelectorAll('[data-source-id]')].map((group)=>({id:group.dataset.sourceId,enabled:group.querySelector('[data-field="enabled"]').checked,interval_seconds:Number(group.querySelector('[data-field="interval"]').value)*60}));
+    await api('/api/pipeline/config',{news_topic:$('pipeline-news-topic').value.trim(),rss_terms:$('pipeline-rss-terms').value.split('\n').map((term)=>term.trim()).filter(Boolean),sources});
+    ui.pipelineFormDirty = false; ui.pipelineFormLoaded = false; notify('监测配置已保存，后台按新配置继续。');
+  });
+});
+$('pipeline-pause').addEventListener('click',()=>action(async()=>{await api('/api/pipeline/config',{paused:!ui.pipeline.paused});}));
+$('new-monitor').addEventListener('click',()=>{ui.onlineView='maintenance';ui.monitorId='';ui.runId='';ui.materialId=null;ui.alertId=null;ui.detail=null;ui.materials=[];ui.runs=[];ui.metrics=null;ui.alerts=[];fillForm(null);remember();renderState();renderOnline();$('topic').focus();});
+$('monitor-select').addEventListener('change',async(event)=>{ui.onlineView='maintenance';ui.monitorId=event.target.value;ui.runId='';ui.materialId=null;ui.alertId=null;ui.detail=null;ui.metrics=null;ui.alerts=[];fillForm(currentMonitor());remember();await refresh();});
 $('source').addEventListener('change',()=>{const portwatch=$('source').value==='portwatch';if(portwatch && currentMonitor()?.source!=='portwatch')$('interval').value=ui.state?.portwatch?.default_interval_minutes || 1440;else if(!ui.monitorId && !portwatch)$('interval').value=30;renderSourceSettings();if(!ui.monitorId)renderOnline();});
 $('pw-alert-filter').addEventListener('change',renderPortWatch);
 $('run-select').addEventListener('change',async(event)=>{ui.runId=event.target.value;ui.detail='run';ui.materialId=null;remember();try{await loadMaterials();}catch(error){notify(error.message);}});
-$('monitor-form').addEventListener('submit',(event)=>{event.preventDefault();action(async()=>{const monitor=await saveMonitor();if(!monitor)return;const run=await api(`/api/monitors/${encodeURIComponent(monitor.id)}/run`,{});ui.runId=String(run.id);ui.detail='run';remember();});});
+$('monitor-form').addEventListener('submit',(event)=>{event.preventDefault();ui.onlineView='maintenance';action(async()=>{const monitor=await saveMonitor();if(!monitor)return;const run=await api(`/api/monitors/${encodeURIComponent(monitor.id)}/run`,{});ui.runId=String(run.id);ui.detail='run';remember();});});
 $('save-button').addEventListener('click',()=>action(async()=>{const monitor=await saveMonitor();if(monitor)notify('主题已保存。');}));
 $('schedule-button').addEventListener('click',()=>action(async()=>{const enabled=!currentMonitor()?.enabled;const monitor=await saveMonitor();if(!monitor)return;await api(`/api/monitors/${encodeURIComponent(monitor.id)}/schedule`,{enabled});}));
 $('cancel-button').addEventListener('click',()=>action(async()=>{const run=activeRun();if(run)await api(`/api/runs/${encodeURIComponent(run.id)}/cancel`,{});}));
 $('refresh-button').addEventListener('click',()=>{notify();refresh();});
 $('run-summary-button').addEventListener('click',()=>{ui.detail='run';renderRunDetail(currentRun());document.querySelector('.details-panel').scrollTop=0;});
-$('replay-button').addEventListener('click',()=>action(async()=>{const run=await api('/api/history/replay',{batch_size:3});ui.monitorId=String(run.monitor_id);ui.runId=String(run.id);ui.formLoaded=false;ui.detail='run';remember();setMode('online');}));
+$('replay-button').addEventListener('click',()=>action(async()=>{const run=await api('/api/history/replay',{batch_size:3});ui.onlineView='maintenance';ui.monitorId=String(run.monitor_id);ui.runId=String(run.id);ui.formLoaded=false;ui.detail='run';remember();setMode('online');}));
 setMode(ui.mode);
 refresh();
-setInterval(refresh,4000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
+setInterval(refresh,2000);

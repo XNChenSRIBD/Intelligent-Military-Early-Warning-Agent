@@ -31,6 +31,24 @@ class Settings:
     portwatch_trigger_days: int = int(os.getenv('PW_TRIGGER_DAYS', '2'))
     portwatch_recovery_ratio: float = float(os.getenv('PW_RECOVERY_RATIO', '0.8'))
     portwatch_recovery_days: int = int(os.getenv('PW_RECOVERY_DAYS', '2'))
+    pipeline_enabled: bool = os.getenv('PIPELINE_ENABLED', 'true').lower() == 'true'
+    pipeline_news_topic: str = os.getenv('PIPELINE_NEWS_TOPIC', '(Hormuz OR "Strait of Hormuz") (shipping OR tanker OR cargo OR maritime)')
+    pipeline_rss_terms: tuple = tuple(term.strip() for term in os.getenv(
+        'PIPELINE_RSS_TERMS', 'Hormuz,shipping,tanker,maritime').split(',') if term.strip())
+    pipeline_sources: tuple = tuple(source.strip() for source in os.getenv(
+        'PIPELINE_SOURCES', 'gdelt,rss,portwatch').split(',') if source.strip())
+    pipeline_news_interval: int = int(os.getenv('PIPELINE_NEWS_INTERVAL', '300'))
+    pipeline_portwatch_interval: int = int(os.getenv('PIPELINE_PORTWATCH_INTERVAL', '86400'))
+    pipeline_lookback_hours: int = int(os.getenv('PIPELINE_LOOKBACK_HOURS', '48'))
+    pipeline_overlap_minutes: int = int(os.getenv('PIPELINE_OVERLAP_MINUTES', '30'))
+    pipeline_batch_size: int = int(os.getenv('PIPELINE_BATCH_SIZE', '3'))
+    pipeline_analysis_version: str = os.getenv('PIPELINE_ANALYSIS_VERSION', 'shipping_v1')
+    pipeline_tool_calls: int = int(os.getenv('PIPELINE_TOOL_CALLS', '2'))
+    pipeline_model_requests: int = int(os.getenv('PIPELINE_MODEL_REQUESTS', '4'))
+    pipeline_source_concurrency: int = int(os.getenv('PIPELINE_SOURCE_CONCURRENCY', '2'))
+    pipeline_search_windows: int = int(os.getenv('PIPELINE_SEARCH_WINDOWS', '8'))
+    pipeline_retry_seconds: int = int(os.getenv('PIPELINE_RETRY_SECONDS', '60'))
+    pipeline_retry_max_seconds: int = int(os.getenv('PIPELINE_RETRY_MAX_SECONDS', '3600'))
 
     @property
     def portwatch_rule(self):

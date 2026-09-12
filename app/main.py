@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 from .config import ROOT, settings
 from .history import history_payload, replay_info
+from .pipeline import Pipeline, alert_summary
 from .runner import Runner
 from .sources import SOURCES
 from .store import Store, now
@@ -20,10 +21,13 @@ from .store import Store, now
 async def lifespan(app):
     app.state.store = Store(settings.data_dir)
     app.state.runner = Runner(app.state.store, settings)
+    app.state.pipeline = Pipeline(app.state.store, settings, app.state.runner)
     scheduler = asyncio.create_task(app.state.runner.schedule())
+    app.state.pipeline.start()
     yield
     scheduler.cancel()
     await asyncio.gather(scheduler, return_exceptions=True)
+    await app.state.pipeline.close()
     await app.state.runner.close()
 
 
@@ -48,6 +52,27 @@ class ReplayInput(BaseModel):
     batch_size: int = Field(default=3, ge=1, le=6)
 
 
+class PipelineSourceInput(BaseModel):
+    id: Literal['gdelt', 'rss', 'portwatch']
+    enabled: bool | None = None
+    interval_seconds: int | None = Field(default=None, ge=60, le=604800)
+
+
+class PipelineInput(BaseModel):
+    paused: bool | None = None
+    news_topic: str | None = Field(default=None, min_length=1, max_length=300)
+    rss_terms: list[str] | None = Field(default=None, max_length=20)
+    sources: list[PipelineSourceInput] | None = None
+
+
+class ReadInput(BaseModel):
+    read: bool = True
+
+
+def run_summary(run):
+    return {key: value for key, value in run.items() if key not in ('steps', 'input', 'result')}
+
+
 def get_monitor(monitor_id):
     monitor = app.state.store.get('monitor', monitor_id)
     if monitor is None:
@@ -62,7 +87,8 @@ async def index():
 
 @app.get('/api/state')
 async def state():
-    return {'monitors': app.state.store.all('monitor'), 'runs': app.state.store.all('run'),
+    return {'monitors': app.state.store.all('monitor'),
+            'runs': [run_summary(run) for run in app.state.store.recent('run', 40)],
             'active_run_id': app.state.runner.active_run_id, 'model': app.state.runner.model,
             'sources': SOURCES, 'replay': replay_info(), 'server_time': now(),
             'portwatch': dict(portwatch_scope(), rule=settings.portwatch_rule,
@@ -77,6 +103,8 @@ async def save_monitor(body: MonitorInput):
         raise HTTPException(422, '请输入监测主题')
     store = app.state.store
     previous = get_monitor(body.id) if body.id else None
+    if previous and previous.get('pipeline_owned'):
+        raise HTTPException(400, '自动监测请使用流水线配置入口')
     if previous and previous.get('mode') == 'replay':
         raise HTTPException(400, '历史回放主题不能改为在线主题')
     if previous and (previous['source'] != data['source'] or
@@ -97,12 +125,19 @@ async def save_monitor(body: MonitorInput):
 @app.post('/api/monitors/{monitor_id}/run')
 async def run_now(monitor_id: str):
     monitor = get_monitor(monitor_id)
-    return app.state.runner.start(monitor_id, mode=monitor.get('mode', 'online'))
+    if monitor.get('pipeline_owned'):
+        raise HTTPException(400, '该监测由自动流水线调度')
+    try:
+        return app.state.runner.start(monitor_id, mode=monitor.get('mode', 'online'))
+    except RuntimeError as error:
+        raise HTTPException(409, str(error)) from error
 
 
 @app.post('/api/monitors/{monitor_id}/schedule')
 async def schedule_monitor(monitor_id: str, body: ScheduleInput):
     monitor = get_monitor(monitor_id)
+    if monitor.get('pipeline_owned'):
+        raise HTTPException(400, '自动监测请使用流水线暂停或来源开关')
     if monitor.get('mode') == 'replay':
         raise HTTPException(400, '历史回放使用分批回放按钮')
     monitor.update(enabled=body.enabled, next_run_at=now())
@@ -121,7 +156,49 @@ async def cancel_run(run_id: str):
 async def monitor_materials(monitor_id: str, run_id: str | None = None):
     get_monitor(monitor_id)
     return {'materials': app.state.store.materials(monitor_id, run_id),
-            'runs': [run for run in app.state.store.all('run') if run['monitor_id'] == monitor_id]}
+            'runs': [run_summary(run) for run in app.state.store.recent('run', 100)
+                     if run['monitor_id'] == monitor_id]}
+
+
+@app.get('/api/runs/{run_id}')
+async def run_detail(run_id: str):
+    run = app.state.store.get('run', run_id)
+    if run is None:
+        raise HTTPException(404, '找不到该运行')
+    return run
+
+
+@app.get('/api/pipeline')
+async def pipeline_state():
+    return app.state.pipeline.snapshot()
+
+
+@app.post('/api/pipeline/config')
+async def pipeline_config(body: PipelineInput):
+    changes = body.model_dump(exclude_none=True)
+    if 'news_topic' in changes:
+        changes['news_topic'] = changes['news_topic'].strip()
+        if not changes['news_topic']:
+            raise HTTPException(422, '新闻主题词不能为空')
+    if 'rss_terms' in changes:
+        changes['rss_terms'] = [term.strip() for term in changes['rss_terms'] if term.strip()]
+    try:
+        return app.state.pipeline.configure(changes)
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
+
+
+@app.get('/api/pipeline/alerts')
+async def pipeline_alerts(limit: int = 50):
+    return {'alerts': [alert_summary(alert) for alert in app.state.pipeline.recent_alerts(max(1, min(limit, 100)))]}
+
+
+@app.get('/api/work/{work_id}')
+async def work_detail(work_id: str):
+    work = app.state.store.get('work', work_id)
+    if work is None:
+        raise HTTPException(404, '找不到该分析工作')
+    return work
 
 
 def portwatch_scope():
@@ -172,7 +249,7 @@ async def metrics(monitor_id: str):
     latest = (current or {}).get('latest_observed_date')
     return {
         'monitor_id': monitor_id, 'scope': scope, 'rule': settings.portwatch_rule,
-        'state': {key: value for key, value in current.items() if key != 'series'} if current else None,
+        'state': {key: value for key, value in current.items() if key not in ('series', 'input_versions')} if current else None,
         'series': [row for row in (current or {}).get('series', [])
                    if start <= row['observed_date'] <= end],
         'observations': rows, 'range_start': start, 'range_end': end,
@@ -197,9 +274,18 @@ async def alert_detail(alert_id: str):
     return get_alert(alert_id)
 
 
+@app.post('/api/alerts/{alert_id}/read')
+async def read_alert(alert_id: str, body: ReadInput):
+    alert = get_alert(alert_id)
+    alert['read_at'] = now() if body.read else None
+    return app.state.store.save('alert', alert)
+
+
 @app.post('/api/alerts/{alert_id}/explain')
 async def explain(alert_id: str):
     alert = get_alert(alert_id)
+    if alert.get('origin_type'):
+        raise HTTPException(400, '流水线会自动分析证据变化并重试，当前结果请在提醒详情查看')
     try:
         return app.state.runner.start_explanation(alert)
     except RuntimeError as error:
@@ -222,4 +308,7 @@ async def replay(body: ReplayInput):
                        mode='replay', lookback_hours=168, max_materials=6, interval_minutes=30,
                        enabled=False, replay_cursor=0, last_success_at=None, last_error=None)
         store.save('monitor', monitor)
-    return app.state.runner.start(monitor['id'], mode='replay', batch_size=body.batch_size)
+    try:
+        return app.state.runner.start(monitor['id'], mode='replay', batch_size=body.batch_size)
+    except RuntimeError as error:
+        raise HTTPException(409, str(error)) from error

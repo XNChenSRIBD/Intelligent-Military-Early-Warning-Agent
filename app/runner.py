@@ -18,6 +18,8 @@ class Runner:
         self.task = None
         self.active_run_id = None
         self.cancel_requested = False
+        self.model_lock = asyncio.Lock()
+        self.source_locks = {}
         self.model = store.get('model', 'qwen') or {
             'id': 'qwen', 'name': config.model_name, 'status': 'unknown',
             'last_error': None, 'last_call_at': None}
@@ -33,7 +35,7 @@ class Runner:
 
     def start(self, monitor_id, mode='online', batch_size=3):
         if self.task and not self.task.done():
-            return self.store.get('run', self.active_run_id)
+            raise RuntimeError('已有维护任务运行，本次请求未创建运行')
         run = {
             'id': uuid4().hex, 'monitor_id': monitor_id, 'mode': mode,
             'status': 'queued', 'stage': 'queued', 'started_at': now(),
@@ -45,6 +47,13 @@ class Runner:
         self.cancel_requested = False
         self.task = asyncio.create_task(self.execute(run, batch_size))
         return run
+
+    def source_lock(self, monitor):
+        source = monitor['source']
+        scope = (self.config.portwatch_url, self.config.portwatch_id) if source == 'portwatch' else (
+            self.config.rss_url if source == 'rss' else monitor['topic'])
+        key = (source, scope)
+        return self.source_locks.setdefault(key, asyncio.Lock())
 
     def cancel(self, run_id):
         run = self.store.get('run', run_id)
@@ -68,7 +77,8 @@ class Runner:
         self.save_run(run, stage='analyzing')
         started = perf_counter()
         try:
-            result = await analyze(batch, self.config)
+            async with self.model_lock:
+                result = await analyze(batch, self.config)
         except ModelError as error:
             elapsed = round((perf_counter() - started) * 1000)
             for material in batch:
@@ -117,7 +127,8 @@ class Runner:
                 source = {'materials': materials, 'status': 'ok' if materials else 'empty',
                           'error': None, 'detail': '历史新闻标题，按 GDELT 收录时间顺序导入'}
             else:
-                source = await collect(monitor, self.config)
+                async with self.source_lock(monitor):
+                    source = await collect(monitor, self.config)
             self.save_run(run, source_status=source['status'])
             self.step(run, 'history.read' if run['mode'] == 'replay' else monitor['source'] + '.collect',
                       source['status'], round((perf_counter() - started) * 1000), source['detail'])
@@ -172,7 +183,8 @@ class Runner:
 
     async def execute_portwatch(self, run, monitor):
         started = perf_counter()
-        source = await collect_portwatch_series(self.config)
+        async with self.source_lock(monitor):
+            source = await collect_portwatch_series(self.config)
         scope = {'source_key': self.config.portwatch_url.rstrip('/'),
                  'portid': self.config.portwatch_id}
         source_state = self.store.get('portwatch_source', monitor['id']) or {'id': monitor['id']}
@@ -258,7 +270,8 @@ class Runner:
             alert['explanation']['status'] = 'running'
             self.store.save('alert', alert)
             self.save_run(run, status='running', stage='explaining')
-            result = await explain_alert(evidence, self.config)
+            async with self.model_lock:
+                result = await explain_alert(evidence, self.config)
             alert = self.store.get('alert', run['alert_id'])
             explanation_status = ('completed' if alert['evidence_version'] == run['evidence_version'] else 'stale')
             alert['explanation'] = {
@@ -304,7 +317,7 @@ class Runner:
                 continue
             timestamp = now()
             for monitor in self.store.all('monitor'):
-                if monitor.get('enabled') and monitor.get('next_run_at', '') <= timestamp:
+                if not monitor.get('pipeline_owned') and monitor.get('enabled') and monitor.get('next_run_at', '') <= timestamp:
                     monitor['next_run_at'] = (datetime.now(timezone.utc) + timedelta(
                         minutes=monitor['interval_minutes'])).isoformat()
                     self.store.save('monitor', monitor)
