@@ -537,6 +537,10 @@ class ResourceManager:
         self._fair_turn += 1
         if self._fair_turn % 3 == 0:
             items.sort(key=lambda item: item['created_at'])
+        # Historical consumers are waiting for these references before they
+        # can use observations. Keep the existing latest/backlog order inside
+        # each group while completing available reference files first.
+        items.sort(key=lambda item: item['resource'].get('role') != 'baseline')
         for item in items:
             if item.get('compute_status') == 'completed' and not item.get('force_fetch'):
                 continue
