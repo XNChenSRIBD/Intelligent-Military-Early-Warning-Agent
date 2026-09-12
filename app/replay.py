@@ -315,6 +315,7 @@ class CaseReplay(Pipeline):
             for resource in self.resources(case_id, as_of=as_of):
                 if resource.get('role') == 'baseline':
                     await self.import_resource(case, resource, as_of)
+                    await asyncio.sleep(0)
             if not self.running():
                 return
             baselines = [resource for resource in self.resources(case_id) if resource.get('role') == 'baseline']
@@ -356,6 +357,7 @@ class CaseReplay(Pipeline):
         for identifier in batch['resource_ids']:
             resource = self.store.get('replay_resource', identifier)
             await self.import_resource(case, resource, batch['as_of'])
+            await asyncio.sleep(0)
         pending = [identifier for identifier in batch['resource_ids']
                    if self.store.get('replay_resource', identifier).get('status') == 'waiting_resource']
         if pending:
@@ -407,7 +409,7 @@ class CaseReplay(Pipeline):
                 raw, signature = None, None
             if resource['kind'] == 'gnss':
                 from .gnss import contextualize_result
-                baselines = self.gnss_results(case_id, as_of, baseline_only=True)
+                baselines = self.gnss_results(case_id, as_of, baseline_only=True, stations=[resource['station']])
                 computed = contextualize_result(raw, resource, as_of=as_of,
                     case_id=case_id, baseline_results=baselines)
                 computed['input_revision'] = resource.get('input_revision', 0) + 1
@@ -537,9 +539,11 @@ class CaseReplay(Pipeline):
         compact['selection_note'] = '初始统计按信号码字母序展示，其他信号可用同站历史工具补查；未按异常大小筛选'
         return compact
 
-    def gnss_results(self, case_id, as_of, baseline_only=False, full=True):
+    def gnss_results(self, case_id, as_of, baseline_only=False, full=True, stations=None):
+        selected_stations = set(stations) if stations is not None else None
         saved = [result for result in self.store.all('gnss_result') if result.get('case_id') == case_id
                 and utc(result['replay_release_at']) <= utc(as_of)
+                and (selected_stations is None or result.get('station') in selected_stations)
                 and (not baseline_only or result.get('role') == 'baseline')]
         if not full:
             return saved
@@ -548,8 +552,9 @@ class CaseReplay(Pipeline):
         for item in sorted(saved, key=lambda value: value.get('role') != 'baseline'):
             resource = self.store.get('replay_resource', item['id'])
             raw = self.acquisition.result(resource['catalog_id'], version=item.get('catalog_version')) if resource and resource.get('catalog_id') else None
+            same_station = [baseline for baseline in baselines if baseline.get('station') == item.get('station')]
             result = contextualize_result(raw, resource, as_of=as_of, case_id=case_id,
-                         baseline_results=baselines) if raw else deepcopy(item)
+                         baseline_results=same_station) if raw else deepcopy(item)
             result.update(id=item['id'], resource_id=item['id'], material_id=item['material_id'],
                           replay_release_at=item['replay_release_at'], role=item.get('role'))
             (baselines if item.get('role') == 'baseline' else observations).append(result)
@@ -631,7 +636,8 @@ class CaseReplay(Pipeline):
                            'replay_release_at': as_of}
                 targets = []
                 if kind == 'gnss':
-                    results = [result for result in self.gnss_results(case_id, as_of) if result['id'] in {r['id'] for r in group}]
+                    results = [result for result in self.gnss_results(case_id, as_of, stations={r['station'] for r in group})
+                               if result['id'] in {r['id'] for r in group}]
                     payload.update(program={'observations': [self.compact_gnss(result) for result in results]},
                                    tools={'station_history': '本例已释放的同站同信号历史统计',
                                           'multistation_check': '本例已释放的同期多站统计'})
@@ -700,7 +706,13 @@ class CaseReplay(Pipeline):
             return {'materials': selected, 'detail': '仅检索本案例已释放归档；未联网补查',
                     'coverage': {'as_of': as_of, 'case_id': case_id, 'complete': False}}
         from .gnss import station_history, multistation_check
-        results = self.gnss_results(case_id, as_of)
+        if name == 'station_history':
+            requested_stations = [args.get('station')]
+        elif name == 'multistation_check':
+            requested_stations = args.get('stations') or None
+        else:
+            return {'materials': [], 'error': '不支持的历史补查工具'}
+        results = self.gnss_results(case_id, as_of, stations=requested_stations)
         registered = {result.get('station') for result in results}
         if name == 'station_history':
             if args.get('station') not in registered:
@@ -711,8 +723,6 @@ class CaseReplay(Pipeline):
             if any(station not in registered for station in stations):
                 return {'materials': [], 'error': '只能比较本案例已释放的站点'}
             output = multistation_check(results, as_of=as_of, stations=stations, signal=args.get('signal'))
-        else:
-            return {'materials': [], 'error': '不支持的历史补查工具'}
         used = set(output.get('resource_ids', []))
         references = [result['material_id'] for result in results if result.get('material_id') and result['id'] in used]
         record = {'title': name + ' · ' + as_of, 'url': '/api/replay/tools/' + uuid4().hex,
