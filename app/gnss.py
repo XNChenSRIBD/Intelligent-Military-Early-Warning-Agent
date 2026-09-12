@@ -181,6 +181,44 @@ def _strength_kind(header, resource, finite, np):
     return "undocumented_signal_strength", declared or "receiver_units", unit_source if declared else "No explicit strength unit"
 
 
+def _load_strength_epochs(gr, text, measures, rinex_version):
+    # GeoRinex OBS3 merges each epoch into a growing xarray Dataset; its fast
+    # flag does not accelerate that path. Bound those merges while retaining
+    # every native epoch, observation and satellite in the final dataset.
+    if not rinex_version or float(rinex_version) < 3:
+        return gr.load(io.StringIO(text), meas=measures, fast=True, useindicators=False)
+    import xarray as xr
+    stream = io.StringIO(text)
+    header_lines = []
+    for line in stream:
+        header_lines.append(line)
+        if 'END OF HEADER' in line:
+            break
+    prefix = ''.join(header_lines)
+    parts, lines, epochs = [], [], 0
+    try:
+        for line in stream:
+            if line.startswith('>'):
+                if epochs == 128:
+                    parts.append(gr.load(io.StringIO(prefix + ''.join(lines)),
+                        meas=measures, useindicators=False))
+                    lines, epochs = [], 0
+                epochs += 1
+            lines.append(line)
+        if lines:
+            parts.append(gr.load(io.StringIO(prefix + ''.join(lines)),
+                meas=measures, useindicators=False))
+        if not parts:
+            raise GnssProcessingError('RINEX contains no observation records')
+        if len(parts) == 1:
+            return parts.pop()
+        return xr.concat(parts, dim='time', data_vars='all', coords='minimal',
+                         compat='override', join='outer', combine_attrs='override')
+    finally:
+        for part in parts:
+            part.close()
+
+
 def _parse_resource(resource, path, case_id, identity=None):
     try:
         import georinex as gr
@@ -195,7 +233,7 @@ def _parse_resource(resource, path, case_id, identity=None):
         raise GnssProcessingError("The observation header contains no S* strength observables")
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
-        dataset = gr.load(io.StringIO(text), meas=measures, fast=True, useindicators=False)
+        dataset = _load_strength_epochs(gr, text, measures, header.get('rinex_version'))
     try:
         if not dataset.sizes.get("time"):
             raise GnssProcessingError("GeoRinex returned no observation epochs")

@@ -290,8 +290,9 @@ class CaseReplay(Pipeline):
         case_id = case['case_id']
         definition = self.definitions[case_id]
         if not case['baseline_ready']:
-            case.update(status='preparing', started_at=case.get('started_at') or now())
-            self.store.save('replay_case', case)
+            if case['status'] not in ('preparing', 'waiting_resources'):
+                case.update(status='preparing', started_at=case.get('started_at') or now())
+                self.store.save('replay_case', case)
             as_of = utc(definition['start_at']).isoformat()
             for resource in self.resources(case_id, as_of=as_of):
                 if resource.get('role') == 'baseline':
@@ -301,12 +302,14 @@ class CaseReplay(Pipeline):
             baselines = [resource for resource in self.resources(case_id) if resource.get('role') == 'baseline']
             pending = [resource for resource in baselines if resource.get('status') == 'waiting_resource']
             case = self.store.get('replay_case', case_id)
-            case.update(baseline_ready=not pending,
+            progress = dict(baseline_ready=not pending,
                 baseline_status={'prepared': sum(resource.get('status') == 'processed' for resource in baselines),
                     'pending': len(pending), 'unavailable': sum(resource.get('status') in ('missing', 'failed') for resource in baselines)},
                 as_of=as_of if not case.get('released_batches') else case.get('as_of'),
                 status='waiting_resources' if pending else 'running')
-            self.store.save('replay_case', case)
+            if any(case.get(key) != value for key, value in progress.items()):
+                case.update(progress)
+                self.store.save('replay_case', case)
             if pending:
                 return
             if not case['released_batches']:
@@ -320,16 +323,18 @@ class CaseReplay(Pipeline):
             return
         if any(work['status'] != 'completed' for work in works):
             return
-        case['completed_batches'] = case['released_batches']
-        if case['released_batches']:
+        if case.get('completed_batches', 0) < case['released_batches']:
+            case['completed_batches'] = case['released_batches']
             self.checkpoint(case, case['released_batches'] - 1)
+            self.store.save('replay_case', case)
         if case['released_batches'] == len(definition['batches']):
             self.finish_case(case)
             return
         batch_index = case['released_batches']
         batch = definition['batches'][batch_index]
-        case.update(status='processing', as_of=batch['as_of'])
-        self.store.save('replay_case', case)
+        if case.get('as_of') != batch['as_of'] or case['status'] not in ('processing', 'waiting_resources'):
+            case.update(status='processing', as_of=batch['as_of'])
+            self.store.save('replay_case', case)
         for identifier in batch['resource_ids']:
             resource = self.store.get('replay_resource', identifier)
             await self.import_resource(case, resource, batch['as_of'])
@@ -337,8 +342,9 @@ class CaseReplay(Pipeline):
                    if self.store.get('replay_resource', identifier).get('status') == 'waiting_resource']
         if pending:
             case = self.store.get('replay_case', case_id)
-            case.update(status='waiting_resources', waiting_resources=len(pending))
-            self.store.save('replay_case', case)
+            if case.get('status') != 'waiting_resources' or case.get('waiting_resources') != len(pending):
+                case.update(status='waiting_resources', waiting_resources=len(pending))
+                self.store.save('replay_case', case)
             return
         if not self.running():
             return
@@ -360,10 +366,12 @@ class CaseReplay(Pipeline):
                 raw_version = state.get('result_version')
                 if state.get('compute_status') not in ('completed', 'not_required') or not raw_version:
                     unavailable = state.get('status') in ('source_missing', 'auth_required') or state.get('compute_status') == 'failed'
-                    resource.update(status='failed' if unavailable else 'waiting_resource',
+                    progress = dict(status='failed' if unavailable else 'waiting_resource',
                         error=state.get('error'), acquisition_status=state.get('status'),
                         compute_status=state.get('compute_status'), next_retry_at=state.get('next_retry_at'))
-                    self.store.save('replay_resource', resource)
+                    if any(resource.get(key) != value for key, value in progress.items()):
+                        resource.update(progress)
+                        self.store.save('replay_resource', resource)
                     return
                 baselines_version = sorted((r['id'], r.get('material_id')) for r in self.resources(case_id, as_of=as_of)
                                            if r.get('role') == 'baseline' and r.get('material_id') and r['kind'] == 'gnss')

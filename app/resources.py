@@ -542,12 +542,14 @@ class ResourceManager:
                 continue
             path = Path(item['path'])
             if path.is_file() and not item.get('force_fetch'):
-                if phase_counts['compute'] < 1:
+                # Small saved JSON records do not occupy the single GNSS parser.
+                phase = 'compute' if item['kind'] == 'gnss' else 'import'
+                if phase_counts[phase] < 1:
                     item = self._claim_work(item['id'], 'compute')
                     if not item:
                         continue
-                    phase_counts['compute'] += 1
-                    self._launch(item, 'compute', self._compute(item))
+                    phase_counts[phase] += 1
+                    self._launch(item, phase, self._compute(item))
                 continue
             if item.get('result_path') and not item.get('force_fetch'):
                 from .gnss import load_raw_cache

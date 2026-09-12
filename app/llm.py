@@ -200,6 +200,13 @@ def _parse_update(content, inputs, material_ids, alert_by_id, tools_available):
             raise ValueError('evidence_refs 只能引用本次实际提供的材料 ID')
         if item.decision in ('candidate', 'update') and not item.evidence_refs:
             raise ValueError('新增或更新线索必须引用直接支持陈述的真实材料')
+        if kind == 'portwatch' and item.decision == 'candidate' and item.existing_alert_id:
+            program_ids = {alert['id'] for alert in current_input.get('program', {}).get('alerts', [])}
+            target = alert_by_id.get(item.existing_alert_id, {})
+            if item.existing_alert_id in program_ids and target.get('origin_type') == 'numeric_rule':
+                # PortWatch publication only attaches an explanation to the rule's existing record.
+                # Preserve the model's original response in attempts; do not change numeric status.
+                item.decision = 'update'
         if item.decision == 'update':
             if item.existing_alert_id not in alert_by_id:
                 raise ValueError('update 必须引用本次提供的 existing_alert_id')
@@ -318,6 +325,9 @@ async def assess_update(inputs, existing_alerts, config, tool_handler):
                 '没有新报道、证据不足、来源或模型故障均不构成解除依据。重复资料不要再次 candidate。'
                 'PortWatch 的 program 是已经计算的规则结果：保持其中 n_total、参考值、阈值、规则状态和日期，不投票修改判定；'
                 '只解释变化与限制，不猜测原因，日度滞后数据不表示现场实时观察。PortWatch 不设置 news_status。'
+                'PortWatch 的 program.alerts 已由程序创建；补充这些已有异常的说明使用 update，'
+                'existing_alert_id 从 program.alerts 与本次 existing_alerts 中共同存在的 ID 选择，不使用 candidate。'
+                '若证据不足则用 insufficient_evidence 且 existing_alert_id=null。'
                 + gnss_guidance +
                 '仅标题不能补写正文，text_truncated 为截取文本；每个输入恰好一条 assessment。'
                 'candidate/update 必须以真实材料 ID 引用直接支持的陈述；existing_alert_id 仅可来自本次列表且仅用于 update。'
@@ -480,7 +490,7 @@ async def _complete(messages, config, parse, budget=None):
                     raise ModelError("invalid_model_output", "模型输出在一次格式修复后仍无法解析", attempts) from exc
                 messages = messages + [
                     {"role": "assistant", "content": content if isinstance(content, str) and content else "未返回有效 JSON"},
-                    {"role": "user", "content": "请修复刚才输出的 JSON 格式及资料编号，并仅返回完整 JSON 对象。解析问题：" + str(exc)},
+                    {"role": "user", "content": "请按解析问题修复 JSON 字段值、字段间的语义关系及资料编号，不要仅调整排版。仅返回完整 JSON 对象。解析问题：" + str(exc)},
                 ]
                 continue
             attempt["status"] = "ok"
