@@ -502,6 +502,13 @@ function coverageText(value) {
   if (Array.isArray(value)) return value.map(coverageText).join('；');
   return value.summary || value.note || value.detail || Object.entries(value).map(([key,item]) => `${key}：${typeof item === 'object' ? coverageText(item) : item}`).join('；');
 }
+function replayCoverageText(item) {
+  const parts = [], counts = item?.resource_counts, baseline = item?.baseline_status;
+  if (counts) parts.push(`当前资源：已处理 ${counts.processed ?? 0} · 待释放 / 处理 ${(counts.registered ?? 0) + (counts.waiting_resource ?? 0)} · 缺失 ${counts.missing ?? 0} · 失败 ${counts.failed ?? 0}`);
+  if (baseline && typeof baseline === 'object') parts.push(`参考准备：已准备 ${baseline.prepared ?? 0} · 等待 ${baseline.pending ?? 0} · 不可用 ${baseline.unavailable ?? 0}`);
+  if (Array.isArray(item?.runtime_missing)) parts.push(item.runtime_missing.length ? `运行缺口：${item.runtime_missing.join('；')}` : '当前未记录额外输入或参考缺口');
+  return parts.join('；') || '运行覆盖待更新';
+}
 function renderReplayCases() {
   const replay = ui.pipeline?.replay;
   const signature = JSON.stringify([replay?.cases,ui.replayCaseId,replay?.current_case_id]);
@@ -514,9 +521,7 @@ function renderReplayCases() {
     const top = el('div','card-top'); top.append(el('strong','',item.label || item.case_id),badge(label(item.status || 'queued'),item.status === 'blocked' ? 'waiting' : ''));
     card.append(top,el('p','',`已完成 ${item.completed_batches || 0}/${item.total_batches || 0} 批 · 已释放 ${item.released_batches || 0}`));
     const progress = el('progress'); progress.max = Math.max(1,item.total_batches || 0); progress.value = item.completed_batches || 0; progress.setAttribute('aria-label',`${item.label || item.case_id} 已完成批次`); card.append(progress);
-    card.append(el('p','micro muted',coverageText(item.coverage)),el('p','micro muted',`观测资源 ${item.gnss_resources ?? '—'} · 已处理 ${item.processed_resources ?? '—'} · 排队 ${item.queued || 0} · 失败 ${item.failed || 0}`));
-    if (item.resource_status || item.resource_counts) card.append(el('p','micro muted',`资源状态：${coverageText(item.resource_status || item.resource_counts)}`));
-    if (item.baseline_status) card.append(el('p','micro muted',`基线准备：${typeof item.baseline_status === 'string' ? label(item.baseline_status) : coverageText(item.baseline_status)}`));
+    card.append(el('p','micro muted',replayCoverageText(item)),el('p','micro muted',`GNSS 观测资源 ${item.gnss_resources ?? '—'} · 已处理 ${item.processed_resources ?? '—'} · 分析排队 ${item.queued || 0} · 分析失败 ${item.failed || 0}`));
     if (item.input_version != null || item.current_input_version != null) card.append(el('p','micro muted',`当前批次输入版本 ${item.input_version ?? item.current_input_version}`));
     if (item.quality_status) card.append(el('p','micro muted',`结果质量：${label(item.quality_status)}`));
     if (item.reason) card.append(el('p','source-error',item.reason));
@@ -542,11 +547,12 @@ function renderGnss() {
     groups.get(key).push(row);
   });
   if (!groups.has(ui.gnssSeriesKey)) ui.gnssSeriesKey = groups.keys().next().value || '';
-  const signature = JSON.stringify([detail?.case_id,detail?.as_of,detail?.gnss,detail?.coverage,ui.gnssSeriesKey]);
+  const coverage = replayCoverageText(detail || selectedReplaySummary());
+  const signature = JSON.stringify([detail?.case_id,detail?.as_of,detail?.gnss,coverage,ui.gnssSeriesKey]);
   if (signature === ui.gnssSignature) return;
   ui.gnssSignature = signature;
   const otherUnits = [...new Set(allRows.filter((row) => (row.unit || detail?.gnss?.units) !== 'dB-Hz').map((row) => row.unit || row.value_kind || '单位未声明'))];
-  $('gnss-coverage').textContent = `${coverageText(detail?.coverage || selectedReplaySummary()?.coverage)}${detail?.as_of ? ` · 仅展示截至 ${utcDate(detail.as_of)} 已释放的观测。` : ''}${otherUnits.length ? ` 另有 ${otherUnits.join('、')} 观测，原始统计保留在材料中，不作为载噪比曲线。` : ''}`;
+  $('gnss-coverage').textContent = `${coverage}${detail?.as_of ? ` · 仅展示截至 ${utcDate(detail.as_of)} 已释放的观测。` : ''}${otherUnits.length ? ` 另有 ${otherUnits.join('、')} 观测，原始统计保留在材料中，不作为载噪比曲线。` : ''}`;
   const select = $('gnss-series-select'); select.replaceChildren();
   groups.forEach((_,key) => select.add(new Option(key,key)));
   if (!groups.size) select.add(new Option('尚无已处理 GNSS 窗口',''));
