@@ -72,6 +72,9 @@ class ResourceManager:
         self.workers = {}
         self.stopping = False
         self._fair_turn = 0
+        self._gnss_claim_serial = 0
+        self._gnss_last_served = {}
+        self._gnss_claims = Counter()
         self.discovering = set()
         with self.db() as db:
             db.executescript('''
@@ -521,14 +524,21 @@ class ResourceManager:
             await self._discovery(current)
         subscriptions = {item['id']: item for item in self.subscriptions()}
         wanted = set()
+        consumer_groups = defaultdict(dict)
         for dependency in self.dependencies():
             consumer = dependency['consumer_id']
             if consumer.startswith(('subscription:', 'subscription-baseline:')):
                 subscription = subscriptions.get(consumer.split(':', 1)[1])
                 if not subscription or not subscription['enabled']:
                     continue
+                group = 'subscription:' + subscription['id']
+            else:
+                group = 'case:' + dependency['case_id'] if dependency.get('case_id') else consumer
             if not dependency.get('released') or dependency.get('pin_result'):
                 wanted.add(dependency['resource_id'])
+                roles = consumer_groups[dependency['resource_id']]
+                if roles.get(group) != 'baseline':
+                    roles[group] = dependency.get('role')
         items = [item for item in self._all() if item['id'] not in self.workers
                  and (item['id'] in wanted or item.get('manual_requested'))
                  and not item.get('cleaning')
@@ -537,10 +547,35 @@ class ResourceManager:
         self._fair_turn += 1
         if self._fair_turn % 3 == 0:
             items.sort(key=lambda item: item['created_at'])
-        # Historical consumers are waiting for these references before they
-        # can use observations. Keep the existing latest/backlog order inside
-        # each group while completing available reference files first.
-        items.sort(key=lambda item: item['resource'].get('role') != 'baseline')
+        # GNSS turns advance only on a successful parser claim. Least recently
+        # served groups also give the third and later consumers their turns.
+        groups = defaultdict(list)
+        for item in items:
+            if item['kind'] != 'gnss':
+                continue
+            roles = consumer_groups.get(item['id'])
+            if not roles:
+                case_id = item['resource'].get('case_id')
+                roles = {'case:' + case_id if case_id else 'manual': item['resource'].get('role')}
+            for group, role in roles.items():
+                groups[group].append((item, role))
+        gnss_order, selected_group = [], {}
+        for group in sorted(groups, key=lambda key: (self._gnss_last_served.get(key, 0), key)):
+            entries = groups[group]
+            if group.startswith('case:'):
+                entries.sort(key=lambda pair: (pair[1] != 'baseline', pair[0].get('observed_start') or '',
+                                               pair[0].get('observed_end') or '', pair[0]['created_at'], pair[0]['id']))
+            else:
+                # Each online subscription gets two latest turns, then one
+                # oldest-gap turn, independently of how many cases are active.
+                entries.sort(key=lambda pair: (pair[0].get('observed_end') or '', pair[0]['created_at'], pair[0]['id']),
+                             reverse=self._gnss_claims[group] % 3 != 2)
+            for item, _ in entries:
+                if item['id'] not in selected_group:
+                    selected_group[item['id']] = group
+                    gnss_order.append(item)
+        ordered_gnss = iter(gnss_order)
+        items = [next(ordered_gnss) if item['kind'] == 'gnss' else item for item in items]
         for item in items:
             if item.get('compute_status') == 'completed' and not item.get('force_fetch'):
                 continue
@@ -553,6 +588,11 @@ class ResourceManager:
                     if not item:
                         continue
                     phase_counts[phase] += 1
+                    if phase == 'compute':
+                        group = selected_group[item['id']]
+                        self._gnss_claim_serial += 1
+                        self._gnss_last_served[group] = self._gnss_claim_serial
+                        self._gnss_claims[group] += 1
                     self._launch(item, phase, self._compute(item))
                 continue
             if item.get('result_path') and not item.get('force_fetch'):

@@ -199,6 +199,20 @@ def _load_strength_epochs(gr, text, measures, rinex_version):
     try:
         for line in stream:
             if line.startswith('>'):
+                if line[31:32] == '4':
+                    # OBS3 reads these header-update records as satellites; two
+                    # GLONASS phase-shift records then become duplicate "R L" SVs.
+                    # Carrier-phase corrections do not alter the S* fields we load.
+                    count = int(line[32:35])
+                    updates = [next(stream, '') for _ in range(count)]
+                    if any(update[60:80].strip() != 'SYS / PHASE SHIFT' for update in updates):
+                        raise GnssProcessingError(
+                            'RINEX epoch flag 4 changes headers beyond carrier phase; '
+                            'strength parsing needs those header changes applied explicitly')
+                    warnings.warn(
+                        f'RINEX header event {line[2:29].strip()}: {count} SYS / PHASE SHIFT '
+                        'records retained in source; excluded from S* observations', RuntimeWarning)
+                    continue
                 if epochs == 128:
                     parts.append(gr.load(io.StringIO(prefix + ''.join(lines)),
                         meas=measures, useindicators=False))
