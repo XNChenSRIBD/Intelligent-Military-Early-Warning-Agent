@@ -429,6 +429,8 @@ class CaseReplay(Pipeline):
                 'available_at': resource.get('available_at'), 'replay_release_at': resource['replay_release_at'],
                 'fetched_at': now(), 'time_note': resource.get('release_assumption') or '按已声明历史窗口模拟到达，非当年实时可用性证明',
                 'analysis_status': 'pipeline', 'archive': payload}
+            if resource['kind'] == 'gnss':
+                data.update(self.gnss_material_presentation(computed, resource['replay_release_at']))
             if resource['kind'] == 'news':
                 article = payload.get('article', payload)
                 data.update(title=article.get('title') or data['title'], text=article.get('text') or '',
@@ -481,13 +483,54 @@ class CaseReplay(Pipeline):
         return payload
 
     @staticmethod
+    def gnss_material_presentation(computed, replay_release_at):
+        return {'observed_at': computed['window_start'],
+            'time_note': (f"RINEX已解析，原始时制为{computed['time_system']}；实际观测覆盖"
+                          f"{computed['window_start']}至{computed['window_end']}（UTC），"
+                          f"采样间隔{computed['interval_seconds']}秒。按已声明时点"
+                          f"{replay_release_at}模拟释放；不代表当年实际获取或发布时间。")}
+
+    def refresh_gnss_presentation(self, work):
+        # Repair only the forthcoming input from its already cited immutable
+        # material; keep its comparison, release time and prior attempts intact.
+        if work.get('kind') != 'gnss' or work.get('status') == 'completed':
+            return
+        observations = {item['resource_id']: item
+            for item in work['input'].get('program', {}).get('observations', [])}
+        changed = False
+        for material in work['input'].get('materials', []):
+            saved = self.store.get_material(material['id'])
+            computed = (saved or {}).get('archive', {}).get('computed')
+            if not computed:
+                continue
+            presentation = self.gnss_material_presentation(computed, material.get('replay_release_at'))
+            for key, value in presentation.items():
+                if material.get(key) != value:
+                    material[key], changed = value, True
+            observation = observations.get(computed['resource_id'])
+            if observation is None:
+                continue
+            if observation.get('status') != computed.get('status'):
+                observation['status'], changed = computed.get('status'), True
+            signals = {signal['signal']: signal for signal in computed.get('signals', [])}
+            for signal in observation.get('signals', []):
+                original = signals.get(signal['signal'])
+                if original is None:
+                    continue
+                for key in ('strength_p10', 'unit_source'):
+                    if key not in signal or signal[key] != original.get(key):
+                        signal[key], changed = original.get(key), True
+        if changed:
+            self.store.save('work', work)
+
+    @staticmethod
     def compact_gnss(result):
         compact = {key: result.get(key) for key in ('resource_id', 'station', 'window_start', 'window_end',
-            'interval_seconds', 'time_system', 'display_time_system', 'processing_version', 'summary',
+            'status', 'interval_seconds', 'time_system', 'display_time_system', 'processing_version', 'summary',
             'reference_method', 'parse_issues', 'notes')}
         signals = sorted(result.get('signals', []), key=lambda signal: signal['signal'])
         compact['signals'] = [{key: signal.get(key) for key in ('signal', 'unit', 'value_kind', 'cnr_p10',
-            'valid_count', 'valid_ratio', 'matched_window_count', 'baseline_window_p10_median',
+            'strength_p10', 'unit_source', 'valid_count', 'valid_ratio', 'matched_window_count', 'baseline_window_p10_median',
             'delta_window_p10_median')} for signal in signals[:3]]
         compact['available_signals'] = [signal['signal'] for signal in signals]
         compact['other_signal_count'] = max(0, len(signals) - 3)
@@ -599,6 +642,7 @@ class CaseReplay(Pipeline):
                     targets, state = self.prepare_numeric(case_id, as_of)
                     payload['program'] = {key: state.get(key) for key in ('current_status', 'summary', 'latest_value',
                         'latest_observed_date', 'baseline', 'ratio', 'baseline_start', 'baseline_end', 'baseline_valid_days', 'rule')}
+                    payload['program']['alerts'] = deepcopy(targets)
                     for material in materials:
                         material['text'] = ''
                     for target in targets:
@@ -616,8 +660,19 @@ class CaseReplay(Pipeline):
                 self.store.insert_once('work', work)
 
     def work_context_alerts(self, work):
-        return [alert for alert in self.context_alerts(work['scope_id']) if alert.get('case_id') == work['case_id']
-                and utc(alert.get('as_of') or alert['replay_release_at']) <= utc(work['as_of'])]
+        self.refresh_gnss_presentation(work)
+        visible = [alert for alert in self.context_alerts(work['scope_id']) if alert.get('case_id') == work['case_id']
+                   and utc(alert.get('as_of') or alert['replay_release_at']) <= utc(work['as_of'])]
+        if work['kind'] == 'portwatch' and 'alerts' not in work['input'].get('program', {}):
+            # Resume already queued inputs with the rule targets they originally
+            # recorded, without admitting a newer alert version or recalculating.
+            numeric = {alert['id']: alert for alert in visible if alert.get('origin_type') == 'numeric_rule'}
+            work['input'].setdefault('program', {})['alerts'] = [deepcopy(target)
+                for target in work.get('numeric_alerts', [])
+                if target['id'] in numeric
+                and target['evidence_version'] == numeric[target['id']].get('evidence_version')]
+            self.store.save('work', work)
+        return visible
 
     async def tool(self, name, args, batch, allowed, run):
         case_id, as_of = batch[0]['case_id'], batch[0]['as_of']
