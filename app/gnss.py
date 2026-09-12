@@ -202,15 +202,17 @@ def _load_strength_epochs(gr, text, measures, rinex_version):
                 if line[31:32] == '4':
                     # OBS3 reads these header-update records as satellites; two
                     # GLONASS phase-shift records then become duplicate "R L" SVs.
-                    # Carrier-phase corrections do not alter the S* fields we load.
+                    # Carrier-phase/frequency metadata does not alter S* column
+                    # positions, measured strengths or their declared units.
                     count = int(line[32:35])
                     updates = [next(stream, '') for _ in range(count)]
-                    if any(update[60:80].strip() != 'SYS / PHASE SHIFT' for update in updates):
+                    labels = {update[60:80].strip() for update in updates}
+                    if labels - {'SYS / PHASE SHIFT', 'GLONASS SLOT / FRQ #'}:
                         raise GnssProcessingError(
-                            'RINEX epoch flag 4 changes headers beyond carrier phase; '
+                            'RINEX epoch flag 4 changes headers beyond carrier phase/frequency metadata; '
                             'strength parsing needs those header changes applied explicitly')
                     warnings.warn(
-                        f'RINEX header event {line[2:29].strip()}: {count} SYS / PHASE SHIFT '
+                        f'RINEX header event {line[2:29].strip()}: {count} {", ".join(sorted(labels))} '
                         'records retained in source; excluded from S* observations', RuntimeWarning)
                     continue
                 if epochs == 128:
