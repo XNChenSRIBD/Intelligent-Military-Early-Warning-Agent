@@ -22,9 +22,10 @@
         <div class="section-heading"><h2>监测主题</h2><button id="new-monitor" class="text-button" type="button">＋ 新建</button></div>
         <label for="monitor-select">已保存主题</label><select id="monitor-select"><option value="">新建主题</option></select>
         <form id="monitor-form">
-          <label for="topic">主题 / 关键词</label><textarea id="topic" name="topic" rows="2" placeholder="例如：航运、港口与国际贸易" required>shipping</textarea>
+          <label for="topic" id="topic-label">主题 / 关键词</label><textarea id="topic" name="topic" rows="2" placeholder="例如：航运、港口与国际贸易" required>shipping</textarea>
           <label for="source">公开来源</label><select id="source" name="source" required><option value="">正在读取来源…</option></select>
-          <div class="field-pair"><div><label for="lookback">最近时间</label><select id="lookback" name="lookback"><option value="24">24 小时</option><option value="72" selected>3 天</option><option value="168">7 天</option><option value="720">30 天</option></select></div><div><label for="limit">单轮材料上限</label><input id="limit" name="limit" type="number" min="1" max="24" value="5"></div></div>
+          <div class="field-pair" id="news-settings"><div><label for="lookback">最近时间</label><select id="lookback" name="lookback"><option value="24">24 小时</option><option value="72" selected>3 天</option><option value="168">7 天</option><option value="720">30 天</option></select></div><div><label for="limit">单轮材料上限</label><input id="limit" name="limit" type="number" min="1" max="24" value="5"></div></div>
+          <div id="portwatch-settings" class="portwatch-settings" hidden></div>
           <label for="interval">周期更新间隔（分钟）</label><input id="interval" name="interval" type="number" min="1" max="1440" value="30">
           <button class="primary full" id="run-button" type="submit"><span aria-hidden="true">▶</span> 立即运行</button>
           <div class="button-pair"><button id="save-button" type="button">保存主题</button><button id="schedule-button" type="button">开始周期更新</button></div>
@@ -46,10 +47,21 @@
     <section class="content-panel panel">
       <div class="content-heading"><div><span class="eyebrow" id="content-kicker">资料流</span><h2 id="content-title">从主题开始，持续整理公开资料</h2></div><button id="refresh-button" class="icon-button" type="button" title="刷新已保存的状态" aria-label="刷新已保存的状态">↻</button></div>
       <div id="online-content">
+        <div id="portwatch-content" hidden>
+          <p id="portwatch-current-note" class="current-state-note" hidden>当前指标与提醒状态，不是所选历史运行快照。</p>
+          <div class="metrics portwatch-metrics"><div><span>最新可见通行量</span><strong id="pw-latest">—</strong><small id="pw-observed-date">尚无观测</small></div><div><span id="pw-baseline-label">近期参考中位数</span><strong id="pw-baseline">—</strong><small id="pw-ratio">比例 —</small></div><div><span>当前规则状态</span><strong id="pw-status" class="metric-status">尚无观测</strong><small id="pw-data-date">数据截至 —</small></div></div>
+          <div class="chart-card"><div class="section-heading"><h3>PortWatch 可见通行量 · 日度</h3><span class="tiny-label">n_total</span></div><div id="pw-chart"></div><div id="pw-chart-legend" class="chart-legend"></div><p id="pw-freshness"></p><p id="pw-source-info"></p><p id="pw-rule-summary"></p></div>
+          <div class="list-heading"><h3>持续偏低提醒 <span id="pw-alert-count" class="count-label">0</span></h3><select id="pw-alert-filter" aria-label="筛选提醒状态"><option value="all">全部提醒</option><option value="active">活跃与恢复中</option><option value="ended">已结束</option></select></div>
+          <div id="pw-alert-list" class="material-list"></div>
+          <details id="pw-observation-fold" class="observation-fold"><summary>日度数值与材料依据 <span id="pw-observation-count"></span></summary><div id="pw-observations" class="table-scroll"></div></details>
+        </div>
+        <div id="news-overview">
         <div class="metrics"><div><span>本轮新增</span><strong id="new-count">—</strong><small>条材料</small></div><div><span>已完成分析</span><strong id="analyzed-count">—</strong><small>条材料</small></div><div><span>失败</span><strong id="failed-count">—</strong><small>次处理</small></div></div>
         <div class="chart-card"><div class="section-heading"><h3>资料时间分布</h3><span class="tiny-label">当前列表 · 条</span></div><div id="article-chart" class="article-chart"></div></div>
-        <div class="list-heading"><h3>资料列表 <span id="material-count" class="count-label">0</span></h3><select id="run-select" aria-label="选择历史运行"><option value="">全部运行</option></select></div>
+        </div>
+        <div class="list-heading"><h3><span id="online-list-title">资料列表</span> <span id="material-count" class="count-label">0</span></h3><select id="run-select" aria-label="选择历史运行"><option value="">全部运行</option></select></div>
         <button id="run-summary-button" class="summary-preview" type="button" hidden></button>
+        <details id="pw-legacy-fold" class="observation-fold" hidden><summary>旧版资料卡与材料依据</summary><div id="pw-legacy-materials" class="material-list"></div></details>
         <div id="material-list" class="material-list"><div class="empty-state"><span class="empty-symbol" aria-hidden="true">⌁</span><h3>资料将在这里汇集</h3><p>设置主题并运行，查看来源、摘要与处理进度。</p></div></div>
       </div>
       <div id="history-content" hidden>

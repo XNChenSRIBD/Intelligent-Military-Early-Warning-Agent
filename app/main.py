@@ -1,5 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
+from datetime import date, datetime, timedelta, timezone
 from typing import Literal
 from uuid import uuid4
 
@@ -63,7 +64,9 @@ async def index():
 async def state():
     return {'monitors': app.state.store.all('monitor'), 'runs': app.state.store.all('run'),
             'active_run_id': app.state.runner.active_run_id, 'model': app.state.runner.model,
-            'sources': SOURCES, 'replay': replay_info(), 'server_time': now()}
+            'sources': SOURCES, 'replay': replay_info(), 'server_time': now(),
+            'portwatch': dict(portwatch_scope(), rule=settings.portwatch_rule,
+                              default_interval_minutes=1440)}
 
 
 @app.post('/api/monitors')
@@ -76,12 +79,17 @@ async def save_monitor(body: MonitorInput):
     previous = get_monitor(body.id) if body.id else None
     if previous and previous.get('mode') == 'replay':
         raise HTTPException(400, '历史回放主题不能改为在线主题')
-    if previous and any(previous[key] != data[key] for key in ('topic', 'source')):
+    if previous and (previous['source'] != data['source'] or
+                     (previous['topic'] != data['topic'] and data['source'] != 'portwatch')):
         # A new topic/source needs its own material history; changing just the window keeps it.
         previous = None
     if previous is None:
         previous = dict(id=uuid4().hex, mode='online', enabled=False,
                         last_success_at=None, last_error=None, created_at=now())
+        if data['source'] == 'portwatch' and 'interval_minutes' not in body.model_fields_set:
+            data['interval_minutes'] = 1440
+    elif 'interval_minutes' not in body.model_fields_set:
+        data['interval_minutes'] = previous['interval_minutes']
     previous.update(data)
     return store.save('monitor', previous)
 
@@ -114,6 +122,88 @@ async def monitor_materials(monitor_id: str, run_id: str | None = None):
     get_monitor(monitor_id)
     return {'materials': app.state.store.materials(monitor_id, run_id),
             'runs': [run for run in app.state.store.all('run') if run['monitor_id'] == monitor_id]}
+
+
+def portwatch_scope():
+    return {'source_key': settings.portwatch_url.rstrip('/'),
+            'portid': settings.portwatch_id, 'name': '霍尔木兹海峡'}
+
+
+def portwatch_monitor(monitor_id):
+    monitor = get_monitor(monitor_id)
+    if monitor['source'] != 'portwatch':
+        raise HTTPException(400, '此主题不是 PortWatch 数值监测')
+    return monitor
+
+
+def get_alert(alert_id):
+    alert = app.state.store.get('alert', alert_id)
+    if alert is None:
+        raise HTTPException(404, '找不到该提醒')
+    return alert
+
+
+@app.get('/api/materials/{material_id}')
+async def material_detail(material_id: str):
+    material = app.state.store.get_material(material_id)
+    if material is None:
+        raise HTTPException(404, '找不到该材料版本')
+    return material
+
+
+@app.get('/api/monitors/{monitor_id}/metrics')
+async def metrics(monitor_id: str):
+    portwatch_monitor(monitor_id)
+    store = app.state.store
+    scope = portwatch_scope()
+    current = store.get('monitor_state', monitor_id)
+    if current and (current.get('source_key') != scope['source_key'] or
+                    current.get('portid') != scope['portid'] or
+                    current.get('rule', {}).get('id') != settings.portwatch_rule_id):
+        current = None
+    source = store.get('portwatch_source', monitor_id) or {}
+    if source.get('source_key') != scope['source_key'] or source.get('portid') != scope['portid']:
+        source = {}
+    today = datetime.now(timezone.utc).date()
+    end = source.get('range_end') or today.isoformat()
+    start = source.get('range_start') or (today - timedelta(
+        days=settings.portwatch_history_days - 1)).isoformat()
+    rows = store.portwatch_rows(scope['source_key'], scope['portid'], start, end)
+    latest = (current or {}).get('latest_observed_date')
+    return {
+        'monitor_id': monitor_id, 'scope': scope, 'rule': settings.portwatch_rule,
+        'state': {key: value for key, value in current.items() if key != 'series'} if current else None,
+        'series': [row for row in (current or {}).get('series', [])
+                   if start <= row['observed_date'] <= end],
+        'observations': rows, 'range_start': start, 'range_end': end,
+        'last_checked_at': source.get('last_checked_at'),
+        'last_success_at': source.get('last_success_at'),
+        'source_status': source.get('status', 'pending'), 'error': source.get('error'),
+        'latest_observed_date': latest,
+        'days_since_observation': (today - date.fromisoformat(latest)).days if latest else None,
+        'current_state_only': True,
+    }
+
+
+@app.get('/api/monitors/{monitor_id}/alerts')
+async def alerts(monitor_id: str):
+    portwatch_monitor(monitor_id)
+    items = [item for item in app.state.store.all('alert') if item['monitor_id'] == monitor_id]
+    return {'alerts': sorted(items, key=lambda item: item['detected_at'], reverse=True)}
+
+
+@app.get('/api/alerts/{alert_id}')
+async def alert_detail(alert_id: str):
+    return get_alert(alert_id)
+
+
+@app.post('/api/alerts/{alert_id}/explain')
+async def explain(alert_id: str):
+    alert = get_alert(alert_id)
+    try:
+        return app.state.runner.start_explanation(alert)
+    except RuntimeError as error:
+        raise HTTPException(409, str(error)) from error
 
 
 @app.get('/api/history')

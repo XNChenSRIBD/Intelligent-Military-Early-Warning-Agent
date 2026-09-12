@@ -6,7 +6,7 @@ import asyncio
 import html
 import json
 import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from html.parser import HTMLParser
 from typing import Any
@@ -143,6 +143,80 @@ def _material(title: str, url: str, publisher: str, date: str | None, source: st
         "source": source,
         "mode": "online",
     }
+
+
+async def collect_portwatch_series(config: Any) -> dict[str, Any]:
+    """Read the complete configured calendar window before returning any rows."""
+    fetched = datetime.now(timezone.utc)
+    checked_at = _stamp(fetched)
+    end = fetched.date()
+    start = end - timedelta(days=config.portwatch_history_days - 1)
+    result = {
+        "checked_at": checked_at, "range_start": start.isoformat(),
+        "range_end": end.isoformat(), "rows": [], "error": None,
+    }
+    query_url = config.portwatch_url.rstrip("/") + "/query"
+    portid = config.portwatch_id.replace("'", "''")
+    params = {
+        "where": f"portid='{portid}' AND date >= DATE '{start}' AND date <= DATE '{end}'",
+        "outFields": "*", "returnGeometry": "false", "orderByFields": "date ASC",
+        "resultRecordCount": config.portwatch_history_days, "resultOffset": 0, "f": "json",
+    }
+    rows = {}
+    try:
+        async with httpx.AsyncClient(timeout=config.source_timeout, follow_redirects=True,
+                                     headers={"User-Agent": "PublicNewsDemo/0.1"}) as client:
+            while True:
+                payload, _ = await _read(client, query_url, config, params=params)
+                received_at = _stamp()
+                product = json.loads(payload)
+                if not isinstance(product, dict):
+                    raise ValueError("PortWatch 未返回日度记录对象")
+                if "error" in product:
+                    raise ValueError("PortWatch 返回错误：" + json.dumps(product["error"], ensure_ascii=False))
+                features = product["features"]
+                if not isinstance(features, list):
+                    raise ValueError("PortWatch 未返回日度记录列表")
+                for feature in features:
+                    attributes = feature["attributes"]
+                    raw_date = attributes["date"]
+                    if isinstance(raw_date, (int, float)) and not isinstance(raw_date, bool):
+                        day = datetime.fromtimestamp(raw_date / 1000, timezone.utc).date()
+                    elif isinstance(raw_date, str):
+                        day = date.fromisoformat(raw_date[:10])
+                    else:
+                        raise ValueError("PortWatch 日度记录缺少可解析的观测日期")
+                    if not start <= day <= end:
+                        raise ValueError("PortWatch 返回了请求日期范围外的记录")
+                    day_text = day.isoformat()
+                    if day_text in rows:
+                        raise ValueError("PortWatch 返回重复日期，无法确定完整的当前日序列")
+                    row_params = {
+                        "where": f"portid='{portid}' AND date = DATE '{day_text}'",
+                        "outFields": "*", "returnGeometry": "false", "f": "json",
+                    }
+                    text = json.dumps(attributes, ensure_ascii=False, sort_keys=True)
+                    material = _material(
+                        f"IMF PortWatch {day_text} · {config.portwatch_id} · 总船次 {attributes.get('n_total', '未提供')}",
+                        query_url + "?" + urlencode(row_params), "IMF PortWatch", day_text,
+                        "portwatch", received_at, text,
+                    )
+                    material.update(
+                        attributes=attributes, content_kind="aggregate", available_at=None,
+                        time_note="observed_at 为产品日度观测参考日期，来源未提供该记录的发布时间",
+                        original_text_chars=len(text), text_truncated=False, analysis_status="not_required",
+                    )
+                    rows[day_text] = {"observed_date": day_text, "attributes": attributes, "material": material}
+                if not product.get("exceededTransferLimit", False):
+                    break
+                if not features:
+                    raise ValueError("PortWatch 标明仍有下一页但未返回记录，日序列获取不完整")
+                params["resultOffset"] += len(features)
+    except (httpx.HTTPError, ValueError, KeyError, TypeError, OverflowError, OSError) as exc:
+        return dict(result, checked_at=_stamp(), status="source_failed", error=str(exc), detail="PortWatch 日序列获取失败，本次未提交部分数据")
+    ordered = [rows[day] for day in sorted(rows)]
+    return dict(result, checked_at=_stamp(), rows=ordered, status="ok" if ordered else "empty",
+                detail=f"获取 {len(ordered)} 个 PortWatch 观测日" if ordered else "PortWatch 在该日期范围未返回观测")
 
 
 async def collect(monitor: dict[str, Any], config: Any) -> dict[str, Any]:

@@ -23,6 +23,26 @@ class Settings:
     rss_url: str = os.getenv('RSS_URL', 'https://news.un.org/feed/subscribe/en/news/all/rss.xml')
     portwatch_url: str = os.getenv('PORTWATCH_URL', 'https://services9.arcgis.com/weJ1QsnbMYJlCHdG/ArcGIS/rest/services/Daily_Chokepoints_Data/FeatureServer/0')
     portwatch_id: str = os.getenv('PORTWATCH_ID', 'chokepoint6')
+    portwatch_history_days: int = int(os.getenv('PW_HISTORY_DAYS', '90'))
+    portwatch_rule_id: str = os.getenv('PW_RULE_ID', 'pw_lowflow_v1')
+    portwatch_baseline_days: int = int(os.getenv('PW_BASELINE_DAYS', '28'))
+    portwatch_min_baseline_days: int = int(os.getenv('PW_MIN_BASELINE_DAYS', '21'))
+    portwatch_trigger_ratio: float = float(os.getenv('PW_TRIGGER_RATIO', '0.5'))
+    portwatch_trigger_days: int = int(os.getenv('PW_TRIGGER_DAYS', '2'))
+    portwatch_recovery_ratio: float = float(os.getenv('PW_RECOVERY_RATIO', '0.8'))
+    portwatch_recovery_days: int = int(os.getenv('PW_RECOVERY_DAYS', '2'))
+
+    @property
+    def portwatch_rule(self):
+        return {
+            'id': self.portwatch_rule_id, 'history_days': self.portwatch_history_days,
+            'baseline_days': self.portwatch_baseline_days,
+            'min_baseline_days': self.portwatch_min_baseline_days,
+            'trigger_ratio': self.portwatch_trigger_ratio,
+            'trigger_days': self.portwatch_trigger_days,
+            'recovery_ratio': self.portwatch_recovery_ratio,
+            'recovery_days': self.portwatch_recovery_days,
+        }
 
 
 settings = Settings()
