@@ -1,0 +1,98 @@
+{
+  "label": "按 GDELT 收录时间顺序回放的历史新闻标题",
+  "source_snapshot": {
+    "source": "GDELT 历史新闻标题列表",
+    "filename": "gdelt_shipping_routes_artlist.json",
+    "original_artifact": "public_data_chasing_lightning/external_intel/gdelt/hormuz_prewarning_routes/gdelt_shipping_routes_artlist.json",
+    "snapshot_fetched_at": null,
+    "imported_at": "2026-09-12T08:21:04.9529883+00:00"
+  },
+  "notes": [
+    "从已有 GDELT 本地快照中摘取民用航运、能源价格及投资新闻，保留原始标题、URL 和元数据。",
+    "仅有标题及索引元数据，不包含新闻正文或既有模型分析。",
+    "seendate 是 GDELT 收录时间，不代表原文发布时间；原始快照抓取时间未确认。",
+    "回放按 seendate 升序；运行时 fetched_at 记录本次将本地标题导入素材流的时间。"
+  ],
+  "articles": [
+    {
+      "url": "https://www.rttnews.com/3624306/oil-holds-near-seven-month-highs-amid-middle-east-tensions.aspx",
+      "url_mobile": "",
+      "title": "Oil Holds Near Seven - month Highs Amid Middle East Tensions",
+      "seendate": "20260224T123000Z",
+      "socialimage": "",
+      "domain": "rttnews.com",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://www.hellenicshippingnews.com/strait-of-hormuz-not-shut-but-risk-sustained-in-shipping/",
+      "url_mobile": "",
+      "title": "Strait of Hormuz not shut but risk sustained in shipping | Hellenic Shipping News Worldwide",
+      "seendate": "20260224T130000Z",
+      "socialimage": "",
+      "domain": "hellenicshippingnews.com",
+      "language": "English",
+      "sourcecountry": "China"
+    },
+    {
+      "url": "https://ec.ltn.com.tw/article/breakingnews/5350453",
+      "url_mobile": "https://ec.ltn.com.tw/amp/article/breakingnews/5350453",
+      "title": "租船每日17萬美元 ！ 路透揭 「 2原因 」 刺激 油輪運價再飆6年新高",
+      "seendate": "20260225T024500Z",
+      "socialimage": "https://img.ltn.com.tw/Upload/business/page/800/2026/02/25/php8P9NUh.jpg",
+      "domain": "ec.ltn.com.tw",
+      "language": "Chinese",
+      "sourcecountry": "Taiwan"
+    },
+    {
+      "url": "https://www.hellenicshippingnews.com/us-and-iranian-tensions-charterparty-implications/",
+      "url_mobile": "",
+      "title": "US and Iranian tensions : Charterparty implications | Hellenic Shipping News Worldwide",
+      "seendate": "20260226T113000Z",
+      "socialimage": "",
+      "domain": "hellenicshippingnews.com",
+      "language": "English",
+      "sourcecountry": "China"
+    },
+    {
+      "url": "https://www.marinelink.com/news/rates-mideastasia-oil-tanker-highest-536244",
+      "url_mobile": "",
+      "title": "Rates For Mideast - Asia Oil Tanker At Highest Since",
+      "seendate": "20260226T180000Z",
+      "socialimage": "https://images.marinelink.com/images/maritime/w800/adobe-stockdechevm-168401.jpeg",
+      "domain": "marinelink.com",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://mb.com.ph/2026/02/27/fuel-prices-set-to-rise-for-9th-straight-week",
+      "url_mobile": "",
+      "title": "Manila Bulletin - Fuel prices set to rise for 9th straight week",
+      "seendate": "20260227T093000Z",
+      "socialimage": "https://mb.com.ph/manilabulletin/uploads/images/2026/02/27/82277.webp",
+      "domain": "mb.com.ph",
+      "language": "English",
+      "sourcecountry": "Philippines"
+    },
+    {
+      "url": "https://www.forbes.com/sites/rrapier/2026/02/27/the-iran-risk-is-keeping-oil-prices-elevated/",
+      "url_mobile": "",
+      "title": "The Iran Risk Is Keeping Oil Prices Elevated",
+      "seendate": "20260227T113000Z",
+      "socialimage": "https://imageio.forbes.com/specials-images/imageserve/69a10298bdb338eeededd431/0x0.jpg?format=jpg&fit=bounds",
+      "domain": "forbes.com",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://www.offshore-technology.com/analyst-comment/geopolitics-upstream-investments-globaldata-poll/",
+      "url_mobile": "",
+      "title": "Geopolitics to have a profound impact on upstream investments , says GlobalData poll",
+      "seendate": "20260227T174500Z",
+      "socialimage": "https://www.offshore-technology.com/wp-content/uploads/sites/20/2026/02/shutterstock_669149530.jpg",
+      "domain": "offshore-technology.com",
+      "language": "English",
+      "sourcecountry": "United Kingdom"
+    }
+  ]
+}

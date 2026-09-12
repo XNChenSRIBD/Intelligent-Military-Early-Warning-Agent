@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>公开资料工作台</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script defer src="/static/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">◈</span><div><h1>公开资料工作台</h1><p>PUBLIC INFORMATION WORKSPACE</p></div></div>
+    <div class="top-status"><span id="mode-badge" class="badge accent">在线资料</span><span id="model-status" class="status-item">Qwen · 状态未知</span><span id="source-status" class="status-item">来源 · 尚未运行</span></div>
+    <div class="top-update"><span>最近成功更新</span><strong id="last-success">尚无记录</strong></div>
+  </header>
+  <div id="notice" class="notice" role="status" hidden></div>
+  <main class="workspace">
+    <aside class="controls panel">
+      <div class="panel-heading"><span class="eyebrow">工作空间</span><span class="tiny-label">01 / 配置</span></div>
+      <nav class="mode-switch" aria-label="资料模式"><button id="online-tab" class="active" type="button">在线资料</button><button id="history-tab" type="button">历史案例</button></nav>
+      <section id="online-controls">
+        <div class="section-heading"><h2>监测主题</h2><button id="new-monitor" class="text-button" type="button">＋ 新建</button></div>
+        <label for="monitor-select">已保存主题</label><select id="monitor-select"><option value="">新建主题</option></select>
+        <form id="monitor-form">
+          <label for="topic">主题 / 关键词</label><textarea id="topic" name="topic" rows="2" placeholder="例如：航运、港口与国际贸易" required>shipping</textarea>
+          <label for="source">公开来源</label><select id="source" name="source" required><option value="">正在读取来源…</option></select>
+          <div class="field-pair"><div><label for="lookback">最近时间</label><select id="lookback" name="lookback"><option value="24">24 小时</option><option value="72" selected>3 天</option><option value="168">7 天</option><option value="720">30 天</option></select></div><div><label for="limit">单轮材料上限</label><input id="limit" name="limit" type="number" min="1" max="24" value="5"></div></div>
+          <label for="interval">周期更新间隔（分钟）</label><input id="interval" name="interval" type="number" min="1" max="1440" value="30">
+          <button class="primary full" id="run-button" type="submit"><span aria-hidden="true">▶</span> 立即运行</button>
+          <div class="button-pair"><button id="save-button" type="button">保存主题</button><button id="schedule-button" type="button">开始周期更新</button></div>
+        </form>
+        <div class="schedule-info" id="schedule-info">手动运行 · 周期更新未开启</div>
+      </section>
+      <section id="history-controls" hidden>
+        <div class="section-heading"><h2>霍尔木兹海峡</h2></div>
+        <p class="muted small">民用航运宏观资料与既有研究结果</p>
+        <div class="case-facts"><span>报告日期</span><strong id="history-date">—</strong><span>观察范围</span><strong id="history-window">—</strong></div>
+        <span class="badge">结果快照浏览</span>
+        <p class="small muted">曲线取自报告已列出的日度观测。点击图表或下方资料，查看原报告数值与说明。</p>
+        <div class="divider"></div>
+        <h3>原始材料回放</h3><p id="replay-description" class="small muted">正在读取历史材料状态…</p>
+        <button id="replay-button" class="primary full" type="button" disabled>回放下一批 · 3 条</button>
+      </section>
+      <div class="runtime-block"><div class="section-heading"><h3>当前运行</h3><span id="running-dot" class="dot"></span></div><strong id="current-stage">等待运行</strong><p id="current-runtime" class="small muted">运行后显示真实处理进度</p><button id="cancel-button" class="full subtle" type="button" disabled>取消当前运行</button><p class="micro muted">取消将在当前处理步骤完成后生效。</p></div>
+    </aside>
+    <section class="content-panel panel">
+      <div class="content-heading"><div><span class="eyebrow" id="content-kicker">资料流</span><h2 id="content-title">从主题开始，持续整理公开资料</h2></div><button id="refresh-button" class="icon-button" type="button" title="刷新已保存的状态" aria-label="刷新已保存的状态">↻</button></div>
+      <div id="online-content">
+        <div class="metrics"><div><span>本轮新增</span><strong id="new-count">—</strong><small>条材料</small></div><div><span>已完成分析</span><strong id="analyzed-count">—</strong><small>条材料</small></div><div><span>失败</span><strong id="failed-count">—</strong><small>次处理</small></div></div>
+        <div class="chart-card"><div class="section-heading"><h3>资料时间分布</h3><span class="tiny-label">当前列表 · 条</span></div><div id="article-chart" class="article-chart"></div></div>
+        <div class="list-heading"><h3>资料列表 <span id="material-count" class="count-label">0</span></h3><select id="run-select" aria-label="选择历史运行"><option value="">全部运行</option></select></div>
+        <button id="run-summary-button" class="summary-preview" type="button" hidden></button>
+        <div id="material-list" class="material-list"><div class="empty-state"><span class="empty-symbol" aria-hidden="true">⌁</span><h3>资料将在这里汇集</h3><p>设置主题并运行，查看来源、摘要与处理进度。</p></div></div>
+      </div>
+      <div id="history-content" hidden>
+        <div class="history-intro"><span class="badge accent">结果快照</span><p id="history-intro">正在读取仓库案例…</p></div>
+        <div id="history-charts"></div>
+        <div class="section-heading"><h3>案例资料</h3><span class="tiny-label">原报告与来源目录</span></div>
+        <div id="history-documents" class="history-documents"></div>
+      </div>
+    </section>
+    <aside class="details-panel panel"><div class="panel-heading"><span class="eyebrow">材料与处理记录</span><span class="tiny-label">03 / 详情</span></div><div id="detail-content"><div class="empty-state detail-empty"><span class="empty-symbol" aria-hidden="true">≡</span><h3>查看资料细节</h3><p>选择一条资料，查看模型摘要、原始摘录与引用来源。</p></div></div></aside>
+  </main>
+</body>
+</html>

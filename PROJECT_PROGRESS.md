@@ -1,6 +1,12 @@
 # Project Progress
 
-Last updated: 2026-08-05
+Last updated: 2026-09-12
+
+## 公开资料工作台 Demo（2026-09-12）
+
+新增单进程 FastAPI 应用、同源中文前端、SQLite 持久化、后台周期运行、GDELT / UN News RSS / IMF PortWatch 采集和 Qwen3-4B 摘要接口。新闻卡片关联原始 URL、获取时间、材料版本和实际模型调用；模型失败材料留待下一轮分析。既有霍尔木兹结果以历史快照展示，另回收 8 条民用航运与能源新闻标题用于按顺序分批回放。
+
+运行说明见 [README.md](README.md)，本次部署与实际资料记录见 [DEMO_DELIVERY.md](DEMO_DELIVERY.md)。下文保留既有研究方向及历史进度，不代表 Web Demo 提供了这些研究能力。
 
 ## 1. Project Goal
 
