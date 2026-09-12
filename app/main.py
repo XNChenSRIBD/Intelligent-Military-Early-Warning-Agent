@@ -1,7 +1,9 @@
 import asyncio
+import json
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta, timezone
 from typing import Literal
+from pathlib import Path
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
@@ -12,7 +14,10 @@ from pydantic import BaseModel, Field
 from .config import ROOT, settings
 from .history import history_payload, replay_info
 from .pipeline import Pipeline, alert_summary
+from .online import OnlinePipeline
 from .replay import CaseReplay
+from .resources import ResourceManager
+from .locks import SharedModelLock
 from .runner import Runner
 from .sources import SOURCES
 from .store import Store, now
@@ -31,8 +36,11 @@ async def lifespan(app):
     if settings.pipeline_mode == 'online' and replay_instance:
         raise ValueError('该 DATA_DIR 属于历史回放，不能作为在线实例启动')
     app.state.runner = Runner(app.state.store, settings)
-    pipeline_type = CaseReplay if settings.pipeline_mode == 'case_replay' else Pipeline
-    app.state.pipeline = pipeline_type(app.state.store, settings, app.state.runner)
+    app.state.acquisition = ResourceManager(settings)
+    app.state.runner.model_lock = SharedModelLock(settings.server_runtime_root / 'catalog' / 'model.lock')
+    pipeline_type = CaseReplay if settings.pipeline_mode == 'case_replay' else OnlinePipeline
+    app.state.pipeline = pipeline_type(app.state.store, settings, app.state.runner, app.state.acquisition)
+    app.state.acquisition.start()
     scheduler = asyncio.create_task(app.state.runner.schedule())
     app.state.pipeline.start()
     yield
@@ -40,6 +48,7 @@ async def lifespan(app):
     await asyncio.gather(scheduler, return_exceptions=True)
     await app.state.pipeline.close()
     await app.state.runner.close()
+    await app.state.acquisition.close()
 
 
 app = FastAPI(title='公开资料工作台', lifespan=lifespan)
@@ -78,6 +87,68 @@ class PipelineInput(BaseModel):
 
 class ReadInput(BaseModel):
     read: bool = True
+
+
+@app.get('/api/acquisition')
+async def acquisition_state():
+    return dict(app.state.acquisition.snapshot(), model_counts=app.state.store.work_counts())
+
+
+@app.get('/api/acquisition/resources/{resource_id}')
+async def acquisition_resource(resource_id: str):
+    record = app.state.acquisition.view(resource_id)
+    if not record:
+        raise HTTPException(404, '找不到注册资源')
+    return record
+
+
+@app.post('/api/acquisition/policy')
+async def acquisition_policy(body: dict):
+    try:
+        return app.state.acquisition.update_policy(body)
+    except (ValueError, TypeError) as error:
+        raise HTTPException(422, str(error)) from error
+
+
+@app.post('/api/acquisition/subscriptions')
+async def acquisition_subscription(body: dict):
+    try:
+        return app.state.acquisition.save_subscription(body)
+    except (ValueError, TypeError) as error:
+        raise HTTPException(422, str(error)) from error
+
+
+@app.post('/api/acquisition/resources/{resource_id}/retry')
+async def acquisition_retry(resource_id: str):
+    if not app.state.acquisition.view(resource_id):
+        raise HTTPException(404, '找不到注册资源')
+    return app.state.acquisition.retry(resource_id)
+
+
+@app.post('/api/acquisition/resources/{resource_id}/fetch')
+async def acquisition_fetch(resource_id: str):
+    if not app.state.acquisition.view(resource_id):
+        raise HTTPException(404, '找不到注册资源')
+    return app.state.acquisition.retry(resource_id, fetch=True)
+
+
+@app.post('/api/acquisition/cleanup')
+async def acquisition_cleanup():
+    return app.state.acquisition.request_cleanup()
+
+
+@app.post('/api/acquisition/cases/{case_id}/acquire')
+async def acquisition_case(case_id: str):
+    registered = sorted({dependency['resource_id'] for dependency in app.state.acquisition.dependencies()
+                         if dependency.get('case_id') == case_id})
+    if not registered:
+        raise HTTPException(404, '该历史案例尚未在服务器登记；启动对应回放实例后会自动登记')
+    for identifier in registered:
+        record = app.state.acquisition.view(identifier) or {}
+        if record.get('compute_status') != 'completed':
+            app.state.acquisition.retry(identifier)
+    app.state.pipeline.wakeup.set()
+    return {'case_id': case_id, 'registered_count': len(registered), 'status': 'queued'}
 
 
 def run_summary(run):
@@ -184,6 +255,15 @@ async def run_detail(run_id: str):
     run = app.state.store.get('run', run_id)
     if run is None:
         raise HTTPException(404, '找不到该运行')
+    if run.get('archive_path'):
+        path = Path(run['archive_path']).resolve()
+        if path.is_relative_to((settings.server_runtime_root / 'evidence').resolve()):
+            try:
+                archived = json.loads(path.read_text(encoding='utf-8'))
+                if archived.get('run', {}).get('id') == run_id:
+                    return dict(archived['run'], archive_path=run['archive_path'], archived=True)
+            except (OSError, ValueError):
+                return dict(run, archive_unavailable=True)
     return run
 
 
@@ -292,6 +372,14 @@ async def metrics(monitor_id: str):
     end = source.get('range_end') or today.isoformat()
     start = source.get('range_start') or (today - timedelta(
         days=settings.portwatch_history_days - 1)).isoformat()
+    if monitor.get('mode') == 'case_replay':
+        case = store.get('replay_case', monitor['case_id']) or {}
+        cutoff = case.get('as_of')
+        if cutoff:
+            visible_through = (datetime.fromisoformat(cutoff.replace('Z', '+00:00')) - timedelta(microseconds=1)).date().isoformat()
+            end = min(end, visible_through)
+            if current and current.get('as_of') and current['as_of'] > cutoff:
+                current = None
     rows = store.portwatch_rows(scope['source_key'], scope['portid'], start, end)
     latest = (current or {}).get('latest_observed_date')
     return {

@@ -391,12 +391,14 @@ async def search_news(source: str, topic: str, start: datetime, end: datetime, c
             'coverage': coverage, 'retry_after_seconds': retry_after}
 
 
-async def collect_portwatch_series(config: Any) -> dict[str, Any]:
+async def collect_portwatch_series(config: Any, *, start_date=None, end_date=None) -> dict[str, Any]:
     """Read the complete configured calendar window before returning any rows."""
     fetched = datetime.now(timezone.utc)
     checked_at = _stamp(fetched)
-    end = fetched.date()
-    start = end - timedelta(days=config.portwatch_history_days - 1)
+    end = date.fromisoformat(end_date) if end_date else fetched.date()
+    start = date.fromisoformat(start_date) if start_date else end - timedelta(days=config.portwatch_history_days - 1)
+    if start > end:
+        raise ValueError("PortWatch 起止日期顺序无效")
     result = {
         "checked_at": checked_at, "range_start": start.isoformat(),
         "range_end": end.isoformat(), "rows": [], "error": None,

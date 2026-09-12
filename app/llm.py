@@ -172,8 +172,8 @@ def _parse_update(content, inputs, material_ids, alert_by_id, tools_available):
                 raise ValueError('search_news 只接受不超过 240 字的可选 query；范围和时间由程序设置')
             return {'type': 'need_tool', 'name': name, 'arguments': {'query': query}}
         if name in ('station_history', 'multistation_check'):
-            if not any(item.get('mode') == 'case_replay' and name in item.get('tools', {}) for item in inputs):
-                raise ValueError('该专业工具未注册到本次历史回放输入')
+            if not any(item.get('kind') == 'gnss' and name in item.get('tools', {}) for item in inputs):
+                raise ValueError('该专业工具未注册到本次观测输入')
             permitted = {'station', 'signal'} if name == 'station_history' else {'stations', 'signal'}
             if set(arguments) - permitted:
                 raise ValueError('专业工具只接受已注册站点和可选信号码，窗口由本次 as_of 固定')
@@ -246,7 +246,7 @@ def _update_materials(materials, config):
             'first_seen_at': item.get('first_seen_at'),
             'time_note': item.get('time_note', ''),
             **({key: item.get(key) for key in ('case_id', 'as_of', 'replay_release_at')}
-               if item.get('mode') == 'case_replay' else {}),
+               if item.get('mode') == 'case_replay' or item.get('source') == 'gnss' else {}),
         })
     return compact
 
@@ -337,6 +337,11 @@ async def assess_update(inputs, existing_alerts, config, tool_handler):
                    '{"type":"need_tool","name":"multistation_check","arguments":{"stations":["可选实际站点标识"],"signal":"可选实际信号码"}}。'
                    '可省略signal和multistation_check的stations；不传路径、URL、SQL、脚本或时间覆盖参数。'
                    '工具返回后依据实际统计继续判断，可以直接finish；不为了调用次数强制补查。' if replay else '')
+                + ('当前在线 GNSS 输入的 case_id 表示已配置订阅范围，as_of 是该工作保存的截止时间。'
+                   '只使用该范围截止时点已取得的观测，缺少配置参考时说明参考不足。'
+                   'input.tools 注册后可使用 station_history（station、可选signal）或 multistation_check（可选stations、signal）；'
+                   '工具窗口由程序固定，不能指定路径或其他范围。无需为了调用次数补查。'
+                   if not replay and any(item['kind'] == 'gnss' for item in inputs) else '')
             )},
             {'role': 'user', 'content': json.dumps({
                 'inputs': prompt_inputs, 'materials': materials, 'existing_alerts': existing_alerts,

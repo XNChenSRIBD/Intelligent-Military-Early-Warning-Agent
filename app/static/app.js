@@ -3,6 +3,13 @@ const ui = {
   mode: 'online',
   onlineView: 'pipeline',
   pipeline: null,
+  acquisition: null,
+  acquisitionSubscriptionId: '',
+  acquisitionSubscriptionDirty: false,
+  acquisitionPolicyDirty: false,
+  acquisitionBusy: false,
+  acquisitionTaskSignature: '',
+  acquisitionResourceId: null,
   replayCaseId: localStorage.getItem('workspace-replay-case') || '',
   replayCase: null,
   replayCaseSignature: '',
@@ -48,6 +55,10 @@ const labels = {
   numeric_rule: '数值规则异常', news_clue: '公开报道线索', no_anomaly: '本批未形成异常线索', monitoring: '持续监测中',
   case_replay: '历史自动回放', gnss_observation: 'GNSS 观测线索', gnss: 'GNSS 观测', blocked: '未完成 · 已阻塞',
   prepared: '输入已准备', processing: '处理观测', pending_inputs: '等待输入', partial: '部分完成',
+  downloading: '正在下载', computing: '正在计算', waiting_source: '等待来源发布', auth_required: '认证不可用',
+  source_missing: '来源缺失', waiting_space: '等待缓存空间', waiting_resources: '等待资源', incomplete: '尚未完成',
+  original_reused: '复用已有原件', result_reused: '复用兼容结果', downloaded: '已实际下载', computed: '已计算',
+  raw_deleted: '原件已清理', cleaned: '已清理', expired: '到期回收', capacity: '容量回收',
 };
 const label = (value) => labels[value] || value || '—';
 const isRunning = (run) => run && ['running', 'queued', 'cancelling'].includes(run.status);
@@ -109,19 +120,24 @@ function setMode(mode) {
   ui.mode = mode;
   remember();
   const history = mode === 'history';
-  $('online-controls').hidden = history;
-  $('online-content').hidden = history;
+  const acquisition = mode === 'acquisition';
+  $('online-controls').hidden = history || acquisition;
+  $('online-content').hidden = history || acquisition;
   $('history-controls').hidden = !history;
   $('history-content').hidden = !history;
-  $('online-tab').classList.toggle('active', !history);
+  $('acquisition-controls').hidden = !acquisition;
+  $('acquisition-content').hidden = !acquisition;
+  $('acquisition-tab').classList.toggle('active', acquisition);
+  $('acquisition-tab').setAttribute('aria-current',acquisition ? 'page' : 'false');
+  $('online-tab').classList.toggle('active', !history && !acquisition);
   $('history-tab').classList.toggle('active', history);
-  $('online-tab').setAttribute('aria-current', history ? 'false' : 'page');
+  $('online-tab').setAttribute('aria-current', history || acquisition ? 'false' : 'page');
   $('history-tab').setAttribute('aria-current', history ? 'page' : 'false');
   $('content-kicker').textContent = history ? '历史案例 / HORMUZ' : '资料流';
   $('content-title').textContent = history ? '霍尔木兹海峡 · 民用航运宏观资料' : currentMonitor()?.topic || '从主题开始，持续整理公开资料';
   $('mode-badge').textContent = history ? '历史 · 结果快照' : currentRun()?.mode === 'replay' ? '原始材料回放' : '在线资料';
   ui.detail = null;
-  if (history) loadHistory(); else renderOnline();
+  if (history) loadHistory(); else if (acquisition) renderAcquisition(); else renderOnline();
   renderPipelineStatus();
 }
 function fillForm(monitor) {
@@ -197,12 +213,160 @@ async function refresh() {
     const manualMonitors = ui.state.monitors.filter((monitor) => !monitor.pipeline_owned);
     if (!ui.monitorId && !ui.formLoaded && manualMonitors.length) ui.monitorId = String(manualMonitors[0].id);
     renderState();
-    if (isPipeline()) await loadPipeline();
+    if (ui.mode === 'acquisition') await loadAcquisition();
+    else if (isPipeline()) await loadPipeline();
     else if (ui.mode === 'online' && ui.monitorId) await loadMaterials();
     else { ui.materials = []; ui.runs = []; ui.metrics = null; ui.alerts = []; if (ui.mode === 'online') renderOnline(); }
     remember();
   } catch (error) { notify(error.message); }
   finally { ui.refreshing = false; }
+}
+const acquisitionPolicyFields = [
+  ['raw_hours','成功原件保留（小时）'],['anomaly_days','异常关联原件（天）'],['failed_days','失败原件等待（天）'],
+  ['part_hours','停止任务残片（小时）'],['features_days','完整分窗特征（天）'],['logs_days','普通日志（天）'],
+  ['quota_gib','受管原件与临时区额度（GiB）'],['high_gib','开始容量回收（GiB）'],['target_gib','容量回收目标（GiB）'],
+];
+function bytes(value) {
+  if (!numeric(value)) return '未知';
+  const units = ['B','KiB','MiB','GiB','TiB'];
+  const index = value > 0 ? Math.min(4,Math.floor(Math.log(value)/Math.log(1024))) : 0;
+  return `${number(value/1024**index)} ${units[index]}`;
+}
+function acquisitionCaseLabel(id) { return ui.pipeline?.replay?.cases?.find((item) => item.case_id === id)?.label || (String(id).includes('kharkiv') ? '哈尔科夫' : String(id).includes('hormuz') ? '霍尔木兹' : id); }
+async function loadAcquisition() {
+  const snapshot = await api('/api/acquisition');
+  if (ui.mode !== 'acquisition') return;
+  ui.acquisition = snapshot;
+  renderAcquisition();
+}
+async function acquisitionAction(callback,message) {
+  if (ui.acquisitionBusy) return;
+  ui.acquisitionBusy = true; notify();
+  document.querySelectorAll('[data-acquisition-action],#acquisition-save-subscription,#acquisition-save-policy,#acquisition-cleanup').forEach((button) => { button.disabled = true; });
+  try { await callback(); notify(message || '请求已提交到服务器。'); if (ui.mode === 'acquisition') await loadAcquisition(); }
+  catch (error) { notify(error.message); }
+  finally { ui.acquisitionBusy = false; document.querySelectorAll('[data-acquisition-action],#acquisition-save-subscription,#acquisition-save-policy,#acquisition-cleanup').forEach((button) => { button.disabled = false; }); }
+}
+function acquisitionButton(text,path,body = {},callback) {
+  const button = el('button','reference-button',text); button.type = 'button'; button.dataset.acquisitionAction = 'true'; button.disabled = ui.acquisitionBusy;
+  button.addEventListener('click',() => acquisitionAction(async () => { await api(path,body); if (callback) await callback(); }));
+  return button;
+}
+function fillAcquisitionSubscription(subscription) {
+  ui.acquisitionSubscriptionId = subscription?.id || '';
+  ui.acquisitionSubscriptionDirty = false;
+  $('acquisition-subscription-select').value = ui.acquisitionSubscriptionId;
+  $('acquisition-source').value = subscription?.source || 'cddis';
+  $('acquisition-stations').value = (subscription?.stations || []).join('\n');
+  $('acquisition-product').value = subscription?.product || 'daily';
+  $('acquisition-start').value = subscription?.start_date || '';
+  $('acquisition-end').value = subscription?.end_date || '';
+  $('acquisition-hours').value = (subscription?.hours || []).join(', ');
+  $('acquisition-interval').value = (subscription?.interval_seconds ?? ($('acquisition-product').value === 'daily' ? 3600 : 900))/60;
+  $('acquisition-enabled').checked = Boolean(subscription?.enabled);
+  $('acquisition-hours-field').hidden = $('acquisition-product').value !== 'highrate';
+}
+function acquisitionSubscriptionValues(subscription) {
+  return Object.fromEntries(['id','source','product','stations','hours','start_date','end_date','enabled','interval_seconds'].filter((key) => subscription[key] !== undefined).map((key) => [key,subscription[key]]));
+}
+function renderAcquisition() {
+  const snapshot = ui.acquisition;
+  $('content-kicker').textContent = '服务器后台 / 数据获取与存储';
+  $('content-title').textContent = '资源获取、计算与保留';
+  $('mode-badge').textContent = '数据获取与存储';
+  if (!snapshot) { $('acquisition-status').textContent = '正在读取服务器资源状态…'; return; }
+  $('acquisition-status').textContent = `${snapshot.enabled ? '资源获取已启用' : '资源获取未启用'} · ${label(snapshot.status)}${snapshot.coordinator ? ` · 协调状态 ${typeof snapshot.coordinator === 'string' ? label(snapshot.coordinator) : coverageText(snapshot.coordinator)}` : ''}`;
+  const counts = snapshot.counts || {};
+  $('acquisition-queue-summary').textContent = [['queued','排队'],['downloading','下载'],['computing','计算'],['ready','可用结果'],['retry_wait','重试'],['waiting_source','等待来源'],['auth_required','认证缺口'],['source_missing','来源缺失'],['waiting_space','等待空间'],['failed','失败']].map(([key,title]) => `${title} ${counts[key] ?? '—'}`).join(' · ');
+  const modelCounts = ui.pipeline?.counts;
+  if (modelCounts) $('acquisition-queue-summary').textContent += `\n本应用分析：排队 ${modelCounts.queued ?? '—'} · 分析中 ${modelCounts.running ?? '—'} · 重试 ${modelCounts.retry_wait ?? '—'}`;
+  const storage = snapshot.storage || {};
+  $('acquisition-storage-summary').textContent = `受管原件 ${bytes(storage.managed_raw_bytes)} + 临时文件 ${bytes(storage.temp_bytes)} · 额度 ${bytes(storage.quota_bytes)} · 下载预留 ${bytes(storage.reserved_bytes)} · 磁盘可用 ${bytes(storage.free_disk_bytes)}`;
+  const select = $('acquisition-subscription-select');
+  if (document.activeElement !== select) {
+    select.replaceChildren(new Option('新建订阅',''));
+    (snapshot.subscriptions || []).forEach((item) => select.add(new Option(`${item.source.toUpperCase()} · ${(item.stations || []).join(', ')} · ${item.product === 'daily' ? '日文件' : '高频'}${item.enabled ? '' : ' · 暂停'}`,item.id)));
+    select.value = ui.acquisitionSubscriptionId;
+  }
+  const subscription = (snapshot.subscriptions || []).find((item) => item.id === ui.acquisitionSubscriptionId);
+  if (subscription && !ui.acquisitionSubscriptionDirty && !document.activeElement?.closest('#acquisition-subscription-form')) fillAcquisitionSubscription(subscription);
+  const subStatus = $('acquisition-subscription-status'); subStatus.replaceChildren();
+  if (subscription) {
+    subStatus.append(el('p','',`${label(subscription.status)} · ${subscription.enabled ? '自动获取已启用' : '已暂停来源'}`),el('p','',`最近扫描 ${date(subscription.last_scan_at)} · 下次检查 ${date(subscription.next_check_at)}`),el('p','',`扫描位置 ${format(subscription.scan_cursor)}\n完整覆盖至 ${format(subscription.coverage_through)}`));
+    if (subscription.error) subStatus.append(el('p','source-error',subscription.error));
+    subStatus.append(acquisitionButton(subscription.enabled ? '暂停此订阅' : '恢复此订阅','/api/acquisition/subscriptions',acquisitionSubscriptionValues({...subscription,enabled:!subscription.enabled})));
+  } else subStatus.append(el('p','',snapshot.subscriptions?.length ? '选择一个订阅查看来源状态，或填写站点新建。' : '尚无持续订阅。历史案例站点不会自动启用为长期订阅。'));
+  const cases = $('acquisition-cases'); cases.replaceChildren();
+  Object.entries(snapshot.cases_counts || {}).forEach(([id,item]) => {
+    const block = el('section','acquisition-case');
+    const heading = el('div','section-heading'); heading.append(el('h3','',acquisitionCaseLabel(id)),acquisitionButton('补取登记缺项',`/api/acquisition/cases/${encodeURIComponent(id)}/acquire`)); block.append(heading);
+    const grid = el('div','acquisition-case-counts');
+    [['required','GNSS 需求'],['original_reused','原件复用'],['result_reused','结果复用'],['downloaded','实际下载'],['computed','已计算'],['pending_download','待获取'],['pending_compute','待计算'],['pending','待处理合计'],['missing','来源缺口'],['failed','技术失败']].forEach(([key,title]) => { const stat = el('div'); stat.append(el('span','',title),el('strong','',item[key] ?? '—')); grid.append(stat); });
+    block.append(grid);
+    if (Array.isArray(item.portwatch_missing_dates)) block.append(el('p','small muted',`PortWatch 登记前置缺日：${item.portwatch_missing_dates.length ? item.portwatch_missing_dates.join('、') : '当前无登记缺日'}${item.portwatch_valid_reference_days != null ? ` · 已有有效参考 ${item.portwatch_valid_reference_days} 日` : ''}`));
+    if (item.reason || item.error) block.append(el('p','source-error',item.reason || item.error));
+    cases.append(block);
+  });
+  if (!Object.keys(snapshot.cases_counts || {}).length) cases.append(el('p','small muted','尚无已登记案例资源需求。'));
+  else cases.append(el('p','micro muted','获取方式与计算状态分别统计；这些列不能相加作为下载总量。'));
+  renderAcquisitionTasks();
+  const storageView = $('acquisition-storage'); storageView.replaceChildren();
+  [['managed_raw_bytes','受管压缩原件'],['temp_bytes','临时文件'],['features_bytes','完整分窗特征'],['database_bytes','数据库'],['evidence_bytes','长期证据'],['reports_bytes','报告'],['unmanaged_raw_bytes','未接管旧原件']].forEach(([key,title]) => { const stat = el('div'); stat.append(el('span','',title),el('strong','',bytes(storage[key]))); storageView.append(stat); });
+  const paths = $('acquisition-paths'); paths.replaceChildren();
+  facts([['服务器资产根',snapshot.paths?.asset_root],['运行根目录',snapshot.paths?.runtime_root],['共享台账',snapshot.paths?.catalog],['长期证据目录',snapshot.paths?.evidence],['数据日期范围',snapshot.observed_range || storage.observed_range || snapshot.date_range]],paths);
+  if (!ui.acquisitionPolicyDirty && !document.activeElement?.closest('#acquisition-policy-form')) {
+    const fields = $('acquisition-policy-fields'); fields.replaceChildren();
+    acquisitionPolicyFields.forEach(([key,title]) => { const field = el('label','',title), input = el('input'); input.type = 'number'; input.min = '0.01'; input.step = 'any'; input.required = true; input.value = snapshot.policy?.[key] ?? ''; input.dataset.policyField = key; field.append(input); fields.append(field); });
+    $('acquisition-autoclean').checked = Boolean(snapshot.policy?.autoclean);
+  }
+  const cleanup = snapshot.cleanup || {};
+  $('acquisition-cleanup-status').replaceChildren(el('p','',`原件／临时区：每小时 · 上次 ${date(cleanup.last_at)} · 下次 ${date(cleanup.next_at)}`),el('p','',`完整特征／普通日志：每日 03:30（Asia/Shanghai） · 上次 ${date(cleanup.last_daily_at)} · 下次 ${date(cleanup.next_daily_at)}`),el('p','',`最近实际释放 ${bytes(cleanup.freed_bytes)} · 清理文件 ${cleanup.items ?? '—'} 个`));
+  if (cleanup.error) $('acquisition-cleanup-status').append(el('p','source-error',cleanup.error));
+  const records = $('acquisition-cleanup-records'); records.replaceChildren();
+  (cleanup.recent_records || []).forEach((item) => { const row = el('div','cleanup-record'); row.append(el('strong','',item.filename || item.resource_id || '清理记录'),el('p','',`${date(item.at || item.cleaned_at)} · ${bytes(item.bytes)} · ${label(item.reason)}`)); if (item.error) row.append(el('p','source-error',item.error)); records.append(row); });
+  if (!cleanup.recent_records?.length) records.append(el('p','small muted','尚无可展示的实际清理记录。'));
+  if (!ui.detail) {
+    $('detail-content').replaceChildren(badge('服务器持久资源状态','accent'),el('h2','detail-heading','查看获取与计算依据'),el('p','small muted','选择一条资源查看实际字节数、重试原因、计算版本与原件状态。维护操作提交到服务器，不依赖页面保持打开。'));
+  }
+}
+function renderAcquisitionTasks() {
+  const tasks = ui.acquisition?.recent_tasks || [], filter = $('acquisition-task-filter').value;
+  const issueStates = ['retry_wait','waiting_source','auth_required','source_missing','waiting_space','failed'];
+  const selected = tasks.filter((item) => filter === 'all' || filter === 'issues' && issueStates.includes(item.status) || filter === 'ready' && (item.compute_status === 'ready' || item.compute_status === 'completed' || item.status === 'ready') || filter === 'pending' && ['queued','downloading','computing','retry_wait','waiting_source','waiting_space'].includes(item.status));
+  const signature = JSON.stringify([selected,filter,ui.acquisitionResourceId,ui.acquisitionBusy]);
+  if (signature === ui.acquisitionTaskSignature) return;
+  ui.acquisitionTaskSignature = signature;
+  const parent = $('acquisition-tasks'); parent.replaceChildren();
+  selected.forEach((item) => {
+    const card = el('button',`material-card${item.id === ui.acquisitionResourceId ? ' active' : ''}`); card.type = 'button';
+    const top = el('div','card-top'); top.append(el('span','publisher',[item.station,item.kind].filter(Boolean).join(' · ') || '资源'),badge(label(item.status),issueStates.includes(item.status) ? 'waiting' : ''));
+    card.append(top,el('h3','',item.filename || item.id),el('p','card-excerpt',`获取：${label(item.acquisition_status || item.status)} · 计算：${label(item.compute_status)}\n实际接收 ${bytes(item.bytes)} / 总量 ${bytes(item.total_bytes)}${item.raw_deleted_at ? '\n原文件已清理，指标与报告保留。' : ''}`));
+    if (numeric(item.total_bytes) && item.total_bytes > 0 && numeric(item.bytes)) { const progress = el('progress','resource-progress'); progress.max = item.total_bytes; progress.value = item.bytes; progress.setAttribute('aria-label','实际接收字节数'); card.append(progress); }
+    card.append(el('p','alert-time',`观测 ${date(item.observed_start)} 至 ${date(item.observed_end)}\n尝试 ${item.attempts ?? '—'} 次 · 下次重试 ${date(item.next_retry_at)} · 更新 ${date(item.updated_at)}`));
+    if (item.error) card.append(el('p','source-error',item.error));
+    card.addEventListener('click',() => openAcquisitionResource(item.id).catch((error) => notify(error.message))); parent.append(card);
+  });
+  if (!selected.length) parent.append(el('p','small muted',tasks.length ? '最近任务中没有符合当前筛选的记录。' : '尚无已登记资源任务。'));
+}
+async function openAcquisitionResource(id) {
+  ui.detail = 'acquisition-resource'; ui.acquisitionResourceId = id;
+  const resource = await api(`/api/acquisition/resources/${encodeURIComponent(id)}`);
+  if (ui.detail !== 'acquisition-resource' || ui.acquisitionResourceId !== id) return;
+  const parent = $('detail-content'), input = resource.resource || {};
+  parent.replaceChildren(badge('服务器资源与计算依据','accent'),el('h2','detail-heading',resource.filename || input.filename || id),el('p','detail-meta',id));
+  if (resource.raw_deleted_at) section('原件状态').append(el('p','',`原文件已清理，指标与报告保留。清理于 ${date(resource.raw_deleted_at)}${resource.raw_delete_reason ? ` · ${label(resource.raw_delete_reason)}` : ''}`));
+  facts([['来源',resource.source || input.source],['实际站点',resource.station || input.station],['产品',resource.product || input.product],['服务器位置',resource.path],['受管原件',resource.managed == null ? '未声明' : resource.managed ? '是' : '否'],['原件存在',resource.raw_present == null && resource.raw_exists == null ? '未声明' : resource.raw_present || resource.raw_exists ? '是' : '否'],['观测起点',date(resource.observed_start || input.observed_start)],['观测终点',date(resource.observed_end || input.observed_end)],['实际接收',bytes(resource.bytes)],['已知总量',bytes(resource.total_bytes)]],section('资源身份与存储'));
+  facts([['获取状态',label(resource.acquisition_status || resource.status)],['计算状态',label(resource.compute_status)],['尝试次数',resource.attempts],['最近成功',date(resource.acquired_at || resource.last_success_at)],['下次重试',date(resource.next_retry_at)],['具体原因',resource.error],['处理版本',resource.result_version],['计算完成',date(resource.computed_at)]],section('获取与处理进度'));
+  const sourceUrl = resource.source_url || input.source_url || resource.url || input.url;
+  if (sourceUrl) link(sourceUrl,'实际登记来源',section('原始来源'));
+  if (resource.result_summary) section('保留的实际观测摘要').append(el('pre','work-record',format(resource.result_summary)));
+  if (resource.evidence_refs?.length) automaticReferences(resource.evidence_refs,section('已保存材料与报告依据'));
+  if (resource.consumers?.length) { const block = section('消费者与续接位置'); resource.consumers.forEach((item) => block.append(el('p','small',`${item.case_id || item.subscription_id || item.instance_id || item.id || '消费者'} · 批次 ${item.batch_id || '—'} · ${label(item.status)}${item.as_of ? ` · 截止 ${utcDate(item.as_of)}` : ''}${item.input_version != null ? ` · 输入版本 ${item.input_version}` : ''}`))); }
+  const actions = section('服务器维护任务');
+  actions.append(acquisitionButton('重试此资源',`/api/acquisition/resources/${encodeURIComponent(id)}/retry`,{},() => openAcquisitionResource(id)),acquisitionButton('请求重新获取原件',`/api/acquisition/resources/${encodeURIComponent(id)}/fetch`,{},() => openAcquisitionResource(id)));
+  const fold = el('details','asset-block'); fold.append(el('summary','','完整资源登记与保留依据'),el('pre','work-record',format(resource))); parent.append(fold);
+  if (ui.mode === 'acquisition') renderAcquisitionTasks();
+  document.querySelector('.details-panel').scrollTop = 0;
 }
 async function loadMaterials() {
   const monitorId = ui.monitorId;
@@ -351,6 +515,9 @@ function renderReplayCases() {
     card.append(top,el('p','',`已完成 ${item.completed_batches || 0}/${item.total_batches || 0} 批 · 已释放 ${item.released_batches || 0}`));
     const progress = el('progress'); progress.max = Math.max(1,item.total_batches || 0); progress.value = item.completed_batches || 0; progress.setAttribute('aria-label',`${item.label || item.case_id} 已完成批次`); card.append(progress);
     card.append(el('p','micro muted',coverageText(item.coverage)),el('p','micro muted',`观测资源 ${item.gnss_resources ?? '—'} · 已处理 ${item.processed_resources ?? '—'} · 排队 ${item.queued || 0} · 失败 ${item.failed || 0}`));
+    if (item.resource_status || item.resource_counts) card.append(el('p','micro muted',`资源状态：${coverageText(item.resource_status || item.resource_counts)}`));
+    if (item.baseline_status) card.append(el('p','micro muted',`基线准备：${typeof item.baseline_status === 'string' ? label(item.baseline_status) : coverageText(item.baseline_status)}`));
+    if (item.input_version != null || item.current_input_version != null) card.append(el('p','micro muted',`当前批次输入版本 ${item.input_version ?? item.current_input_version}`));
     if (item.quality_status) card.append(el('p','micro muted',`结果质量：${label(item.quality_status)}`));
     if (item.reason) card.append(el('p','source-error',item.reason));
     if (item.case_id === replay.current_case_id) card.append(el('span','micro replay-current','后台当前案例'));
@@ -469,6 +636,8 @@ function appendResourceLinks(value,parent) {
         facts([['资源 ID',resource.id || id],['案例',resource.case_id],['实际站点',resource.station],['观测起点',resource.observed_start || resource.start],['观测终点',resource.observed_end || resource.end],['原始采样（秒）',resource.interval_seconds],['来源发布时间',resource.available_at],['模拟释放',resource.replay_release_at],['处理版本',resource.processing_version]],section('原始输入登记'));
         if (resource.source || resource.url) { const source = section('来源引用'); source.append(el('p','',resource.source || '')); link(resource.url,'原始来源',source); }
         if (resource.time_note || resource.coverage) section('覆盖与时间假设').append(el('p','',coverageText(resource.time_note || resource.coverage)));
+        if (resource.raw_deleted_at) section('原件状态').append(el('p','',`原文件已清理，指标与报告保留。清理时间 ${date(resource.raw_deleted_at)}。`));
+        if (resource.catalog_id) { const button = el('button','full subtle','查看服务器存储、保留结果与重取入口'); button.type = 'button'; button.addEventListener('click',() => openAcquisitionResource(resource.catalog_id).catch((error) => notify(error.message))); $('detail-content').append(button); }
         const fold = el('details','asset-block'); fold.append(el('summary','','登记的完整资源元数据'),el('pre','work-record',format(resource))); $('detail-content').append(fold);
         document.querySelector('.details-panel').scrollTop = 0;
       } catch (error) { notify(error.message); }
@@ -492,6 +661,7 @@ function renderPipeline() {
   const counts = pipeline?.counts || {};
   $('pipeline-summary').textContent = !pipeline ? '正在读取监测进度…' : !pipeline.enabled ? '自动流水线未启用。' : pipeline.paused ? '自动监测已暂停；已保存的资料和结果继续可查看。' : pipeline.summary || '持续监测中，本轮未发布新异常';
   if (replayMode && pipeline?.enabled) $('pipeline-summary').textContent = `${pipeline.paused ? '自动回放已暂停。' : ''}当前查看 ${replayCase?.label || ui.replayCaseId || '待配置案例'}：${label(replayCase?.status || 'queued')}；已释放 ${replayCase?.released_batches || 0}/${replayCase?.total_batches || 0} 批，已完成 ${replayCase?.completed_batches || 0} 批。${replayCase?.reason || ''}${replayCase?.as_of ? ` 本例可见截止 ${utcDate(replayCase.as_of)}。` : ''}`;
+  if (replayMode && (replayCase?.input_version != null || replayCase?.current_input_version != null)) $('pipeline-summary').textContent += ` 当前批次输入版本 ${replayCase.input_version ?? replayCase.current_input_version}；补到的资料沿原批次截止时间更新依据。`;
   $('pipeline-queue-info').textContent = `排队 ${counts.queued || 0} · 分析中 ${counts.running || 0} · 等待自动重试 ${counts.retry_wait || 0} · 已处理 ${counts.completed || 0}${pipeline?.model_retry_at ? ` · 模型下次重试 ${date(pipeline.model_retry_at)}` : ''}${pipeline?.last_published_at ? ` · 最近发布 ${date(pipeline.last_published_at)}` : ''}`;
   const sources = $('pipeline-source-dates'); sources.replaceChildren();
   (replayMode ? [] : pipeline?.sources || []).forEach((source) => {
@@ -537,7 +707,7 @@ function renderPipeline() {
         if (ui.detail !== 'pipeline-work' || ui.pipelineWorkId !== work.id) return;
         $('detail-content').replaceChildren(badge('自动分析工作','accent'),el('h2','detail-heading',label(work.decision || work.status)));
         facts([['工作 ID',result.id],['状态',label(result.status)],['入队',date(result.created_at)],['分析完成',date(result.completed_at)],['尝试次数',result.attempts],['下次重试',date(result.next_retry_at)]],section('处理记录'));
-        if (result.case_id) facts([['案例',result.case_id],['回放截止',utcDate(result.as_of)],['批次',result.batch_id]],section('本批历史范围'));
+        if (result.case_id) facts([['案例',result.case_id],['回放截止',utcDate(result.as_of)],['批次',result.batch_id],['输入版本',result.input_version ?? result.batch_input_version]],section('本批历史范围'));
         section('本批结果').append(el('p','',work.statement || result.error || label(result.status)));
         appendWorkExecution(result,$('detail-content'));
         const fold = el('details','asset-block'); fold.append(el('summary','','完整输入、结论与补读记录')); const raw = el('pre','work-record'); raw.textContent = format(result); fold.append(raw); $('detail-content').append(fold);
@@ -627,7 +797,7 @@ function renderAutomaticAnalysis(alert) {
       try {
         const work = await api(`/api/work/${encodeURIComponent(workId)}`);
         facts([['工作 ID',work.id],['状态',label(work.status)],['入队时间',date(work.created_at)],['尝试次数',work.attempts ?? work.attempt_count],['下次重试',date(work.next_retry_at)],['失败原因',work.error]],fold);
-        if (work.case_id) facts([['案例',work.case_id],['回放截止',utcDate(work.as_of)],['批次',work.batch_id]],fold);
+        if (work.case_id) facts([['案例',work.case_id],['回放截止',utcDate(work.as_of)],['批次',work.batch_id],['输入版本',work.input_version ?? work.batch_input_version]],fold);
         appendWorkExecution(work,fold);
         const records = el('pre','work-record'); records.textContent = format(work); fold.append(records); fold.dataset.loaded = 'true';
       } catch (error) { delete fold.dataset.loaded; fold.append(el('p','source-error',error.message)); }
@@ -1241,6 +1411,35 @@ async function setOnlineView(view) {
 }
 $('online-tab').addEventListener('click',()=>setOnlineView('pipeline'));
 $('history-tab').addEventListener('click',()=>setMode('history'));
+$('acquisition-tab').addEventListener('click',()=>{setMode('acquisition');refresh();});
+$('acquisition-new-subscription').addEventListener('click',()=>{fillAcquisitionSubscription(null);renderAcquisition();$('acquisition-stations').focus();});
+$('acquisition-subscription-select').addEventListener('change',(event)=>{fillAcquisitionSubscription(ui.acquisition?.subscriptions?.find((item)=>item.id===event.target.value));renderAcquisition();});
+$('acquisition-product').addEventListener('change',()=>{$('acquisition-hours-field').hidden=$('acquisition-product').value!=='highrate';if(!ui.acquisitionSubscriptionId)$('acquisition-interval').value=$('acquisition-product').value==='daily'?60:15;});
+$('acquisition-subscription-form').addEventListener('input',()=>{ui.acquisitionSubscriptionDirty=true;});
+$('acquisition-subscription-form').addEventListener('submit',(event)=>{
+  event.preventDefault();
+  acquisitionAction(async()=>{
+    const stations=$('acquisition-stations').value.split(/[\s,，]+/).filter(Boolean).map((value)=>value.toUpperCase());
+    const hourText=$('acquisition-hours').value.trim();
+    const hours=$('acquisition-product').value==='highrate' && hourText ? hourText.split(/[\s,，]+/).filter(Boolean).map(Number) : [];
+    if(hours.some((value)=>!Number.isInteger(value)||value<0||value>23))throw new Error('UTC 小时须为 0 至 23 的整数，以逗号分隔。');
+    const subscription=await api('/api/acquisition/subscriptions',{...(ui.acquisitionSubscriptionId?{id:ui.acquisitionSubscriptionId}:{}),source:$('acquisition-source').value,stations,product:$('acquisition-product').value,start_date:$('acquisition-start').value||null,end_date:$('acquisition-end').value||null,hours,interval_seconds:Number($('acquisition-interval').value)*60,enabled:$('acquisition-enabled').checked});
+    ui.acquisitionSubscriptionId=subscription.id||subscription.subscription?.id||ui.acquisitionSubscriptionId;
+    ui.acquisitionSubscriptionDirty=false;
+  },'订阅已保存，服务器将按自动开关与周期执行。');
+});
+$('acquisition-task-filter').addEventListener('change',renderAcquisitionTasks);
+$('acquisition-policy-form').addEventListener('input',()=>{ui.acquisitionPolicyDirty=true;});
+$('acquisition-policy-form').addEventListener('submit',(event)=>{
+  event.preventDefault();
+  acquisitionAction(async()=>{
+    const policy=Object.fromEntries([...$('acquisition-policy-fields').querySelectorAll('[data-policy-field]')].map((field)=>[field.dataset.policyField,Number(field.value)]));
+    if(!(0<policy.target_gib&&policy.target_gib<policy.high_gib&&policy.high_gib<policy.quota_gib))throw new Error('容量需满足：0 < 回收目标 < 高水位 < 总额度。');
+    await api('/api/acquisition/policy',{...policy,autoclean:$('acquisition-autoclean').checked});
+    ui.acquisitionPolicyDirty=false;
+  },'服务器保留策略已保存。');
+});
+$('acquisition-cleanup').addEventListener('click',()=>acquisitionAction(()=>api('/api/acquisition/cleanup',{}),'缓存清理任务已提交；实际释放量按服务器处理结果更新。'));
 $('maintenance-view').addEventListener('click',()=>setOnlineView('maintenance'));
 $('pipeline-view').addEventListener('click',()=>setOnlineView('pipeline'));
 $('pipeline-alert-filter').addEventListener('change',renderPipeline);

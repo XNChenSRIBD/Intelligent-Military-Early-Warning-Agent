@@ -156,4 +156,6 @@ python skills\igs-cddis-api-download\scripts\igs_cddis_api.py download `
 
 ## Progress Notes
 
+第五轮服务器数据入口、下载/计算队列、原实例续接及缓存页面见 [ROUND5_DELIVERY.md](ROUND5_DELIVERY.md)。服务器启动入口为 `bash scripts/start_server_data.sh online` / `replay`；先准备独立工作台环境并按部署授权更新原应用。在线实例默认接续已有 `runtime`，原件与资源台账由 `.16` 保存，浏览器关闭不决定后台推进。下载、模型、部署及清理的实际运行状态以该交付报告为准。
+
 项目进度、已验证数据源、典型案例与后续计划记录在 [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md)。

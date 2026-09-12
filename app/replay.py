@@ -24,10 +24,11 @@ def utc(value):
 
 
 class CaseReplay(Pipeline):
-    def __init__(self, store, config, runner):
+    def __init__(self, store, config, runner, acquisition):
         if store.all('monitor') and not store.get('replay', 'instance'):
             raise ValueError('case_replay 必须使用独立 DATA_DIR，不能使用已有在线数据库')
         self.store, self.config, self.runner = store, config, runner
+        self.acquisition = acquisition
         self.wakeup, self.collectors, self.tasks = asyncio.Event(), {}, []
         self.stopping = False
         self.definitions = {}
@@ -61,7 +62,19 @@ class CaseReplay(Pipeline):
         case_id = definition['case_id']
         self.case_order.append(case_id)
         start, end = utc(definition['start_at']), utc(definition['end_at'])
-        resources = definition.get('resources', [])
+        resources = list(definition.get('resources', []))
+        if any(resource['kind'] == 'portwatch' for resource in resources):
+            available_days = {resource['observed_start'][:10] for resource in resources if resource['kind'] == 'portwatch'}
+            for offset in range(self.config.portwatch_baseline_days, 0, -1):
+                day = (start - timedelta(days=offset)).date()
+                if day.isoformat() not in available_days:
+                    resources.append({'id': f'{case_id}-portwatch-{day}', 'kind': 'portwatch',
+                        'root': 'assets', 'path': f'external_intel/portwatch/daily/{self.config.portwatch_id}/{day}.json',
+                        'role': 'baseline', 'observed_start': day.isoformat() + 'T00:00:00Z',
+                        'observed_end': (day + timedelta(days=1)).isoformat() + 'T00:00:00Z',
+                        'available_at': None, 'source': 'IMF PortWatch / ArcGIS Daily_Chokepoints_Data',
+                        'url': self.config.portwatch_url, 'portid': self.config.portwatch_id,
+                        'release_assumption': '事后取得的历史日值，日窗结束模拟释放；历史首次发布时间未知'})
         ids = [resource['id'] for resource in resources]
         if len(ids) != len(set(ids)):
             raise ValueError('同案例资源编号不能重复')
@@ -90,8 +103,19 @@ class CaseReplay(Pipeline):
                     day_end += timedelta(days=1)
                 as_of = min(day_end, end).isoformat()
                 batches.setdefault(as_of, []).append(resource['registered_id'])
-            self.store.insert_once('replay_resource', dict(resource, id=resource['registered_id'],
+            saved, _ = self.store.insert_once('replay_resource', dict(resource, id=resource['registered_id'],
                 status='registered', material_id=None, imported_at=None))
+            if resource['kind'] in ('gnss', 'portwatch'):
+                prior_case = self.store.get('replay_case', case_id) or {}
+                if prior_case.get('status') == 'completed' and saved.get('catalog_id') and self.acquisition.view(saved['catalog_id']):
+                    continue
+                consumer = self.consumer_id(case_id)
+                managed = self.acquisition.require(resource, consumer, metadata={
+                    'instance_id': self.instance_id, 'case_id': case_id, 'data_dir': str(self.config.data_dir.resolve()),
+                    'role': resource.get('role'), 'registered_id': resource['registered_id'],
+                    'legacy_cache_dir': str(self.config.data_dir / 'gnss_cache')})
+                saved['catalog_id'] = managed['id']
+                self.store.save('replay_resource', saved)
         definition = dict(definition, batches=[{'as_of': key, 'resource_ids': value}
                                              for key, value in sorted(batches.items())])
         self.definitions[case_id] = definition
@@ -113,6 +137,9 @@ class CaseReplay(Pipeline):
 
     def scope_id(self, case_id):
         return f'replay:{self.instance_id}:{case_id}'
+
+    def consumer_id(self, case_id):
+        return self.scope_id(case_id)
 
     def monitor_id(self, case_id, kind):
         return f'replay-{self.instance_id[:8]}-{case_id}-{kind}'
@@ -136,12 +163,84 @@ class CaseReplay(Pipeline):
                 and (not as_of or utc(resource['replay_release_at']) <= utc(as_of))]
 
     def case_works(self, case_id):
-        return [work for work in self.store.all('work') if work.get('case_id') == case_id]
+        return [work for work in self.store.all('work') if work.get('case_id') == case_id
+                and not work.get('superseded')]
+
+    def recent_alerts(self, limit=50):
+        return [alert for alert in super().recent_alerts(limit * 2) if not alert.get('superseded')
+                and (not alert.get('case_id') or not alert.get('as_of') or
+                     utc(alert['as_of']) <= utc(self.store.get('replay_case', alert['case_id']).get('as_of') or alert['as_of']))][:limit]
+
+    def sync_resources(self, case):
+        """A source/result change reopens the same instance; fetch timestamps do not."""
+        available = {}
+        for resource in self.resources(case['case_id']):
+            if not resource.get('catalog_id'):
+                continue
+            state = self.acquisition.view(resource['catalog_id']) or {}
+            if state.get('result_version') and state.get('compute_status') in ('completed', 'not_required'):
+                available[resource['id']] = state['result_version']
+        previous = case.get('available_versions', {})
+        changed = [identifier for identifier, version in available.items() if previous.get(identifier) != version]
+        if not changed or any(work['status'] == 'running' for work in self.case_works(case['case_id'])):
+            return case
+        definition = self.definitions[case['case_id']]
+        changed_resources = [self.store.get('replay_resource', identifier) for identifier in changed]
+        first = 0 if any(resource.get('role') == 'baseline' for resource in changed_resources) else min(
+            (index for index, batch in enumerate(definition['batches']) if set(changed) & set(batch['resource_ids'])),
+            default=case.get('released_batches', 0))
+        if first > case.get('released_batches', 0):
+            case['available_versions'] = available
+            self.store.save('replay_case', case)
+            return case
+        first = min(first, case.get('released_batches', 0))
+        if first < case.get('released_batches', 0):
+            self.restore_before(case['case_id'], first)
+        for work in self.case_works(case['case_id']):
+            if work.get('batch_index', -1) >= first:
+                work.update(superseded=True, superseded_at=now())
+                if work['status'] in ('queued', 'retry_wait'):
+                    work['status'] = 'superseded'
+                self.store.save('work', work)
+        case.update(available_versions=available, run_revision=case.get('run_revision', 0) + 1,
+            released_batches=first, completed_batches=first, baseline_ready=False,
+            as_of=definition['batches'][first - 1]['as_of'] if first else definition['start_at'],
+            status='preparing', quality_status='pending', completed_at=None, reason=None,
+            revision_reason={'resource_ids': changed, 'from_batch': first, 'at': now()})
+        self.store.save('replay_case', case)
+        return case
+
+    def restore_before(self, case_id, index):
+        checkpoint = self.store.get('replay_checkpoint', f'{case_id}:{index - 1}') if index else None
+        with self.store.atomic():
+            for alert in self.store.all('alert'):
+                if alert.get('case_id') != case_id or alert.get('superseded'):
+                    continue
+                self.store.save('alert_version', dict(deepcopy(alert), id=uuid4().hex, alert_id=alert['id']))
+                alert.update(superseded=True, analysis_stale=True)
+                self.store.save('alert', alert)
+            for alert in (checkpoint or {}).get('alerts', []):
+                self.store.save('alert', dict(alert, superseded=False))
+            monitor_id = self.monitor_id(case_id, 'portwatch')
+            if (checkpoint or {}).get('numeric_state'):
+                self.store.save('monitor_state', checkpoint['numeric_state'])
+            else:
+                with self.store.connect() as db:
+                    db.execute("DELETE FROM records WHERE kind='monitor_state' AND id=?", (monitor_id,))
+
+    def checkpoint(self, case, index):
+        self.store.save('replay_checkpoint', {'id': f"{case['case_id']}:{index}",
+            'case_id': case['case_id'], 'as_of': case['as_of'], 'revision': case.get('run_revision', 0),
+            'alerts': [deepcopy(alert) for alert in self.recent_alerts(200) if alert.get('case_id') == case['case_id']],
+            'numeric_state': self.store.get('monitor_state', self.monitor_id(case['case_id'], 'portwatch'))})
 
     def case_summary(self, case):
         works = self.case_works(case['case_id'])
         resources = self.resources(case['case_id'])
-        return dict(case, queued=sum(work['status'] in ('queued', 'running', 'retry_wait') for work in works),
+        resource_counts = {status: sum(resource.get('status') == status for resource in resources)
+                           for status in ('registered', 'waiting_resource', 'processed', 'missing', 'failed')}
+        return dict(case, input_version=case.get('run_revision', 0), resource_counts=resource_counts,
+            queued=sum(work['status'] in ('queued', 'running', 'retry_wait') for work in works),
             failed=sum(work['status'] == 'failed' for work in works),
             processed_resources=sum(resource.get('status') == 'processed' and resource['kind'] == 'gnss'
                                     and resource.get('role') != 'baseline' for resource in resources))
@@ -149,7 +248,10 @@ class CaseReplay(Pipeline):
     def snapshot(self):
         payload = super().snapshot()
         cases = [self.case_summary(self.store.get('replay_case', case_id)) for case_id in self.case_order]
-        current = next((case for case in cases if case['status'] not in ('completed', 'incomplete', 'blocked')), None)
+        analyzing = next((work.get('case_id') for work in self.store.all('work') if work['status'] == 'running'), None)
+        current = next((case for case in cases if case['case_id'] == analyzing), None)
+        current = current or next((case for case in cases if case['status'] in ('processing', 'analyzing')), None)
+        current = current or next((case for case in cases if case['status'] not in ('completed', 'incomplete', 'blocked')), None)
         status = 'running' if current else 'completed' if cases and all(case['status'] == 'completed' for case in cases) else 'incomplete'
         payload.update(mode='case_replay', scope='历史 PNT/GNSS 观测质量自动回放',
             replay={'instance_id': self.instance_id, 'current_case_id': current['case_id'] if current else None,
@@ -168,19 +270,20 @@ class CaseReplay(Pipeline):
             if not self.running():
                 await self.idle()
                 continue
-            cases = [self.store.get('replay_case', case_id) for case_id in self.case_order]
-            case = next((item for item in cases if item['status'] not in ('completed', 'incomplete', 'blocked')), None)
-            if not case:
-                await self.idle()
-                continue
-            try:
-                await self.advance(case)
-            except asyncio.CancelledError:
-                raise
-            except Exception as error:
-                case = self.store.get('replay_case', case['case_id'])
-                case.update(status='blocked', reason=str(error), updated_at=now(), quality_status='technical_failure')
-                self.store.save('replay_case', case)
+            for case_id in self.case_order:
+                if case_id not in self.definitions:
+                    continue
+                case = self.sync_resources(self.store.get('replay_case', case_id))
+                if case['status'] in ('completed', 'incomplete', 'blocked'):
+                    continue
+                try:
+                    await self.advance(case)
+                except asyncio.CancelledError:
+                    raise
+                except Exception as error:
+                    case = self.store.get('replay_case', case_id)
+                    case.update(status='blocked', reason=str(error), updated_at=now(), quality_status='technical_failure')
+                    self.store.save('replay_case', case)
             await self.idle()
 
     async def advance(self, case):
@@ -195,10 +298,19 @@ class CaseReplay(Pipeline):
                     await self.import_resource(case, resource, as_of)
             if not self.running():
                 return
-            self.prepare_numeric(case_id, as_of, baseline=True)
+            baselines = [resource for resource in self.resources(case_id) if resource.get('role') == 'baseline']
+            pending = [resource for resource in baselines if resource.get('status') == 'waiting_resource']
             case = self.store.get('replay_case', case_id)
-            case.update(baseline_ready=True, as_of=as_of, status='running')
+            case.update(baseline_ready=not pending,
+                baseline_status={'prepared': sum(resource.get('status') == 'processed' for resource in baselines),
+                    'pending': len(pending), 'unavailable': sum(resource.get('status') in ('missing', 'failed') for resource in baselines)},
+                as_of=as_of if not case.get('released_batches') else case.get('as_of'),
+                status='waiting_resources' if pending else 'running')
             self.store.save('replay_case', case)
+            if pending:
+                return
+            if not case['released_batches']:
+                self.prepare_numeric(case_id, as_of, baseline=True)
         works = self.case_works(case_id)
         failures = [work for work in works if work['status'] == 'failed']
         if failures:
@@ -209,6 +321,8 @@ class CaseReplay(Pipeline):
         if any(work['status'] != 'completed' for work in works):
             return
         case['completed_batches'] = case['released_batches']
+        if case['released_batches']:
+            self.checkpoint(case, case['released_batches'] - 1)
         if case['released_batches'] == len(definition['batches']):
             self.finish_case(case)
             return
@@ -219,6 +333,13 @@ class CaseReplay(Pipeline):
         for identifier in batch['resource_ids']:
             resource = self.store.get('replay_resource', identifier)
             await self.import_resource(case, resource, batch['as_of'])
+        pending = [identifier for identifier in batch['resource_ids']
+                   if self.store.get('replay_resource', identifier).get('status') == 'waiting_resource']
+        if pending:
+            case = self.store.get('replay_case', case_id)
+            case.update(status='waiting_resources', waiting_resources=len(pending))
+            self.store.save('replay_case', case)
+            return
         if not self.running():
             return
         with self.store.atomic():
@@ -229,25 +350,50 @@ class CaseReplay(Pipeline):
         self.wakeup.set()
 
     async def import_resource(self, case, resource, as_of):
-        if resource.get('status') in ('processed', 'missing', 'failed') or not self.running():
+        if not self.running():
             return
         identifier, case_id = resource['id'], case['case_id']
         path = self.resource_path(resource)
         try:
-            if not path.is_file():
-                raise FileNotFoundError('已注册原始文件在配置数据根目录中缺失：' + path.name)
+            if resource.get('catalog_id'):
+                state = self.acquisition.view(resource['catalog_id']) or {}
+                raw_version = state.get('result_version')
+                if state.get('compute_status') not in ('completed', 'not_required') or not raw_version:
+                    unavailable = state.get('status') in ('source_missing', 'auth_required') or state.get('compute_status') == 'failed'
+                    resource.update(status='failed' if unavailable else 'waiting_resource',
+                        error=state.get('error'), acquisition_status=state.get('status'),
+                        compute_status=state.get('compute_status'), next_retry_at=state.get('next_retry_at'))
+                    self.store.save('replay_resource', resource)
+                    return
+                baselines_version = sorted((r['id'], r.get('material_id')) for r in self.resources(case_id, as_of=as_of)
+                                           if r.get('role') == 'baseline' and r.get('material_id') and r['kind'] == 'gnss')
+                signature = [raw_version, baselines_version if resource.get('role') != 'baseline' else []]
+                if resource.get('processing_signature') == json.loads(json.dumps(signature)) and resource.get('material_id'):
+                    return
+                raw = self.acquisition.result(resource['catalog_id'])
+                if raw is None:
+                    resource.update(status='waiting_resource', error='等待可复用结果或重新取得原件')
+                    self.store.save('replay_resource', resource)
+                    return
+            elif resource.get('status') == 'processed':
+                return
+            else:
+                raw, signature = None, None
             if resource['kind'] == 'gnss':
-                from .gnss import compute_resource
+                from .gnss import contextualize_result
                 baselines = self.gnss_results(case_id, as_of, baseline_only=True)
-                computed = await asyncio.to_thread(compute_resource, resource, path,
-                    self.config.data_dir / 'gnss_cache', as_of=as_of,
+                computed = contextualize_result(raw, resource, as_of=as_of,
                     case_id=case_id, baseline_results=baselines)
+                computed['input_revision'] = resource.get('input_revision', 0) + 1
                 if computed.get('status') in ('failed', 'unavailable'):
                     raise ValueError(computed.get('error') or computed.get('summary') or 'GNSS 处理失败')
-                text = json.dumps(self.compact_gnss(computed), ensure_ascii=False)
-                payload = {'computed': computed}
+                text = json.dumps(dict(self.compact_gnss(computed), input_revision=computed['input_revision']), ensure_ascii=False)
+                # Keep the plotted/cited signals; the complete raw feature array lives in the shared catalog.
+                selected = {signal['signal'] for signal in self.compact_gnss(computed)['signals']}
+                retained = dict(computed, series=[point for point in computed.get('series', []) if point.get('signal') in selected])
+                payload = {'computed': retained}
             else:
-                payload = self.read_archive(resource, path, as_of)
+                payload = raw if raw is not None else self.read_archive(resource, path, as_of)
                 text = json.dumps(payload, ensure_ascii=False)
             data = {'title': resource.get('title') or f"{resource.get('station') or resource['kind']} · {resource['observed_start']}",
                 'url': '/api/replay/resources/' + identifier, 'publisher': resource.get('source') or resource['kind'],
@@ -262,17 +408,23 @@ class CaseReplay(Pipeline):
                 data.update(title=article.get('title') or data['title'], text=article.get('text') or '',
                             content_kind=article.get('content_kind') or ('article_text' if article.get('text') else 'title_only'),
                             original_url=article.get('url'), publisher=article.get('publisher') or article.get('domain') or data['publisher'])
-            run_id = f"import:{self.instance_id}:{identifier}"
+            revision = resource.get('input_revision', 0) + 1
+            run_id = f"import:{self.instance_id}:{identifier}:{revision}"
             with self.store.atomic():
                 self.store.insert_once('run', {'id': run_id, 'monitor_id': self.monitor_id(case_id, resource['kind'] if resource['kind'] in ('gnss', 'portwatch', 'news') else 'context'),
                     'mode': 'case_replay_import', 'case_id': case_id, 'status': 'completed', 'started_at': now(),
                     'finished_at': now(), 'steps': [], 'as_of': as_of})
                 material, _ = self.store.add_material(self.monitor_id(case_id, resource['kind'] if resource['kind'] in ('gnss', 'portwatch', 'news') else 'context'), run_id, data)
-                resource.update(status='processed', material_id=material['id'], imported_at=now(), as_of=as_of)
+                resource.update(status='processed', material_id=material['id'], imported_at=now(), as_of=as_of,
+                    error=None, processing_signature=signature, input_revision=revision,
+                    catalog_version=raw_version if resource.get('catalog_id') else None)
                 if resource['kind'] == 'gnss':
                     computed.update(id=identifier, material_id=material['id'], role=resource.get('role'),
                                     replay_release_at=resource['replay_release_at'])
-                    self.store.save('gnss_result', computed)
+                    retained.update(id=identifier, material_id=material['id'], role=resource.get('role'),
+                                    replay_release_at=resource['replay_release_at'],
+                                    catalog_version=raw_version)
+                    self.store.save('gnss_result', retained)
                 self.store.save('replay_resource', resource)
         except asyncio.CancelledError:
             raise
@@ -316,10 +468,23 @@ class CaseReplay(Pipeline):
         compact['selection_note'] = '初始统计按信号码字母序展示，其他信号可用同站历史工具补查；未按异常大小筛选'
         return compact
 
-    def gnss_results(self, case_id, as_of, baseline_only=False):
-        return [result for result in self.store.all('gnss_result') if result.get('case_id') == case_id
+    def gnss_results(self, case_id, as_of, baseline_only=False, full=True):
+        saved = [result for result in self.store.all('gnss_result') if result.get('case_id') == case_id
                 and utc(result['replay_release_at']) <= utc(as_of)
                 and (not baseline_only or result.get('role') == 'baseline')]
+        if not full:
+            return saved
+        from .gnss import contextualize_result
+        baselines, observations = [], []
+        for item in sorted(saved, key=lambda value: value.get('role') != 'baseline'):
+            resource = self.store.get('replay_resource', item['id'])
+            raw = self.acquisition.result(resource['catalog_id'], version=item.get('catalog_version')) if resource and resource.get('catalog_id') else None
+            result = contextualize_result(raw, resource, as_of=as_of, case_id=case_id,
+                         baseline_results=baselines) if raw else deepcopy(item)
+            result.update(id=item['id'], resource_id=item['id'], material_id=item['material_id'],
+                          replay_release_at=item['replay_release_at'], role=item.get('role'))
+            (baselines if item.get('role') == 'baseline' else observations).append(result)
+        return baselines + observations
 
     def prepare_numeric(self, case_id, as_of, baseline=False):
         visible = [resource for resource in self.resources(case_id, as_of=as_of, imported_only=True)
@@ -347,7 +512,10 @@ class CaseReplay(Pipeline):
                 'mode': 'case_replay_import', 'case_id': case_id, 'status': 'completed',
                 'started_at': now(), 'finished_at': now(), 'steps': [], 'as_of': as_of,
                 'summary': '写入已释放的 PortWatch 历史日记录'})
-        current_rows = self.store.portwatch_rows(source_key, self.config.portwatch_id)
+        current_rows = [row for row in self.store.portwatch_rows(source_key, self.config.portwatch_id)
+                        if row['observed_date'] <= max(item['observed_date'] for item in rows)]
+        before = [alert for alert in before if not alert.get('superseded') and
+                  (not alert.get('as_of') or utc(alert['as_of']) <= utc(as_of))]
         output = evaluate(current_rows, previous, before, self.config.portwatch_rule, now(),
                           monitor_id, source_key, self.config.portwatch_id)
         old_by_id = {alert['id']: alert for alert in before}
@@ -376,6 +544,7 @@ class CaseReplay(Pipeline):
 
     def enqueue_batch(self, case_id, index, batch):
         as_of = batch['as_of']
+        input_version = self.store.get('replay_case', case_id).get('run_revision', 0)
         resources = [self.store.get('replay_resource', identifier) for identifier in batch['resource_ids']]
         current = [resource for resource in resources if resource.get('material_id')]
         for kind in ('gnss', 'portwatch', 'news'):
@@ -385,7 +554,8 @@ class CaseReplay(Pipeline):
             groups = ([[resource] for resource in subset] if kind == 'news' else
                       [subset[offset:offset + 3] for offset in range(0, len(subset), 3)] if kind == 'gnss' else [subset])
             for group_index, group in enumerate(groups):
-                work_id = f'replay:{self.instance_id}:{case_id}:{index}:{kind}:{group_index}:{self.config.pipeline_analysis_version}'
+                logical_id = f'replay:{self.instance_id}:{case_id}:{index}:{kind}:{group_index}'
+                work_id = f'{logical_id}:v{input_version}:{self.config.pipeline_analysis_version}'
                 materials = [material_input(self.store.get_material(resource['material_id'])) for resource in group]
                 payload = {'id': work_id, 'kind': kind, 'mode': 'case_replay', 'case_id': case_id,
                            'as_of': as_of, 'materials': materials, 'origin': 'historical_replay',
@@ -412,6 +582,7 @@ class CaseReplay(Pipeline):
                 work = {'id': work_id, 'scope_id': self.scope_id(case_id), 'monitor_id': self.monitor_id(case_id, kind),
                     'case_id': case_id, 'as_of': as_of, 'batch_index': index,
                     'batch_id': f'{case_id}-{index + 1}', 'mode': 'case_replay',
+                    'input_version': input_version, 'logical_id': logical_id,
                     'kind': kind, 'source': kind, 'input': payload, 'material_ids': [item['id'] for item in materials],
                     'resource_ids': [resource['id'] for resource in group], 'numeric_alerts': targets,
                     'analysis_version': self.config.pipeline_analysis_version, 'status': 'queued',
@@ -490,6 +661,17 @@ class CaseReplay(Pipeline):
                             pending.update(status='failed', error='本例因持续分析故障停止推进，输入和位置已保留')
                             self.store.save('work', pending)
                             self.mark_numeric(pending, 'failed')
+        for original in batch:
+            work = self.store.get('work', original['id'])
+            if work['status'] == 'completed':
+                identifiers = [resource.get('catalog_id') for resource in self.resources(work['case_id'])
+                               if resource['id'] in work.get('resource_ids', []) and resource.get('catalog_id')]
+                if work.get('published_alert_ids'):
+                    self.acquisition.mark_anomaly(identifiers)
+                self.acquisition.release(self.consumer_id(work['case_id']), identifiers, pin=True,
+                    evidence={'work_id': work['id'], 'case_id': work['case_id'], 'as_of': work['as_of'],
+                        'program': work['input'].get('program'), 'assessment': work.get('assessment'),
+                        'tools': work.get('tool_results'), 'resource_ids': identifiers})
 
     def publish(self, work, assessment, result, materials):
         if work['kind'] == 'portwatch':
@@ -499,16 +681,20 @@ class CaseReplay(Pipeline):
             work['published_alert_ids'] = []
             if assessment['decision'] in ('candidate', 'update'):
                 prior = assessment.get('existing_alert_id')
+                emission = self.store.get('replay_emission', work.get('logical_id', work['id']))
+                retained_id = emission.get('alert_id') if emission else None
                 alert = self.store.get('alert', prior) if prior else None
                 expected_type = 'gnss_observation' if work['kind'] == 'gnss' else 'news_clue'
                 if prior and (not alert or alert.get('case_id') != work['case_id'] or
                               alert.get('origin_type') != expected_type or utc(alert['as_of']) > utc(work['as_of'])):
                     raise ValueError('更新对象必须是本案例、本类证据及当前时点可见的异常')
                 if not alert:
-                    alert = {'id': 'case-alert-' + uuid4().hex, 'origin_type': expected_type,
+                    old_version = self.store.get('alert', retained_id) if retained_id else None
+                    alert = {'id': retained_id or 'case-alert-' + uuid4().hex, 'origin_type': expected_type,
                         'scope_id': work['scope_id'], 'monitor_id': work['monitor_id'], 'case_id': work['case_id'],
                         'mode': 'case_replay', 'detected_at': timestamp, 'published_at': timestamp,
-                        'origin': 'historical_replay', 'analysis_history': [], 'evidence_version': 0}
+                        'origin': 'historical_replay', 'analysis_history': [],
+                        'evidence_version': (old_version or {}).get('evidence_version', 0)}
                 if alert.get('analysis'):
                     alert['analysis_history'].append(dict(alert['analysis'], evidence_refs=alert.get('evidence_refs')))
                 status = assessment.get('observation_status' if work['kind'] == 'gnss' else 'news_status') or 'active'
@@ -523,8 +709,9 @@ class CaseReplay(Pipeline):
                     updated_at=timestamp, read_at=None, as_of=work['as_of'], replay_release_at=work['as_of'],
                     observed_at=work['input']['materials'][0].get('observed_at'),
                     available_at=work['input']['materials'][0].get('available_at'),
-                    first_seen_at=work['input']['materials'][0].get('first_seen_at'))
+                    first_seen_at=work['input']['materials'][0].get('first_seen_at'), superseded=False)
                 self.store.save('alert', alert)
+                self.store.save('replay_emission', {'id': work.get('logical_id', work['id']), 'alert_id': alert['id']})
                 work['published_alert_ids'].append(alert['id'])
                 current = self.store.get('pipeline', 'main')
                 current['last_published_at'] = timestamp
@@ -544,7 +731,7 @@ class CaseReplay(Pipeline):
                     and resource.get('status') == 'processed']
         technical = [work for work in works if work.get('result_quality') == 'budget_exhausted']
         missing = []
-        results = self.gnss_results(case['case_id'], case['as_of']) if case.get('as_of') else []
+        results = self.gnss_results(case['case_id'], case['as_of'], full=False) if case.get('as_of') else []
         if not any(result.get('role') != 'baseline' and result.get('status') == 'computed' for result in results):
             missing.append('尚无本版程序从原始 GNSS 文件得到的有效观测统计')
         if observed and not any(result.get('role') != 'baseline' and
@@ -558,7 +745,8 @@ class CaseReplay(Pipeline):
                      and row.get('validity') == 'valid']
             if len(valid) < self.config.portwatch_min_baseline_days:
                 missing.append(f'PortWatch 回放起点前只有 {len(valid)} 个有效参考日，规则要求至少 {self.config.portwatch_min_baseline_days} 日')
-        complete = bool(observed) and not missing and not failures and bool(works) and not technical
+        pending = [resource for resource in resources if resource.get('status') in ('waiting_resource', 'registered')]
+        complete = bool(observed) and not missing and not failures and not pending and bool(works) and not technical
         runs = [run for run in self.store.all('run') if run.get('case_id') == case['case_id']
                 and run.get('mode') == 'pipeline_analysis']
         model_requests = sum(len(step.get('detail', {}).get('attempts', [])) for run in runs for step in run.get('steps', []))
@@ -574,6 +762,12 @@ class CaseReplay(Pipeline):
             professional_tool_calls=tool_calls, dynamic_tools_status='observed' if tool_calls else 'not_demonstrated',
             processed_inputs=sum(work['status'] == 'completed' for work in works))
         self.store.save('replay_case', case)
+        if complete:
+            self.acquisition.release(self.consumer_id(case['case_id']), pin=False,
+                evidence={'case_id': case['case_id'], 'instance_id': self.instance_id,
+                    'as_of': case['as_of'], 'quality_status': case['quality_status'],
+                    'gnss': results, 'baseline': case.get('baseline_status'),
+                    'alerts': [alert for alert in self.recent_alerts(200) if alert.get('case_id') == case['case_id']]})
 
     def case_view(self, case_id):
         case = self.store.get('replay_case', case_id)
@@ -582,7 +776,7 @@ class CaseReplay(Pipeline):
         as_of = case.get('as_of')
         series, summaries = [], []
         if as_of:
-            for result in self.gnss_results(case_id, as_of):
+            for result in self.gnss_results(case_id, as_of, full=False):
                 if result.get('role') == 'baseline':
                     continue
                 summaries.append(self.compact_gnss(result))
@@ -595,7 +789,7 @@ class CaseReplay(Pipeline):
         works = sorted(self.case_works(case_id), key=lambda work: work['created_at'], reverse=True)
         return dict(self.case_summary(case), gnss={'series': series, 'summary': summaries, 'units': 'per_signal'},
             recent_work=[dict({key: work.get(key) for key in ('id', 'kind', 'status', 'created_at', 'completed_at',
-                'next_retry_at', 'error', 'case_id', 'as_of', 'batch_index', 'batch_id')},
+                'next_retry_at', 'error', 'case_id', 'as_of', 'batch_index', 'batch_id', 'input_version')},
                 decision=work.get('assessment', {}).get('decision'), statement=work.get('assessment', {}).get('statement'))
                 for work in works[:40]],
             portwatch_monitor_id=self.monitor_id(case_id, 'portwatch'),
@@ -613,4 +807,7 @@ class CaseReplay(Pipeline):
             'status', 'material_id', 'imported_at', 'error')} | {'file_name': Path(resource['path']).name,
                 'filename': Path(resource['path']).name, 'url': resource.get('url'),
                 'time_note': resource.get('release_assumption'),
-                'processing_version': 'rinex-cnr-window-v1' if resource['kind'] == 'gnss' else None}
+                'processing_version': 'rinex-cnr-window-v1' if resource['kind'] == 'gnss' else None,
+                'catalog_id': resource.get('catalog_id'), 'input_version': resource.get('input_revision'),
+                'raw_deleted_at': ((self.acquisition.view(resource['catalog_id']) or {}).get('raw_deleted_at')
+                                   if resource.get('catalog_id') else None)}

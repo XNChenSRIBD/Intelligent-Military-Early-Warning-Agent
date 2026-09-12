@@ -10,6 +10,7 @@ from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 import gzip
+import hashlib
 import io
 import json
 import math
@@ -22,7 +23,12 @@ import warnings
 PROCESSING_VERSION = "rinex-cnr-window-v1"
 WINDOW_SECONDS = 300
 RINEX_REFERENCE = "https://files.igs.org/pub/data/format/rinex305.pdf"
-LEAP_REFERENCE = "https://datacenter.iers.org/versionMetadata.php?filename=mt%2Fbulletinc-071.txt"
+LEAP_REFERENCE = "https://datacenter.iers.org/data/16/bulletinc-072.txt"
+LEAP_VALID_UNTIL = "2027-01-01T00:00:00Z"
+RAW_SCHEMA_VERSION = 2
+PARSING_METADATA_FIELDS = ("station", "interval_seconds", "time_system", "utc_offset_seconds",
+                          "time_conversion_source", "time_conversion_valid_from", "time_conversion_valid_until",
+                          "signal_unit", "signal_unit_source", "coordinates")
 SYSTEM_NAMES = {"G": "GPS", "R": "GLONASS", "E": "Galileo", "C": "BeiDou",
                 "J": "QZSS", "I": "NavIC", "S": "SBAS"}
 
@@ -97,8 +103,9 @@ def _header(text):
     raise GnssProcessingError("RINEX header has no END OF HEADER")
 
 
-def _read_rinex(path):
+def _read_rinex(path, identity=None):
     raw = path.read_bytes()
+    source_identity = {"sha256": (identity or {}).get("sha256") or hashlib.sha256(raw).hexdigest(), "size": len(raw)}
     compressed = raw[:2] == b"\x1f\x8b"
     if compressed:
         raw = gzip.decompress(raw)
@@ -109,7 +116,7 @@ def _read_rinex(path):
         except ImportError as exc:
             raise GnssProcessingError("Install workbench requirements-gnss.txt for Compact RINEX decoding") from exc
         raw = hatanaka.decompress(raw)
-    return raw.decode("ascii"), {"gzip_decoded": compressed, "hatanaka_decoded": compact}
+    return raw.decode("ascii"), {"gzip_decoded": compressed, "hatanaka_decoded": compact}, source_identity
 
 
 def _time_conversion(header, resource, first, last):
@@ -122,15 +129,22 @@ def _time_conversion(header, resource, first, last):
         return system, 0.0, {"method": "RINEX UTC/GLO observation timestamps", "source": RINEX_REFERENCE}
     # The two historical cases fall wholly inside the confirmed constant-offset
     # interval. Do not silently extrapolate this offset to other future datasets.
-    in_interval = first >= datetime(2017, 1, 2) and last < datetime(2026, 7, 1)
+    # IERS Bulletin C 72 (2026-07-06) confirms no leap second at December 2026.
+    in_interval = first >= datetime(2017, 1, 2) and last < datetime(2027, 1, 1)
     if in_interval and system in {"GPS", "GAL", "QZS", "BDT"}:
         offset = 4.0 if system == "BDT" else 18.0
-        return system, offset, {"method": "IERS Bulletin C 71; integer-second system-time to UTC conversion",
+        return system, offset, {"method": "IERS Bulletin C 72; integer-second system-time to UTC conversion",
                                 "source": LEAP_REFERENCE, "format_source": RINEX_REFERENCE,
+                                "valid_until": LEAP_VALID_UNTIL,
                                 "resolution_note": "Integer-second conversion for five-minute statistics; no subsecond synchrony claim"}
     explicit = _number(resource.get("utc_offset_seconds"))
-    if explicit is not None and resource.get("time_conversion_source"):
-        return system, explicit, {"method": "Registered source time correction", "source": resource["time_conversion_source"]}
+    valid_until = resource.get("time_conversion_valid_until")
+    valid_from = resource.get("time_conversion_valid_from")
+    if (explicit is not None and resource.get("time_conversion_source") and valid_until
+            and last < _dt(valid_until).replace(tzinfo=None)
+            and (not valid_from or first >= _dt(valid_from).replace(tzinfo=None))):
+        return system, explicit, {"method": "Registered source time correction", "source": resource["time_conversion_source"],
+                                  "valid_from": valid_from, "valid_until": valid_until}
     raise GnssProcessingError(f"No supported, sourced UTC conversion for {system} at {first.isoformat()}")
 
 
@@ -167,13 +181,13 @@ def _strength_kind(header, resource, finite, np):
     return "undocumented_signal_strength", declared or "receiver_units", unit_source if declared else "No explicit strength unit"
 
 
-def _parse_resource(resource, path, case_id):
+def _parse_resource(resource, path, case_id, identity=None):
     try:
         import georinex as gr
         import numpy as np
     except ImportError as exc:
         raise GnssProcessingError("GNSS processing requires the optional workbench requirements-gnss.txt") from exc
-    text, decoding = _read_rinex(path)
+    text, decoding, source_identity = _read_rinex(path, identity)
     header = _header(text)
     measures = sorted({code for codes in header["signals"].values() for code in codes
                        if re.fullmatch(r"S[0-9][A-Z]?", code)})
@@ -282,6 +296,7 @@ def _parse_resource(resource, path, case_id):
         return {"processing_version": PROCESSING_VERSION, "resource_id": resource["id"], "case_id": case_id,
                 "station": station, "marker_name": header.get("marker_name"), "coordinates": _coordinates(header, resource),
                 "source_filename": path.name, "role": resource.get("role", "observation"),
+                "source_identity": source_identity,
                 "replay_start": resource.get("replay_start"), "available_at": resource.get("available_at"),
                 "replay_release_at": resource.get("replay_release_at"),
                 "window_start": _iso(observed_start), "window_end": _iso(observed_end),
@@ -351,44 +366,109 @@ def _attach_reference(result, baselines, as_of, replay_start):
     return result
 
 
-def compute_resource(resource, path, cache_dir, *, as_of, case_id, baseline_results=None):
-    """Decode and compute one whole released file; reuse only this code's cache.
+def parsing_metadata(resource):
+    return {key: resource.get(key) for key in PARSING_METADATA_FIELDS} | {
+        "time_table_source": LEAP_REFERENCE, "time_table_valid_until": LEAP_VALID_UNTIL}
 
-    ``baseline_results`` contains prior computed resource dictionaries. The
-    caller registers resource IDs as materials and stores this returned result.
-    Parsing never calls HTTP, the model, a shell command, or old result tables.
+
+def _raw_path(cache_dir, resource, digest):
+    metadata_key = hashlib.sha256(json.dumps(parsing_metadata(resource), sort_keys=True).encode()).hexdigest()[:16]
+    return cache_dir / f"{PROCESSING_VERSION}-{digest}-{metadata_key}.json"
+
+
+def load_raw_cache(cache_path, resource, identity):
+    """Read a catalog-identified result without requiring the retained original."""
+    if not identity or not identity.get("sha256"):
+        return None
+    try:
+        raw = json.loads(Path(cache_path).read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return None
+    if (raw.get("raw_schema_version") != RAW_SCHEMA_VERSION
+            or raw.get("processing_version") != PROCESSING_VERSION
+            or raw.get("parsing_metadata") != parsing_metadata(resource)
+            or raw.get("source_identity", {}).get("sha256") != identity["sha256"]):
+        return None
+    return raw
+
+
+def compute_raw(resource, path, cache_dir, identity=None, temp_dir=None):
+    """One source version yields context-free raw features shared by consumers.
+
+    Catalog callers pass a known byte identity and raw_cache_path after cleanup.
+    A present original only reuses that identity when stored size/mtime still
+    match; otherwise its bytes are identified once during the normal parse read.
     """
-    path, cache_dir = Path(path), Path(cache_dir)
-    stat = path.stat()
-    resource_id = str(resource["id"])
-    if not re.fullmatch(r"[A-Za-z0-9_.-]+", resource_id) or not re.fullmatch(r"[A-Za-z0-9_.-]+", str(case_id)):
-        raise GnssProcessingError("Registered case/resource IDs must be simple identifiers")
-    cache = cache_dir / str(case_id) / f"{resource_id}.{PROCESSING_VERSION}.json"
-    identity = {"processing_version": PROCESSING_VERSION, "resource_id": resource_id,
-                "filename": path.name, "mtime_ns": stat.st_mtime_ns, "size": stat.st_size,
-                "metadata": {key: resource.get(key) for key in ("station", "interval_seconds", "time_system", "utc_offset_seconds",
-                             "time_conversion_source", "signal_unit", "signal_unit_source", "coordinates", "role", "replay_start",
-                             "available_at", "replay_release_at")}}
-    result = None
-    if cache.exists():
-        saved = json.loads(cache.read_text(encoding="utf-8"))
-        if saved.get("identity") == identity and saved.get("result"):
-            result = saved["result"]
-    if result is None:
+    cache_dir = Path(cache_dir)
+    identity = dict(identity or resource.get("source_identity") or {})
+    path = Path(path) if path is not None else None
+    original_present = bool(path and path.is_file())
+    local_index = cache_dir / "local-index" / (path.name + ".json") if path else None
+    if original_present:
+        if not identity.get("sha256") and local_index.exists():
+            try:
+                previous = json.loads(local_index.read_text(encoding="utf-8"))
+                if previous.get("path") == str(path.resolve()) and previous.get("metadata") == parsing_metadata(resource):
+                    identity = previous["identity"]
+            except (OSError, ValueError, KeyError):
+                pass
+        stat = path.stat()
+        if identity.get("size") != stat.st_size or identity.get("mtime_ns") != stat.st_mtime_ns:
+            identity = {}
+    cached_path = resource.get("raw_cache_path") or identity.get("raw_cache_path")
+    if not cached_path and identity.get("sha256"):
+        cached_path = _raw_path(cache_dir, resource, identity["sha256"])
+    if cached_path:
+        cached = load_raw_cache(cached_path, resource, identity)
+        if cached:
+            return cached
+    if not original_present:
+        raise GnssProcessingError("Original absent and no compatible catalog-identified raw feature cache")
+    try:
+        parsed = _parse_resource(resource, path, "", identity=identity)
+        raw = {key: value for key, value in parsed.items() if key not in {
+            "resource_id", "case_id", "role", "replay_start", "available_at", "replay_release_at"}}
+        for row in raw["series"]:
+            row.pop("resource_id", None)
+            row.pop("case_id", None)
+        raw["summary"].pop("reference_status", None)
+        raw.update(raw_schema_version=RAW_SCHEMA_VERSION, parsing_metadata=parsing_metadata(resource))
+        raw["source_identity"].update(mtime_ns=stat.st_mtime_ns)
+        cache = _raw_path(cache_dir, resource, raw["source_identity"]["sha256"])
+        raw["raw_cache_path"] = str(cache)
+        _write_json(cache, raw)
         try:
-            result = _parse_resource(resource, path, str(case_id))
-            # Save the natural work unit before reference comparison or model work.
-            _write_json(cache, {"identity": identity, "result": result})
-        except Exception as exc:
-            _write_json(cache.with_suffix(".failure.json"), {"identity": identity, "status": "failed",
-                        "failed_at": _iso(datetime.now(timezone.utc)), "error": type(exc).__name__,
-                        "message": str(exc).replace(str(path), path.name)[:1000]})
-            raise
-    result = deepcopy(result)
-    if not _visible(result, as_of, str(case_id)):
+            _write_json(local_index, {"path": str(path.resolve()), "metadata": parsing_metadata(resource),
+                                     "identity": raw["source_identity"]})
+        except OSError:
+            raw.setdefault("notes", []).append("Raw feature result saved; optional local lookup pointer could not be written")
+        return raw
+    except Exception as exc:
+        failure = Path(temp_dir or cache_dir) / "gnss-processing.failure.json"
+        _write_json(failure, {"processing_version": PROCESSING_VERSION, "source_identity": identity,
+            "status": "failed", "failed_at": _iso(datetime.now(timezone.utc)), "error": type(exc).__name__,
+            "message": str(exc).replace(str(path), path.name)[:1000]})
+        raise
+
+
+def contextualize_result(raw, resource, *, as_of, case_id, baseline_results=None):
+    """Rebind evidence and recompute references for exactly this consumer."""
+    result = deepcopy(raw)
+    result.pop("raw_cache_path", None)
+    result.update(resource_id=resource["id"], case_id=case_id, role=resource.get("role", "observation"),
+                  replay_start=resource.get("replay_start"), available_at=resource.get("available_at"),
+                  replay_release_at=resource.get("replay_release_at"), as_of=_iso(_dt(as_of)))
+    for row in result["series"]:
+        row.update(resource_id=resource["id"], case_id=case_id)
+    if not _visible(result, as_of, case_id):
         raise GnssProcessingError("Actual resource observation/release end is later than this immutable replay as_of")
-    result["as_of"] = _iso(_dt(as_of))
     return _attach_reference(result, baseline_results or [], as_of, resource.get("replay_start"))
+
+
+def compute_resource(resource, path, cache_dir, *, as_of, case_id, baseline_results=None):
+    """Compatibility entry point; acquisition consumers should use raw cache APIs."""
+    raw = compute_raw(resource, path, cache_dir, identity=resource.get("source_identity"))
+    return contextualize_result(raw, resource, as_of=as_of, case_id=case_id, baseline_results=baseline_results)
 
 
 def _rows(results, as_of, case_id=None, station=None, signal=None, window_start=None, window_end=None):

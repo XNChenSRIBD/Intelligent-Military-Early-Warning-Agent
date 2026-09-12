@@ -19,6 +19,24 @@
     <aside class="controls panel">
       <div class="panel-heading"><span class="eyebrow">工作空间</span><span class="tiny-label">01 / 配置</span></div>
       <nav class="mode-switch" aria-label="资料模式"><button id="online-tab" class="active" type="button">自动监测</button><button id="history-tab" type="button">历史案例</button></nav>
+      <button id="acquisition-tab" class="full workspace-entry" type="button">数据获取与存储</button>
+      <section id="acquisition-controls" hidden>
+        <div class="section-heading"><h2>GNSS 来源订阅</h2><button id="acquisition-new-subscription" class="text-button" type="button">＋ 新建</button></div>
+        <p class="small muted">配置保存到服务器，由后台持续获取、计算和分析。</p>
+        <label for="acquisition-subscription-select">已保存订阅</label><select id="acquisition-subscription-select"><option value="">新建订阅</option></select>
+        <form id="acquisition-subscription-form">
+          <label for="acquisition-source">原始来源</label><select id="acquisition-source"><option value="cddis">CDDIS / Earthdata</option><option value="bkg">BKG archive</option></select>
+          <label for="acquisition-stations">实际站点（每行一个）</label><textarea id="acquisition-stations" rows="3" placeholder="输入 9 位 IGS 站号" required></textarea>
+          <label for="acquisition-product">采样产品</label><select id="acquisition-product"><option value="daily">Daily · 日文件</option><option value="highrate">High-rate · 高频切片</option></select>
+          <div class="field-pair"><div><label for="acquisition-start">起始日期 UTC</label><input id="acquisition-start" type="date"></div><div><label for="acquisition-end">结束日期 UTC</label><input id="acquisition-end" type="date"></div></div>
+          <p class="micro muted">结束日期留空时持续发现已发布资料。</p>
+          <div id="acquisition-hours-field" hidden><label for="acquisition-hours">UTC 小时（0–23，以逗号分隔）</label><input id="acquisition-hours" type="text" placeholder="留空为全部小时"></div>
+          <label for="acquisition-interval">检查周期（分钟）</label><input id="acquisition-interval" type="number" min="1" step="1" value="60" required>
+          <label class="checkbox-label acquisition-enabled-label"><input id="acquisition-enabled" type="checkbox"><span>启用自动获取</span></label>
+          <button id="acquisition-save-subscription" class="primary full" type="submit">保存订阅</button>
+        </form>
+        <div id="acquisition-subscription-status" class="small muted"></div>
+      </section>
       <section id="online-controls">
         <div class="section-heading"><h2 id="pipeline-control-title">持续监测</h2><span id="pipeline-enabled" class="badge">读取中</span></div>
         <p id="pipeline-scope" class="small muted">霍尔木兹海峡 · 民用航运公开资料</p>
@@ -93,6 +111,14 @@
         <div id="history-charts"></div>
         <div class="section-heading"><h3>案例资料</h3><span class="tiny-label">原报告与来源目录</span></div>
         <div id="history-documents" class="history-documents"></div>
+      </div>
+      <div id="acquisition-content" hidden>
+        <div class="pipeline-overview"><p id="acquisition-status">正在读取服务器资源状态…</p><p id="acquisition-queue-summary" class="small muted"></p><p id="acquisition-storage-summary" class="small muted"></p></div>
+        <div class="section-heading"><h3>双案例资源需求</h3><span class="tiny-label">服务器原件与计算结果</span></div><div id="acquisition-cases" class="acquisition-cases"></div>
+        <div class="list-heading"><h3>最近获取与计算任务</h3><select id="acquisition-task-filter" aria-label="筛选资源任务"><option value="all">全部任务</option><option value="pending">等待与进行中</option><option value="issues">重试与具体缺口</option><option value="ready">已计算</option></select></div><div id="acquisition-tasks" class="material-list"></div>
+        <div class="section-heading acquisition-heading"><h3>服务器存储</h3><span class="tiny-label">受管与长期保存分列</span></div><div id="acquisition-storage" class="acquisition-storage"></div><details class="observation-fold"><summary>实际目录与数据范围</summary><div id="acquisition-paths"></div></details>
+        <details id="acquisition-policy-fold" class="observation-fold"><summary>保留期限与容量策略</summary><form id="acquisition-policy-form"><div id="acquisition-policy-fields" class="acquisition-policy-fields"></div><label class="checkbox-label"><input id="acquisition-autoclean" type="checkbox"><span>启用策略自动清理</span></label><p class="small muted">仅处理服务器台账中可回收的受管文件。指标、已引用依据与报告独立保留。</p><button id="acquisition-save-policy" class="full" type="submit">保存保留策略</button></form></details>
+        <div class="section-heading acquisition-heading"><h3>清理记录</h3><button id="acquisition-cleanup" class="text-button" type="button">提交缓存清理任务</button></div><div id="acquisition-cleanup-status" class="small muted"></div><div id="acquisition-cleanup-records"></div>
       </div>
     </section>
     <aside class="details-panel panel"><div class="panel-heading"><span class="eyebrow">依据、分析与处理记录</span><span class="tiny-label">03 / 详情</span></div><div id="detail-content"><div class="empty-state detail-empty"><span class="empty-symbol" aria-hidden="true">≡</span><h3>查看异常依据</h3><p>选择一条动态，查看程序规则、Qwen 结论和原始材料。</p></div></div></aside>

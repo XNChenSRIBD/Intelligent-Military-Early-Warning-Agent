@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(ROOT / '.env')
+SERVER_ASSETS = '/home/xnchen/gnss_public_data/chasing_lightning' if os.name != 'nt' else str(ROOT.parents[1] / 'public_data_chasing_lightning')
+SERVER_RUNTIME = '/home/xnchen/gnss_public_data/early_warning_runtime' if os.name != 'nt' else str(ROOT / 'runtime-server')
 
 
 @dataclass
@@ -52,7 +54,11 @@ class Settings:
     pipeline_mode: str = os.getenv('PIPELINE_MODE', 'online')
     replay_manifests: tuple = tuple(value.strip() for value in os.getenv(
         'REPLAY_MANIFESTS', 'cases/replay/kharkiv/manifest.json;cases/replay/hormuz/manifest.json').split(';') if value.strip())
-    replay_asset_root: Path = Path(os.getenv('REPLAY_ASSET_ROOT', str(ROOT.parents[1] / 'public_data_chasing_lightning')))
+    server_asset_root: Path = Path(os.getenv('SERVER_ASSET_ROOT', os.getenv('REPLAY_ASSET_ROOT', SERVER_ASSETS)))
+    server_runtime_root: Path = Path(os.getenv('SERVER_RUNTIME_ROOT', SERVER_RUNTIME))
+    acquisition_enabled: bool = os.getenv('ACQUISITION_ENABLED', 'false').lower() == 'true'
+    acquisition_autoclean: bool = os.getenv('ACQUISITION_AUTOCLEAN', 'false').lower() == 'true'
+    replay_asset_root: Path = Path(os.getenv('SERVER_ASSET_ROOT', os.getenv('REPLAY_ASSET_ROOT', SERVER_ASSETS)))
     replay_autostart: bool = os.getenv('REPLAY_AUTOSTART', 'true').lower() == 'true'
     replay_max_attempts: int = int(os.getenv('REPLAY_MAX_ATTEMPTS', '3'))
 
