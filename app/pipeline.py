@@ -484,6 +484,12 @@ class Pipeline:
             async with self.runner.model_lock:
                 if not self.running() or self.stopping:
                     return
+                current_batch = [self.store.get('work', work['id']) for work in batch]
+                if any(not work or work.get('superseded') or work['status'] not in ('queued', 'retry_wait')
+                       for work in current_batch):
+                    return
+                batch = current_batch
+                tool_materials = {m['id']: m for work in batch for m in work['input']['materials']}
                 with self.store.atomic():
                     run['status'] = 'running'
                     self.store.save('run', run)

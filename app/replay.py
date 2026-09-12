@@ -57,6 +57,23 @@ class CaseReplay(Pipeline):
             if work['status'] == 'running':
                 work.update(status='queued', next_retry_at=now(), error='重启后续接同一 as_of')
                 store.save('work', work)
+        # Reconstruct completion from the retained work, including upgrades
+        # from a version that counted an awaiting batch as completed.
+        for case_id in self.case_order:
+            case = store.get('replay_case', case_id)
+            if not case or not case.get('released_batches'):
+                continue
+            works = self.case_works(case_id)
+            completed = 0
+            for index in range(case['released_batches']):
+                if any(work['status'] != 'completed' for work in works if work.get('batch_index') == index):
+                    break
+                completed = index + 1
+            if case.get('completed_batches') != completed:
+                case['completed_batches'] = completed
+                if case['status'] not in ('blocked', 'incomplete'):
+                    case['status'] = 'analyzing'
+                store.save('replay_case', case)
 
     def register_case(self, definition):
         case_id = definition['case_id']
@@ -186,10 +203,11 @@ class CaseReplay(Pipeline):
             return case
         definition = self.definitions[case['case_id']]
         changed_resources = [self.store.get('replay_resource', identifier) for identifier in changed]
-        first = 0 if any(resource.get('role') == 'baseline' for resource in changed_resources) else min(
+        baseline_changed = any(resource.get('role') == 'baseline' for resource in changed_resources)
+        first = 0 if baseline_changed else min(
             (index for index, batch in enumerate(definition['batches']) if set(changed) & set(batch['resource_ids'])),
             default=case.get('released_batches', 0))
-        if first > case.get('released_batches', 0):
+        if not baseline_changed and first >= case.get('released_batches', 0):
             case['available_versions'] = available
             self.store.save('replay_case', case)
             return case
@@ -203,7 +221,7 @@ class CaseReplay(Pipeline):
                     work['status'] = 'superseded'
                 self.store.save('work', work)
         case.update(available_versions=available, run_revision=case.get('run_revision', 0) + 1,
-            released_batches=first, completed_batches=first, baseline_ready=False,
+            released_batches=first, completed_batches=min(case.get('completed_batches', 0), first), baseline_ready=False,
             as_of=definition['batches'][first - 1]['as_of'] if first else definition['start_at'],
             status='preparing', quality_status='pending', completed_at=None, reason=None,
             revision_reason={'resource_ids': changed, 'from_batch': first, 'at': now()})
