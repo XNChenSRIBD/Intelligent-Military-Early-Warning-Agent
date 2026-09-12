@@ -12,6 +12,7 @@
     <div class="brand"><span class="brand-mark" aria-hidden="true">◈</span><div><h1>公开资料工作台</h1><p>PUBLIC INFORMATION WORKSPACE</p></div></div>
     <div class="top-status"><span id="mode-badge" class="badge accent">自动监测</span><span id="pipeline-status" class="status-item">流水线 · 读取中</span><span id="model-status" class="status-item">Qwen · 尚无调用记录</span><span id="source-status" class="status-item">来源 · 尚无检查记录</span></div>
     <div class="top-update"><span>最近采集 <strong id="last-success">尚无记录</strong></span><span>最近分析 <strong id="last-analysis">尚无记录</strong></span><span id="pipeline-backlog">待分析 —</span></div>
+    <div id="replay-top-status" class="replay-top-status" hidden></div>
   </header>
   <div id="notice" class="notice" role="status" hidden></div>
   <main class="workspace">
@@ -19,9 +20,10 @@
       <div class="panel-heading"><span class="eyebrow">工作空间</span><span class="tiny-label">01 / 配置</span></div>
       <nav class="mode-switch" aria-label="资料模式"><button id="online-tab" class="active" type="button">自动监测</button><button id="history-tab" type="button">历史案例</button></nav>
       <section id="online-controls">
-        <div class="section-heading"><h2>持续监测</h2><span id="pipeline-enabled" class="badge">读取中</span></div>
+        <div class="section-heading"><h2 id="pipeline-control-title">持续监测</h2><span id="pipeline-enabled" class="badge">读取中</span></div>
         <p id="pipeline-scope" class="small muted">霍尔木兹海峡 · 民用航运公开资料</p>
         <button id="pipeline-pause" class="primary full" type="button" disabled>读取运行状态…</button>
+        <section id="replay-controls" hidden><div class="section-heading"><h3>本次案例</h3><span class="tiny-label">查看进度</span></div><div id="replay-case-list" class="replay-case-list"></div><p class="micro muted">后台自动顺序处理。选择案例仅切换查看内容，已完成结果持续保留。</p></section>
         <form id="pipeline-form">
           <label for="pipeline-news-topic">新闻主题词</label><textarea id="pipeline-news-topic" rows="2" required></textarea>
           <label for="pipeline-rss-terms">RSS 筛选词（每行一个）</label><textarea id="pipeline-rss-terms" rows="2"></textarea>
@@ -64,7 +66,8 @@
           <div class="list-heading"><h3>异常动态 <span id="pipeline-alert-count" class="count-label">0</span></h3><select id="pipeline-alert-filter" aria-label="筛选自动异常"><option value="all">全部动态</option><option value="unread">未读</option><option value="active">持续与待分析</option><option value="ended">解除与撤销</option></select></div>
           <div id="pipeline-alert-list" class="material-list"></div>
           <details class="observation-fold"><summary>最近资料处理记录</summary><div id="pipeline-recent-runs" class="material-list"></div></details>
-          <div class="section-heading pipeline-chart-heading"><h3>数值观测</h3><span class="tiny-label">PortWatch · 日度资料</span></div>
+          <section id="gnss-content" hidden><div class="section-heading pipeline-chart-heading"><h3>GNSS 真实观测</h3><span class="tiny-label">CNR p10 · dB-Hz</span></div><p id="gnss-coverage" class="small muted"></p><label for="gnss-series-select" class="small muted">实际站点 / 信号</label><select id="gnss-series-select" aria-label="选择实际 GNSS 站点和信号"></select><div id="gnss-summary" class="gnss-summary"></div><div class="chart-card"><div id="gnss-chart"></div><div id="gnss-chart-legend" class="chart-legend"></div><p id="gnss-chart-note"></p></div><details class="observation-fold"><summary>观测窗口、质量与原始依据</summary><div id="gnss-observations" class="table-scroll"></div></details></section>
+          <div id="pipeline-pw-heading" class="section-heading pipeline-chart-heading"><h3>数值观测</h3><span class="tiny-label">PortWatch · 日度资料</span></div>
         </section>
         <button id="pipeline-view" class="text-button" type="button" hidden>← 返回自动监测看板</button>
         <div id="portwatch-content" hidden>

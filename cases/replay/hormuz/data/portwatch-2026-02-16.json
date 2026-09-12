@@ -1,0 +1,30 @@
+{
+  "attributes": {
+    "date": "2026-02-16",
+    "year": 2026,
+    "month": 2,
+    "day": 16,
+    "portid": "chokepoint6",
+    "portname": "Strait of Hormuz",
+    "n_container": 6,
+    "n_dry_bulk": 3,
+    "n_general_cargo": 4,
+    "n_roro": 1,
+    "n_tanker": 27,
+    "n_cargo": 14,
+    "n_total": 41,
+    "capacity_container": 147998,
+    "capacity_dry_bulk": 84874,
+    "capacity_general_cargo": 31566,
+    "capacity_roro": 4621,
+    "capacity_tanker": 1381731,
+    "capacity_cargo": 269061,
+    "capacity": 1650792,
+    "ObjectId": 16859
+  },
+  "source": "IMF PortWatch / ArcGIS Daily_Chokepoints_Data",
+  "source_key": "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/Daily_Chokepoints_Data/FeatureServer/0",
+  "original_artifact": "iran_20260228/portwatch_wto/portwatch_hormuz_20260214_20260314.json",
+  "snapshot_fetched_at": "2026-08-05T04:22:50.3008088Z",
+  "historical_revision_status": "事后取得的历史数据，不能代表当时冻结版本。"
+}

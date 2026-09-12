@@ -3,6 +3,12 @@ const ui = {
   mode: 'online',
   onlineView: 'pipeline',
   pipeline: null,
+  replayCaseId: localStorage.getItem('workspace-replay-case') || '',
+  replayCase: null,
+  replayCaseSignature: '',
+  replayListSignature: '',
+  gnssSeriesKey: '',
+  gnssSignature: '',
   pipelineFormLoaded: false,
   pipelineFormDirty: false,
   pipelineAlert: null,
@@ -40,6 +46,8 @@ const labels = {
   initialization: '初始化发现', update: '后续更新', revision: '来源修订', stale: '旧证据版本',
   paused: '已暂停', enabled: '已启用', retry_wait: '等待自动重试', insufficient_evidence: '证据不足', new: '新增', ongoing: '持续', revised: '修订',
   numeric_rule: '数值规则异常', news_clue: '公开报道线索', no_anomaly: '本批未形成异常线索', monitoring: '持续监测中',
+  case_replay: '历史自动回放', gnss_observation: 'GNSS 观测线索', gnss: 'GNSS 观测', blocked: '未完成 · 已阻塞',
+  prepared: '输入已准备', processing: '处理观测', pending_inputs: '等待输入', partial: '部分完成',
 };
 const label = (value) => labels[value] || value || '—';
 const isRunning = (run) => run && ['running', 'queued', 'cancelling'].includes(run.status);
@@ -75,6 +83,14 @@ function currentRun() { const run = ui.runs.find((item) => String(item.id) === S
 function activeRun() { return ui.state?.runs.find((item) => String(item.id) === String(ui.state.active_run_id)); }
 function isPortWatch() { return (currentMonitor()?.source || $('source').value) === 'portwatch'; }
 function isPipeline() { return ui.mode === 'online' && ui.onlineView === 'pipeline'; }
+function isCaseReplay() { return ui.pipeline?.mode === 'case_replay'; }
+function selectedReplaySummary() { return ui.pipeline?.replay?.cases?.find((item) => item.case_id === ui.replayCaseId); }
+function pipelineAlerts() { return isCaseReplay() ? ui.replayCase?.alerts || (ui.pipeline?.alerts || []).filter((item) => item.case_id === ui.replayCaseId) : ui.pipeline?.alerts || []; }
+function utcDate(value) {
+  if (!value) return '未声明';
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? String(value) : `${parsed.toISOString().replace('T',' ').replace('.000Z','')} UTC`;
+}
 function renderSourceSettings() {
   const portwatch = $('source').value === 'portwatch';
   $('topic-label').textContent = portwatch ? '监测名称' : '主题 / 关键词';
@@ -230,24 +246,40 @@ function renderPipelineStatus() {
   const pipeline = ui.pipeline;
   if (!pipeline) return;
   const paused = pipeline.paused || !pipeline.enabled;
+  const replayMode = isCaseReplay(), replay = pipeline.replay;
+  $('pipeline-control-title').textContent = replayMode ? '历史自动回放' : '持续监测';
+  $('online-tab').textContent = replayMode ? '自动回放' : '自动监测';
+  $('history-tab').textContent = replayMode ? '历史参考' : '历史案例';
+  $('pipeline-form').hidden = replayMode;
+  $('replay-controls').hidden = !replayMode;
+  $('replay-top-status').hidden = !replayMode;
+  document.body.classList.toggle('case-replay-mode', replayMode);
   $('pipeline-status').textContent = `流水线 · ${!pipeline.enabled ? '未启用' : pipeline.paused ? '已暂停' : label(pipeline.status || 'monitoring')}`;
   $('pipeline-status').className = `status-item ${paused ? '' : 'busy'}`;
   $('pipeline-enabled').textContent = !pipeline.enabled ? '未启用' : pipeline.paused ? '已暂停' : '已启用';
-  $('pipeline-pause').textContent = pipeline.paused ? '恢复自动监测' : '暂停自动监测';
+  $('pipeline-pause').textContent = pipeline.paused ? `恢复${replayMode ? '自动回放' : '自动监测'}` : `暂停${replayMode ? '自动回放' : '自动监测'}`;
   $('pipeline-pause').disabled = !pipeline.enabled || ui.saving;
   const scope = pipeline.scope;
   $('pipeline-scope').textContent = typeof scope === 'string' ? scope : scope?.name || scope?.label || '霍尔木兹海峡 · 民用航运公开资料';
+  if (replayMode) {
+    $('pipeline-scope').textContent = '哈尔科夫与霍尔木兹 · 历史观测顺序回放';
+    const current = replay?.cases?.find((item) => item.case_id === replay.current_case_id);
+    $('replay-top-status').textContent = `后台当前：${current?.label || replay?.current_case_id || '尚未开始'} · 截止 ${utcDate(current?.as_of || replay?.as_of)} · 本例 ${current?.completed_batches || 0}/${current?.total_batches || 0} 批 · ${label(replay?.status || current?.status || 'queued')}${current?.reason ? ` · ${current.reason}` : ''}`;
+    renderReplayCases();
+  }
   const counts = pipeline.counts || {};
   const backlog = (counts.queued || 0) + (counts.running || 0) + (counts.retry_wait || 0);
   $('pipeline-backlog').textContent = `待分析 ${backlog} · 重试 ${counts.retry_wait || 0}`;
   $('last-analysis').textContent = pipeline.last_analyzed_at ? date(pipeline.last_analyzed_at) : '尚无记录';
   if (isPipeline()) {
-    $('mode-badge').textContent = '自动监测';
+    $('mode-badge').textContent = replayMode ? '历史自动回放' : '自动监测';
     $('last-success').textContent = pipeline.last_collected_at ? date(pipeline.last_collected_at) : '尚无记录';
     const dated = (pipeline.sources || []).filter((source) => source.latest_observed_date);
     $('source-status').textContent = dated.length ? dated.map((source) => `${source.name || source.source} · 数据截至 ${date(source.latest_observed_date)}`).join(' / ') : '来源数据日期 · 尚无记录';
     $('source-status').title = $('source-status').textContent;
+    if (replayMode) $('source-status').textContent = `回放实例 · ${replay?.instance_id || '尚未建立'}`;
   }
+  if (replayMode) return;
   if (!ui.pipelineFormLoaded || !ui.pipelineFormDirty && document.activeElement?.closest('#pipeline-form') == null) {
     $('pipeline-news-topic').value = pipeline.config?.news_topic || '';
     $('pipeline-rss-terms').value = (pipeline.config?.rss_terms || []).join('\n');
@@ -271,31 +303,198 @@ function renderPipelineStatus() {
   }
 }
 async function loadPipeline() {
-  const source = ui.pipeline?.sources?.find((item) => item.source === 'portwatch');
-  ui.metrics = source?.monitor_id ? await api(`/api/monitors/${encodeURIComponent(source.monitor_id)}/metrics`) : null;
-  ui.alerts = (ui.pipeline?.alerts || []).filter((alert) => alert.origin_type === 'numeric_rule' || alert.rule);
+  let monitorId, requestedCaseId;
+  if (isCaseReplay()) {
+    const cases = ui.pipeline.replay?.cases || [];
+    if (!cases.some((item) => item.case_id === ui.replayCaseId)) {
+      ui.replayCaseId = ui.pipeline.replay?.current_case_id || cases[0]?.case_id || '';
+      ui.replayCase = null; ui.replayCaseSignature = '';
+    }
+    const caseId = ui.replayCaseId;
+    requestedCaseId = caseId;
+    const signature = JSON.stringify([ui.pipeline.replay?.instance_id, selectedReplaySummary(), (ui.pipeline.alerts || []).filter((item) => item.case_id === caseId)]);
+    if (caseId && signature !== ui.replayCaseSignature) {
+      const detail = await api(`/api/replay/cases/${encodeURIComponent(caseId)}`);
+      if (caseId !== ui.replayCaseId || !isPipeline()) return;
+      ui.replayCase = detail; ui.replayCaseSignature = signature;
+    }
+    monitorId = ui.replayCase?.portwatch_monitor_id;
+  } else monitorId = ui.pipeline?.sources?.find((item) => item.source === 'portwatch')?.monitor_id;
+  const metrics = monitorId ? await api(`/api/monitors/${encodeURIComponent(monitorId)}/metrics`) : null;
+  if (requestedCaseId !== undefined && requestedCaseId !== ui.replayCaseId) return;
+  ui.metrics = metrics;
+  ui.alerts = pipelineAlerts().filter((alert) => alert.origin_type === 'numeric_rule' || alert.rule);
   if (!isPipeline()) return;
   renderOnline();
   if (ui.detail === 'pipeline-alert' && ui.alertId) {
-    const summary = (ui.pipeline.alerts || []).find((alert) => String(alert.id) === String(ui.alertId));
+    const summary = pipelineAlerts().find((alert) => String(alert.id) === String(ui.alertId));
     const signature = summary ? JSON.stringify(summary) : '';
     if (signature && signature !== ui.pipelineDetailSignature) await openPipelineAlert(ui.alertId, false, signature);
   }
 }
+function coverageText(value) {
+  if (!value) return '覆盖尚未声明';
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.map(coverageText).join('；');
+  return value.summary || value.note || value.detail || Object.entries(value).map(([key,item]) => `${key}：${typeof item === 'object' ? coverageText(item) : item}`).join('；');
+}
+function renderReplayCases() {
+  const replay = ui.pipeline?.replay;
+  const signature = JSON.stringify([replay?.cases,ui.replayCaseId,replay?.current_case_id]);
+  if (signature === ui.replayListSignature) return;
+  ui.replayListSignature = signature;
+  const list = $('replay-case-list'); list.replaceChildren();
+  (replay?.cases || []).forEach((item) => {
+    const card = el('button',`replay-case${item.case_id === ui.replayCaseId ? ' active' : ''}`); card.type = 'button';
+    card.setAttribute('aria-pressed',String(item.case_id === ui.replayCaseId));
+    const top = el('div','card-top'); top.append(el('strong','',item.label || item.case_id),badge(label(item.status || 'queued'),item.status === 'blocked' ? 'waiting' : ''));
+    card.append(top,el('p','',`已完成 ${item.completed_batches || 0}/${item.total_batches || 0} 批 · 已释放 ${item.released_batches || 0}`));
+    const progress = el('progress'); progress.max = Math.max(1,item.total_batches || 0); progress.value = item.completed_batches || 0; progress.setAttribute('aria-label',`${item.label || item.case_id} 已完成批次`); card.append(progress);
+    card.append(el('p','micro muted',coverageText(item.coverage)),el('p','micro muted',`观测资源 ${item.gnss_resources ?? '—'} · 已处理 ${item.processed_resources ?? '—'} · 排队 ${item.queued || 0} · 失败 ${item.failed || 0}`));
+    if (item.quality_status) card.append(el('p','micro muted',`结果质量：${label(item.quality_status)}`));
+    if (item.reason) card.append(el('p','source-error',item.reason));
+    if (item.case_id === replay.current_case_id) card.append(el('span','micro replay-current','后台当前案例'));
+    card.addEventListener('click',async () => {
+      ui.replayCaseId = item.case_id; localStorage.setItem('workspace-replay-case',item.case_id);
+      ui.replayCase = null; ui.replayCaseSignature = ''; ui.gnssSignature = ''; ui.gnssSeriesKey = ''; ui.detail = null; ui.alertId = null; ui.metrics = null;
+      renderPipeline();
+      try { await loadPipeline(); } catch (error) { notify(error.message); }
+    });
+    list.append(card);
+  });
+  if (!replay?.cases?.length) list.append(el('p','small muted','尚无已配置案例；等待案例清单。'));
+}
+function renderGnss() {
+  const detail = ui.replayCase;
+  const allRows = detail?.gnss?.series || [];
+  const rows = allRows.filter((row) => (row.unit || detail?.gnss?.units) === 'dB-Hz').map((row) => ({...row,time:row.time || row.bin_start || row.window_start,p10:row.p10 ?? row.cnr_p10,delta_db:row.delta_db ?? row.delta_p10,valid_samples:row.valid_samples ?? row.valid_count}));
+  const groups = new Map();
+  rows.forEach((row) => {
+    const key = `${row.station || '未声明站点'} / ${row.signal || '未声明信号'}`;
+    if (!groups.has(key)) groups.set(key,[]);
+    groups.get(key).push(row);
+  });
+  if (!groups.has(ui.gnssSeriesKey)) ui.gnssSeriesKey = groups.keys().next().value || '';
+  const signature = JSON.stringify([detail?.case_id,detail?.as_of,detail?.gnss,detail?.coverage,ui.gnssSeriesKey]);
+  if (signature === ui.gnssSignature) return;
+  ui.gnssSignature = signature;
+  const otherUnits = [...new Set(allRows.filter((row) => (row.unit || detail?.gnss?.units) !== 'dB-Hz').map((row) => row.unit || row.value_kind || '单位未声明'))];
+  $('gnss-coverage').textContent = `${coverageText(detail?.coverage || selectedReplaySummary()?.coverage)}${detail?.as_of ? ` · 仅展示截至 ${utcDate(detail.as_of)} 已释放的观测。` : ''}${otherUnits.length ? ` 另有 ${otherUnits.join('、')} 观测，原始统计保留在材料中，不作为载噪比曲线。` : ''}`;
+  const select = $('gnss-series-select'); select.replaceChildren();
+  groups.forEach((_,key) => select.add(new Option(key,key)));
+  if (!groups.size) select.add(new Option('尚无已处理 GNSS 窗口',''));
+  select.value = ui.gnssSeriesKey; select.disabled = !groups.size;
+  const data = [...(groups.get(ui.gnssSeriesKey) || [])].sort((a,b) => Date.parse(a.time) - Date.parse(b.time));
+  const latest = data.at(-1), summary = $('gnss-summary'); summary.replaceChildren();
+  [['当前窗口 CNR p10',latest ? `${number(latest.p10)} dB-Hz` : '尚无观测'],['可比历史 p10',numeric(latest?.baseline_p10) ? `${number(latest.baseline_p10)} dB-Hz` : '参考不足'],['当前 − 历史',numeric(latest?.delta_db) ? `${number(latest.delta_db)} dB` : '无法比较']].forEach(([title,value]) => { const block = el('div'); block.append(el('span','',title),el('strong','',value)); summary.append(block); });
+  const intervals = [...new Set(data.map((row) => row.interval_seconds).filter(numeric))];
+  $('gnss-chart-note').textContent = `${ui.gnssSeriesKey || '实际站点 / 信号待处理'} · 原始采样 ${intervals.length ? intervals.map((item) => `${number(item)} 秒`).join(' / ') : '未声明'}。曲线点为实际分窗统计；缺口断开，无可比参考时不画参考线。描述统计与 Qwen 线索分别保存。`;
+  const parent = $('gnss-chart'); parent.replaceChildren();
+  const legend = $('gnss-chart-legend'); legend.replaceChildren();
+  const lines = [['p10','#087f76','实际窗口 CNR p10'],...(data.some((row) => numeric(row.baseline_p10)) ? [['baseline_p10','#71858c','同站同信号可比历史 p10']] : [])];
+  lines.forEach(([,color,name]) => { const item = el('span','legend-item'), line = el('span','legend-line'); line.style.background = color; item.append(line,el('span','',name)); legend.append(item); });
+  const plottable = data.filter((row) => Number.isFinite(Date.parse(row.time)));
+  if (!plottable.some((row) => numeric(row.p10))) parent.append(el('div','chart-empty',detail?.reason || '尚无有效 GNSS 数值；实际计算完成后自动显示。'));
+  else {
+    const width = 640, height = 245, left = 45, right = 18, top = 15, bottom = 43;
+    const chart = svgNode('svg',{viewBox:`0 0 ${width} ${height}`,class:'chart-svg gnss-chart',role:'img','aria-label':`${ui.gnssSeriesKey} CNR p10 与实际历史参考，dB-Hz，UTC；缺口断开。`});
+    const values = plottable.flatMap((row) => lines.map(([key]) => row[key]).filter(numeric));
+    const low = Math.floor(Math.min(...values)-1), high = Math.ceil(Math.max(...values)+1);
+    const start = Date.parse(plottable[0].time), end = Date.parse(plottable.at(-1).time);
+    const x = (row) => left + (end === start ? .5 : (Date.parse(row.time)-start)/(end-start))*(width-left-right);
+    const y = (value) => height-bottom-(value-low)/(high-low)*(height-top-bottom);
+    const gaps = plottable.slice(1).map((row,index) => Date.parse(row.time)-Date.parse(plottable[index].time)).filter((value) => value > 0);
+    const cadence = Math.min(86400000,...gaps);
+    for (let tick = 0; tick <= 4; tick++) {
+      const value = low+(high-low)*tick/4;
+      chart.append(svgNode('line',{x1:left,y1:y(value),x2:width-right,y2:y(value),class:'grid'}),svgNode('text',{x:left-7,y:y(value)+3,'text-anchor':'end'},number(value)));
+    }
+    [...lines].reverse().forEach(([key,color]) => {
+      let path = '', previous = null;
+      plottable.forEach((row) => {
+        if (!numeric(row[key])) { previous = null; return; }
+        const previousEnd = previous?.window_end || previous?.end;
+        const currentStart = row.window_start || row.start || row.time;
+        const contiguous = previous && !previous.gap && !row.gap && (previousEnd ? Date.parse(currentStart) <= Date.parse(previousEnd) + 1000 : Date.parse(row.time)-Date.parse(previous.time) <= cadence * 1.5);
+        path += `${contiguous ? 'L' : 'M'}${x(row)},${y(row[key])} `;
+        const point = svgNode('circle',{cx:x(row),cy:y(row[key]),r:key === 'p10' ? 2.4 : 1.8,fill:color});
+        point.append(svgNode('title',{},`${utcDate(row.time)} · ${key === 'p10' ? '当前' : '历史参考'} ${number(row[key])} dB-Hz · 原始采样 ${number(row.interval_seconds)} 秒 · 有效样本 ${row.valid_samples ?? '未声明'}`));
+        chart.append(point); previous = row;
+      });
+      chart.append(svgNode('path',{d:path,fill:'none',stroke:color,'stroke-width':key === 'p10' ? 2.2 : 1.4,...(key === 'p10' ? {} : {'stroke-dasharray':'5 4'})}));
+    });
+    const tickIndices = [...new Set([0,Math.floor((plottable.length-1)/2),plottable.length-1])];
+    tickIndices.forEach((index) => {
+      const row = plottable[index], stamp = new Date(row.time).toISOString();
+      const text = svgNode('text',{x:x(row),y:height-22,'text-anchor':index === 0 ? 'start' : index === plottable.length-1 ? 'end' : 'middle'},stamp.slice(0,10));
+      text.append(svgNode('tspan',{x:x(row),dy:13},`${stamp.slice(11,16)} UTC`)); chart.append(text);
+    });
+    parent.append(chart);
+  }
+  const tableParent = $('gnss-observations'); tableParent.replaceChildren();
+  if (!data.length) tableParent.append(el('p','small muted','本案例尚无已释放并完成计算的 GNSS 窗口。'));
+  else {
+    const table = el('table','daily-table'), head = el('thead'), tr = el('tr'), body = el('tbody');
+    ['窗口 UTC','p10 / 参考','有效样本 / 比例','依据'].forEach((title) => tr.append(el('th','',title))); head.append(tr);
+    [...data].reverse().forEach((row) => {
+      const line = el('tr'), window = el('td'), source = el('td');
+      const button = el('button','text-button',utcDate(row.time)); button.type = 'button'; button.addEventListener('click',() => renderGnssDetail(row)); window.append(button);
+      appendMaterialLink(row,source);
+      line.append(window,el('td','',`${number(row.p10)} / ${number(row.baseline_p10)}`),el('td','',`${row.valid_samples ?? '未声明'} / ${numeric(row.valid_ratio) ? `${number(row.valid_ratio*100)}%` : '未声明'}`),source); body.append(line);
+    });
+    table.append(head,body); tableParent.append(table);
+  }
+}
+function renderGnssDetail(row) {
+  ui.detail = 'gnss-observation';
+  $('detail-content').replaceChildren(badge('GNSS · 本次实际统计','accent'),el('h2','detail-heading',`${row.station} · ${row.signal}`));
+  facts([['案例',ui.replayCase?.label || ui.replayCaseId],['观测窗口',`${utcDate(row.window_start || row.start || row.time)} 至 ${utcDate(row.window_end || row.end || row.time)}`],['回放截止',utcDate(ui.replayCase?.as_of)],['原始采样',numeric(row.interval_seconds) ? `${number(row.interval_seconds)} 秒` : '未声明'],['原时间系统',row.time_system],['CNR p10',`${number(row.p10)} dB-Hz`],['可比历史 p10',numeric(row.baseline_p10) ? `${number(row.baseline_p10)} dB-Hz` : '参考不足'],['当前 − 历史',numeric(row.delta_db) ? `${number(row.delta_db)} dB` : '无法比较'],['有效样本',row.valid_samples],['历元数',row.epoch_count],['缺失历元',row.missing_epoch_count],['有效比例',numeric(row.valid_ratio) ? `${number(row.valid_ratio*100)}%` : '未声明'],['处理版本',row.processing_version]],section('观测与计算口径'));
+  const evidence = section('原始材料与基线依据'); appendMaterialLink(row,evidence); appendResourceLinks(row,evidence);
+  if (row.baseline_resource_ids?.length) { evidence.append(el('p','small muted','实际历史基线资源')); appendResourceLinks({resource_ids:row.baseline_resource_ids},evidence); }
+  automaticReferences(row.baseline_refs || [],evidence);
+  if (row.issues || row.limitations || row.time_note) section('质量与时间说明').append(el('p','',coverageText(row.issues || row.limitations || row.time_note)));
+  document.querySelector('.details-panel').scrollTop = 0;
+}
+function appendResourceLinks(value,parent) {
+  const resources = value.resource_ids || (value.resource_id ? [value.resource_id] : []);
+  resources.forEach((entry) => {
+    const id = typeof entry === 'string' ? entry : entry.id || entry.resource_id;
+    if (!id) return;
+    const button = el('button','reference-button',`原始资源 ${id}`); button.type = 'button';
+    button.addEventListener('click',async () => {
+      try {
+        const resource = await api(`/api/replay/resources/${encodeURIComponent(id)}`);
+        ui.detail = 'replay-resource';
+        $('detail-content').replaceChildren(badge('已注册历史资源','accent'),el('h2','detail-heading',resource.filename || resource.name || id));
+        facts([['资源 ID',resource.id || id],['案例',resource.case_id],['实际站点',resource.station],['观测起点',resource.observed_start || resource.start],['观测终点',resource.observed_end || resource.end],['原始采样（秒）',resource.interval_seconds],['来源发布时间',resource.available_at],['模拟释放',resource.replay_release_at],['处理版本',resource.processing_version]],section('原始输入登记'));
+        if (resource.source || resource.url) { const source = section('来源引用'); source.append(el('p','',resource.source || '')); link(resource.url,'原始来源',source); }
+        if (resource.time_note || resource.coverage) section('覆盖与时间假设').append(el('p','',coverageText(resource.time_note || resource.coverage)));
+        const fold = el('details','asset-block'); fold.append(el('summary','','登记的完整资源元数据'),el('pre','work-record',format(resource))); $('detail-content').append(fold);
+        document.querySelector('.details-panel').scrollTop = 0;
+      } catch (error) { notify(error.message); }
+    });
+    parent.append(button);
+  });
+}
 function renderPipeline() {
   const pipeline = ui.pipeline;
-  $('content-kicker').textContent = '持续监测 / 自动更新';
-  $('content-title').textContent = '霍尔木兹海峡 · 公开资料异常动态';
+  const replayMode = isCaseReplay(), replayCase = ui.replayCase || selectedReplaySummary();
+  $('content-kicker').textContent = replayMode ? '历史自动回放 / 已释放观测' : '持续监测 / 自动更新';
+  $('content-title').textContent = replayMode ? `${replayCase?.label || ui.replayCaseId || '双案例'} · 本次观测与异常` : '霍尔木兹海峡 · 公开资料异常动态';
   renderPipelineStatus();
-  $('portwatch-content').hidden = !(pipeline?.sources || []).some((source) => source.source === 'portwatch');
+  $('portwatch-content').hidden = replayMode ? !ui.replayCase?.portwatch_monitor_id : !(pipeline?.sources || []).some((source) => source.source === 'portwatch');
+  $('pipeline-pw-heading').hidden = $('portwatch-content').hidden;
+  $('gnss-content').hidden = !replayMode;
+  if (replayMode) renderGnss();
   $('pw-alert-heading').hidden = true;
   $('pw-alert-list').hidden = true;
   if (!$('portwatch-content').hidden) renderPortWatch();
   const counts = pipeline?.counts || {};
   $('pipeline-summary').textContent = !pipeline ? '正在读取监测进度…' : !pipeline.enabled ? '自动流水线未启用。' : pipeline.paused ? '自动监测已暂停；已保存的资料和结果继续可查看。' : pipeline.summary || '持续监测中，本轮未发布新异常';
+  if (replayMode && pipeline?.enabled) $('pipeline-summary').textContent = `${pipeline.paused ? '自动回放已暂停。' : ''}当前查看 ${replayCase?.label || ui.replayCaseId || '待配置案例'}：${label(replayCase?.status || 'queued')}；已释放 ${replayCase?.released_batches || 0}/${replayCase?.total_batches || 0} 批，已完成 ${replayCase?.completed_batches || 0} 批。${replayCase?.reason || ''}${replayCase?.as_of ? ` 本例可见截止 ${utcDate(replayCase.as_of)}。` : ''}`;
   $('pipeline-queue-info').textContent = `排队 ${counts.queued || 0} · 分析中 ${counts.running || 0} · 等待自动重试 ${counts.retry_wait || 0} · 已处理 ${counts.completed || 0}${pipeline?.model_retry_at ? ` · 模型下次重试 ${date(pipeline.model_retry_at)}` : ''}${pipeline?.last_published_at ? ` · 最近发布 ${date(pipeline.last_published_at)}` : ''}`;
   const sources = $('pipeline-source-dates'); sources.replaceChildren();
-  (pipeline?.sources || []).forEach((source) => {
+  (replayMode ? [] : pipeline?.sources || []).forEach((source) => {
     const row = el('div', 'pipeline-source-status');
     row.append(el('strong', '', source.name || source.source), badge(source.enabled ? label(source.status) : '已停用', source.error ? 'waiting' : ''), el('p', '', `数据截至 ${source.latest_observed_date ? date(source.latest_observed_date) : '未知'} · 最近检查 ${date(source.last_checked_at)}`));
     row.append(el('p', '', `最近成功获取 ${date(source.last_success_at)} · 下次检查 ${date(source.next_check_at)}`));
@@ -304,16 +503,16 @@ function renderPipeline() {
     if (source.error) row.append(el('p', 'source-error', `来源检查：${source.error}`));
     sources.append(row);
   });
-  const all = pipeline?.alerts || [], filter = $('pipeline-alert-filter').value;
+  const all = pipelineAlerts(), filter = $('pipeline-alert-filter').value;
   const alerts = all.filter((alert) => filter === 'all' || (filter === 'unread' ? !alert.read_at : filter === 'ended' ? ['resolved','revoked'].includes(alert.status) : !['resolved','revoked'].includes(alert.status)));
   $('pipeline-alert-count').textContent = all.length;
-  const signature = JSON.stringify([alerts,ui.alertId,filter,pipeline?.paused,counts]);
+  const signature = JSON.stringify([alerts,ui.alertId,filter,pipeline?.paused,counts,replayMode,ui.replayCaseId]);
   if (signature !== ui.pipelineListSignature) {
     ui.pipelineListSignature = signature;
     const list = $('pipeline-alert-list'); list.replaceChildren();
     if (!alerts.length) {
       const empty = el('div', 'empty-state compact-empty');
-      empty.append(el('h3', '', filter === 'all' ? '本轮未发布新异常' : '暂无符合筛选的动态'), el('p', '', (counts.queued || counts.running || counts.retry_wait) ? '仍有资料待分析或等待重试，处理进度见上方。' : pipeline?.paused || !pipeline?.enabled ? '已保存的异常会保留；启用后继续自动处理新资料。' : '后台继续检查来源。未发布异常不代表资料覆盖之外没有变化。'));
+      empty.append(el('h3', '', filter === 'all' ? '本轮未发布新异常' : '暂无符合筛选的动态'), el('p', '', (counts.queued || counts.running || counts.retry_wait) ? '仍有资料待分析或等待重试，处理进度见上方。' : replayMode ? '以本例处理状态和实际覆盖解释当前结果；参考不足或缺测不表示观测正常。' : pipeline?.paused || !pipeline?.enabled ? '已保存的异常会保留；启用后继续自动处理新资料。' : '后台继续检查来源。未发布异常不代表资料覆盖之外没有变化。'));
       list.append(empty);
     }
     alerts.forEach((alert) => {
@@ -322,15 +521,15 @@ function renderPipeline() {
       top.append(el('span', 'publisher', label(alert.origin_type || (alert.rule ? 'numeric_rule' : 'news_clue'))), badge(label(alert.display_status || alert.status), ['resolved','revoked'].includes(alert.status) ? '' : 'waiting'));
       const meta = el('div','card-meta');
       meta.append(el('span','',alert.read_at ? '已读' : '未读'),el('span','',`Qwen · ${label(alert.analysis_status || 'queued')}`));
-      card.append(top, el('h3','',alert.title || 'PortWatch 可见通行量持续偏低提醒'), el('p','card-excerpt',(!alert.analysis_stale && alert.analysis?.statement) || alert.statement || alert.summary || (alert.origin_type === 'numeric_rule' ? '程序规则已触发，Qwen 待分析。' : '查看公开报道与分析依据。')), meta, el('p','alert-time',`所指数据 / 报道时间 ${date(alert.observed_at || alert.latest_observed_date || alert.started_on || alert.available_at)}\n系统发现 ${date(alert.detected_at)} · 发布 ${date(alert.published_at)}`));
+      card.append(top, el('h3','',alert.title || (alert.origin_type === 'gnss_observation' ? 'GNSS 观测质量变化线索' : 'PortWatch 可见通行量持续偏低提醒')), el('p','card-excerpt',(!alert.analysis_stale && alert.analysis?.statement) || alert.statement || alert.summary || (alert.origin_type === 'numeric_rule' ? '程序规则已触发，Qwen 待分析。' : alert.origin_type === 'gnss_observation' ? '观测统计已保存，等待自动分析。' : '查看公开报道与分析依据。')), meta, el('p','alert-time',`所指数据 / 报道时间 ${date(alert.observed_at || alert.latest_observed_date || alert.started_on || alert.available_at)}\n系统发现 ${date(alert.detected_at)} · 发布 ${date(alert.published_at)}${alert.as_of ? `\n回放截止 ${utcDate(alert.as_of)}` : ''}`));
       card.addEventListener('click', () => openPipelineAlert(alert.id, true, JSON.stringify(alert)).catch((error) => notify(error.message)));
       list.append(card);
     });
   }
   const recent = $('pipeline-recent-runs'); recent.replaceChildren();
-  const works = pipeline?.recent_work || [];
+  const works = (replayMode && ui.replayCase?.recent_work ? ui.replayCase.recent_work : pipeline?.recent_work || []).filter((work) => !replayMode || work.case_id === ui.replayCaseId);
   works.forEach((work) => {
-    const button = el('button','summary-preview',`${work.kind === 'portwatch' ? '数值证据分析' : '公开报道分析'} · ${label(work.decision || work.status)}\n${work.statement || work.error || `入队 ${date(work.created_at)}${work.next_retry_at ? ` · 下次重试 ${date(work.next_retry_at)}` : ''}`}`); button.type = 'button';
+    const button = el('button','summary-preview',`${work.kind === 'portwatch' ? '数值证据分析' : work.kind === 'gnss' ? 'GNSS 观测分析' : '公开报道分析'} · ${label(work.decision || work.status)}\n${work.statement || work.error || `入队 ${date(work.created_at)}${work.next_retry_at ? ` · 下次重试 ${date(work.next_retry_at)}` : ''}`}`); button.type = 'button';
     button.addEventListener('click',async () => {
       ui.detail = 'pipeline-work'; ui.pipelineWorkId = work.id;
       try {
@@ -338,14 +537,16 @@ function renderPipeline() {
         if (ui.detail !== 'pipeline-work' || ui.pipelineWorkId !== work.id) return;
         $('detail-content').replaceChildren(badge('自动分析工作','accent'),el('h2','detail-heading',label(work.decision || work.status)));
         facts([['工作 ID',result.id],['状态',label(result.status)],['入队',date(result.created_at)],['分析完成',date(result.completed_at)],['尝试次数',result.attempts],['下次重试',date(result.next_retry_at)]],section('处理记录'));
+        if (result.case_id) facts([['案例',result.case_id],['回放截止',utcDate(result.as_of)],['批次',result.batch_id]],section('本批历史范围'));
         section('本批结果').append(el('p','',work.statement || result.error || label(result.status)));
+        appendWorkExecution(result,$('detail-content'));
         const fold = el('details','asset-block'); fold.append(el('summary','','完整输入、结论与补读记录')); const raw = el('pre','work-record'); raw.textContent = format(result); fold.append(raw); $('detail-content').append(fold);
         document.querySelector('.details-panel').scrollTop = 0;
       } catch (error) { notify(error.message); }
     });
     recent.append(button);
   });
-  const runs = works.length ? [] : (ui.state?.runs || []).filter((run) => run.mode === 'pipeline_analysis' || run.mode === 'pipeline_collection').slice(0, 8);
+  const runs = works.length || replayMode ? [] : (ui.state?.runs || []).filter((run) => run.mode === 'pipeline_analysis' || run.mode === 'pipeline_collection').slice(0, 8);
   if (!runs.length && !works.length) recent.append(el('p','small muted','尚无自动处理记录。'));
   runs.forEach((run) => {
     const button = el('button','summary-preview',`${run.mode === 'pipeline_analysis' ? '自动分析' : '来源检查'} · ${label(run.stage || run.status)} · ${date(run.started_at)}\n${run.error || (run.summary ? format(run.summary) : '处理进行中')}`); button.type = 'button';
@@ -382,9 +583,25 @@ function automaticReferences(refs, parent) {
     const block = el('div', 'analysis-reference');
     if (entry.title) block.append(el('p','small',entry.title));
     appendMaterialLink({material_id:entry.material_id || entry.id,material_version:entry.material_version || entry.version,url:entry.url},block);
+    appendResourceLinks(entry,block);
     if (entry.observed_at || entry.available_at || entry.first_seen_at) block.append(el('p','micro muted',`观测 ${date(entry.observed_at)} · 发布 ${date(entry.available_at)} · 首次获取 ${date(entry.first_seen_at)}`));
     parent.append(block);
   });
+}
+function appendWorkExecution(work,parent) {
+  const block = section('实际模型与工具记录',parent);
+  const attempts = work.attempts_detail || [];
+  facts([['模型',work.assessment?.model || work.result?.model],['该次模型请求记录',attempts.length],['专业补查记录',(work.tool_results || []).length]],block);
+  const tools = work.tool_results || [];
+  if (!tools.length) block.append(el('p','small muted','该工作尚无已保存的实际补查调用记录。'));
+  tools.forEach((tool,index) => {
+    const fold = el('details','asset-block');
+    fold.append(el('summary','',`${index+1}. ${tool.name} · 实际调用与返回`),el('pre','work-record',format({arguments:tool.arguments,result:tool.result}))); block.append(fold);
+  });
+  if (attempts.length) {
+    const fold = el('details','asset-block');
+    fold.append(el('summary','','模型请求、响应与耗时'),el('pre','work-record',format(attempts))); block.append(fold);
+  }
 }
 function renderAutomaticAnalysis(alert) {
   const analysis = alert.analysis || {};
@@ -410,6 +627,8 @@ function renderAutomaticAnalysis(alert) {
       try {
         const work = await api(`/api/work/${encodeURIComponent(workId)}`);
         facts([['工作 ID',work.id],['状态',label(work.status)],['入队时间',date(work.created_at)],['尝试次数',work.attempts ?? work.attempt_count],['下次重试',date(work.next_retry_at)],['失败原因',work.error]],fold);
+        if (work.case_id) facts([['案例',work.case_id],['回放截止',utcDate(work.as_of)],['批次',work.batch_id]],fold);
+        appendWorkExecution(work,fold);
         const records = el('pre','work-record'); records.textContent = format(work); fold.append(records); fold.dataset.loaded = 'true';
       } catch (error) { delete fold.dataset.loaded; fold.append(el('p','source-error',error.message)); }
     });
@@ -418,11 +637,13 @@ function renderAutomaticAnalysis(alert) {
 }
 function renderPipelineAlert(alert) {
   const parent = $('detail-content');
-  if (alert.origin_type === 'numeric_rule' || alert.rule) renderAlert(alert);
+  const gnss = alert.origin_type === 'gnss_observation';
+  if (alert.origin_type === 'numeric_rule' || alert.rule && !gnss) renderAlert(alert);
   else {
-    parent.replaceChildren(badge('公开报道线索','accent'),el('h2','detail-heading',alert.title || '公开报道线索'),el('p','detail-meta',`${label(alert.display_status || alert.status)} · ${alert.id}`));
-    const source = section('资料支持的陈述');
+    parent.replaceChildren(badge(gnss ? 'GNSS 观测线索' : '公开报道线索','accent'),el('h2','detail-heading',alert.title || (gnss ? 'GNSS 观测质量变化' : '公开报道线索')),el('p','detail-meta',`${label(alert.display_status || alert.status)} · ${alert.id}`));
+    const source = section(gnss ? '观测依据与待核实线索' : '资料支持的陈述');
     source.append(el('p','',alert.analysis_stale ? '来源已有新版本，当前结论待自动更新。' : alert.statement || alert.summary || alert.analysis?.statement || '查看下方本次分析与原始资料。'));
+    if (gnss) source.append(el('p','small muted','数值来自实际 GNSS 处理；Qwen 描述观测变化及其证据范围。参考不足、缺测和补查失败分别保留。'));
     if (alert.origin === 'initialization' || alert.initialization) source.append(el('p','small muted','初始化回填中发现的线索，所指报道时间与系统发现时间分别列出。'));
     renderAutomaticAnalysis(alert);
     if (alert.changes?.length || alert.previous_analysis || alert.analysis_history?.length) {
@@ -430,6 +651,7 @@ function renderPipelineAlert(alert) {
       const prior = el('pre','work-record'); prior.textContent = format({changes:alert.changes,previous_analysis:alert.previous_analysis,analysis_history:alert.analysis_history}); fold.append(prior); section('版本变化').append(fold);
     }
   }
+  if (alert.case_id || alert.mode === 'case_replay') facts([['运行模式','历史自动回放'],['案例',alert.case_id],['本次分析回放截止',utcDate(alert.as_of)],['模拟释放时间',utcDate(alert.replay_release_at)],['时间假设',alert.time_note]],section('本次历史范围'));
   facts([['业务状态',label(alert.status)],['所指观测日期',date(alert.observed_at || alert.started_on)],['来源发布时间',date(alert.available_at)],['系统首次获取',date(alert.first_seen_at)],['系统发现',date(alert.detected_at)],['异常发布',date(alert.published_at)],['最近变化',date(alert.updated_at)],['已读时间',date(alert.read_at)]],section('资料与系统时间'));
   const read = el('button','full subtle',alert.read_at ? '已读' : '标为已读'); read.type = 'button'; read.disabled = Boolean(alert.read_at);
   read.addEventListener('click',async () => {
@@ -442,6 +664,7 @@ function renderOnline() {
   $('pipeline-content').hidden = !isPipeline();
   $('maintenance-content').hidden = isPipeline();
   $('pipeline-view').hidden = isPipeline();
+  $('gnss-content').hidden = !isPipeline() || !isCaseReplay();
   if (isPipeline()) { renderPipeline(); return; }
   const run = currentRun();
   const portwatch = isPortWatch();
@@ -524,7 +747,7 @@ function facts(values, parent) {
 }
 function link(url, title, parent) {
   if (!url) return;
-  const parsed = new URL(url);
+  const parsed = new URL(url,window.location.origin);
   if (!['http:','https:'].includes(parsed.protocol)) return;
   const anchor = el('a', '', title || url);
   anchor.href = parsed.href;
@@ -534,7 +757,7 @@ function link(url, title, parent) {
 }
 function renderMaterial(material) {
   const parent = $('detail-content');
-  parent.replaceChildren(badge(material.mode === 'replay' ? '原始材料回放' : '在线资料', 'accent'), el('h2', 'detail-heading', material.title), el('p', 'detail-meta', `${material.publisher || material.source} · ${label(material.content_kind)} · 版本 ${material.version || 1}`));
+  parent.replaceChildren(badge(material.mode === 'case_replay' ? '历史自动回放 · 实际材料' : material.mode === 'replay' ? '原始材料回放' : '在线资料', 'accent'), el('h2', 'detail-heading', material.title), el('p', 'detail-meta', `${material.publisher || material.source} · ${label(material.content_kind)} · 版本 ${material.version || 1}`));
   const analysis = section(material.analysis_status === 'not_required' ? '数值材料' : 'Qwen 资料摘要');
   analysis.append(el('p', '', material.analysis_status === 'not_required' ? '该记录用于结构化数值监测；自动流水线将数值证据变化交给 Qwen 分析。' : material.analysis?.summary ? format(material.analysis.summary) : `当前状态：${label(material.analysis_status)}`));
   if (material.error) analysis.append(el('p', '', material.error));
@@ -544,12 +767,14 @@ function renderMaterial(material) {
   }
   const source = section('引用来源');
   link(material.url, material.title || material.url, source);
+  appendResourceLinks(material,source);
   source.append(el('p', 'micro muted', `材料 ID：${material.id}`));
   const excerpt = section('实际获取的原文 / 摘录');
   excerpt.append(el('p', 'excerpt', material.text || '仅取得标题，未取得正文。'));
   if (material.extraction_error) excerpt.append(el('p', '', material.extraction_error));
   const times = section('时间信息');
   facts([['观测时间', material.observed_at], ['来源发布时间', material.available_at], ['本次获取时间', material.fetched_at]], times);
+  if (material.mode === 'case_replay' || material.case_id) facts([['案例',material.case_id],['观测结束',material.observed_end],['模拟释放',material.replay_release_at],['本批回放截止',material.as_of],['处理版本',material.processing_version]],times);
   if (material.time_note) times.append(el('p', '', material.time_note));
   if (!isPipeline()) renderSteps(currentRun(), section('本轮处理步骤'));
 }
@@ -659,8 +884,9 @@ function renderPortWatch() {
   $('pw-status').textContent = state ? label(state.current_status) : '尚无观测';
   $('pw-status').className = `metric-status ${['active','recovering'].includes(state?.current_status) ? 'lowflow-text' : ''}`;
   $('pw-data-date').textContent = `数据截至 ${metrics?.latest_observed_date || '—'}`;
-  $('pw-freshness').textContent = `数据截至 ${metrics?.latest_observed_date || '—'} · 最近获取时间：${date(metrics?.last_success_at)}${metrics?.days_since_observation > 0 ? ` · 尚未收到后续观测（距该观测 ${metrics.days_since_observation} 天）` : ''}${state?.data_gaps?.length ? ` · 观测缺口：${state.data_gaps.join('、')}` : ''}`;
+  $('pw-freshness').textContent = `数据截至 ${metrics?.latest_observed_date || '—'} · 最近${isCaseReplay() ? '导入' : '获取'}时间：${date(metrics?.last_success_at)}${!isCaseReplay() && metrics?.days_since_observation > 0 ? ` · 尚未收到后续观测（距该观测 ${metrics.days_since_observation} 天）` : ''}${state?.data_gaps?.length ? ` · 观测缺口：${state.data_gaps.join('、')}` : ''}`;
   $('pw-source-info').textContent = metrics?.error ? `本次来源更新未完成：${metrics.error}。当前显示已保存结果。` : metrics?.last_checked_at ? `最近检查：${date(metrics.last_checked_at)} · 该次来源状态：${label(metrics.source_status)}` : isPipeline() ? '等待后台按配置获取数值序列。' : '点击立即更新获取数值序列。';
+  if (isCaseReplay()) $('pw-source-info').textContent = metrics?.error ? `本例历史数值处理：${metrics.error}` : `历史归档按批释放 · 本例回放截止 ${utcDate(ui.replayCase?.as_of)}。曲线与规则只使用已释放日期；事后取得的历史记录不表示当年的冻结版本。`;
   $('pw-rule-summary').textContent = `${state?.summary || ''}${rule ? ` 规则 ${rule.id}：候选日前 ${rule.baseline_days} 个自然日中位数；连续 ${rule.trigger_days} 日 < ${rule.trigger_ratio * 100}% 触发，连续 ${rule.recovery_days} 日 ≥ ${rule.recovery_ratio * 100}% 解除。工程默认参数，未校准，非 IMF 官方阈值。` : ''}`;
   const signature = JSON.stringify([metrics, ui.alerts, $('pw-alert-filter').value, ui.alertId]);
   if (signature === ui.portwatchSignature) return;
@@ -1018,6 +1244,7 @@ $('history-tab').addEventListener('click',()=>setMode('history'));
 $('maintenance-view').addEventListener('click',()=>setOnlineView('maintenance'));
 $('pipeline-view').addEventListener('click',()=>setOnlineView('pipeline'));
 $('pipeline-alert-filter').addEventListener('change',renderPipeline);
+$('gnss-series-select').addEventListener('change',(event)=>{ui.gnssSeriesKey=event.target.value;renderGnss();});
 $('pipeline-form').addEventListener('input',()=>{ui.pipelineFormDirty = true;});
 $('pipeline-form').addEventListener('submit',(event)=>{
   event.preventDefault();

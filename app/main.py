@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from .config import ROOT, settings
 from .history import history_payload, replay_info
 from .pipeline import Pipeline, alert_summary
+from .replay import CaseReplay
 from .runner import Runner
 from .sources import SOURCES
 from .store import Store, now
@@ -19,9 +20,19 @@ from .store import Store, now
 
 @asynccontextmanager
 async def lifespan(app):
+    if settings.pipeline_mode not in ('online', 'case_replay'):
+        raise ValueError('PIPELINE_MODE 仅支持 online 或 case_replay')
+    if settings.pipeline_mode == 'case_replay' and settings.data_dir.resolve() == (ROOT / 'runtime').resolve():
+        raise ValueError('历史回放必须指定独立 DATA_DIR，不使用默认在线 runtime')
     app.state.store = Store(settings.data_dir)
+    replay_instance = app.state.store.get('replay', 'instance')
+    if settings.pipeline_mode == 'case_replay' and app.state.store.all('monitor') and not replay_instance:
+        raise ValueError('指定目录已有在线数据，请为回放选择独立 DATA_DIR')
+    if settings.pipeline_mode == 'online' and replay_instance:
+        raise ValueError('该 DATA_DIR 属于历史回放，不能作为在线实例启动')
     app.state.runner = Runner(app.state.store, settings)
-    app.state.pipeline = Pipeline(app.state.store, settings, app.state.runner)
+    pipeline_type = CaseReplay if settings.pipeline_mode == 'case_replay' else Pipeline
+    app.state.pipeline = pipeline_type(app.state.store, settings, app.state.runner)
     scheduler = asyncio.create_task(app.state.runner.schedule())
     app.state.pipeline.start()
     yield
@@ -80,6 +91,11 @@ def get_monitor(monitor_id):
     return monitor
 
 
+def require_online():
+    if settings.pipeline_mode == 'case_replay':
+        raise HTTPException(400, '当前为隔离的历史自动回放实例，资料由案例清单释放')
+
+
 @app.get('/')
 async def index():
     return FileResponse(ROOT / 'app' / 'static' / 'index.html')
@@ -97,6 +113,7 @@ async def state():
 
 @app.post('/api/monitors')
 async def save_monitor(body: MonitorInput):
+    require_online()
     data = body.model_dump(exclude={'id'})
     data['topic'] = data['topic'].strip()
     if not data['topic']:
@@ -124,6 +141,7 @@ async def save_monitor(body: MonitorInput):
 
 @app.post('/api/monitors/{monitor_id}/run')
 async def run_now(monitor_id: str):
+    require_online()
     monitor = get_monitor(monitor_id)
     if monitor.get('pipeline_owned'):
         raise HTTPException(400, '该监测由自动流水线调度')
@@ -135,6 +153,7 @@ async def run_now(monitor_id: str):
 
 @app.post('/api/monitors/{monitor_id}/schedule')
 async def schedule_monitor(monitor_id: str, body: ScheduleInput):
+    require_online()
     monitor = get_monitor(monitor_id)
     if monitor.get('pipeline_owned'):
         raise HTTPException(400, '自动监测请使用流水线暂停或来源开关')
@@ -170,7 +189,29 @@ async def run_detail(run_id: str):
 
 @app.get('/api/pipeline')
 async def pipeline_state():
-    return app.state.pipeline.snapshot()
+    payload = app.state.pipeline.snapshot()
+    payload.setdefault('mode', 'online')
+    return payload
+
+
+@app.get('/api/replay/cases/{case_id}')
+async def replay_case(case_id: str):
+    if settings.pipeline_mode != 'case_replay':
+        raise HTTPException(404, '当前不是历史回放实例')
+    record = app.state.pipeline.case_view(case_id)
+    if record is None:
+        raise HTTPException(404, '找不到该回放案例')
+    return record
+
+
+@app.get('/api/replay/resources/{resource_id}')
+async def replay_resource(resource_id: str):
+    if settings.pipeline_mode != 'case_replay':
+        raise HTTPException(404, '当前不是历史回放实例')
+    record = app.state.pipeline.resource_view(resource_id)
+    if record is None:
+        raise HTTPException(404, '该资源尚未释放或不属于此实例')
+    return record
 
 
 @app.post('/api/pipeline/config')
@@ -230,10 +271,14 @@ async def material_detail(material_id: str):
 
 @app.get('/api/monitors/{monitor_id}/metrics')
 async def metrics(monitor_id: str):
-    portwatch_monitor(monitor_id)
+    monitor = portwatch_monitor(monitor_id)
     store = app.state.store
     scope = portwatch_scope()
     current = store.get('monitor_state', monitor_id)
+    if monitor.get('mode') == 'case_replay':
+        scope = dict((current or {}).get('scope') or {}, name='霍尔木兹历史 PortWatch')
+        scope.setdefault('source_key', '')
+        scope.setdefault('portid', settings.portwatch_id)
     if current and (current.get('source_key') != scope['source_key'] or
                     current.get('portid') != scope['portid'] or
                     current.get('rule', {}).get('id') != settings.portwatch_rule_id):
@@ -242,6 +287,8 @@ async def metrics(monitor_id: str):
     if source.get('source_key') != scope['source_key'] or source.get('portid') != scope['portid']:
         source = {}
     today = datetime.now(timezone.utc).date()
+    if monitor.get('mode') == 'case_replay' and (current or {}).get('as_of'):
+        today = date.fromisoformat(current['as_of'][:10])
     end = source.get('range_end') or today.isoformat()
     start = source.get('range_start') or (today - timedelta(
         days=settings.portwatch_history_days - 1)).isoformat()
@@ -283,6 +330,7 @@ async def read_alert(alert_id: str, body: ReadInput):
 
 @app.post('/api/alerts/{alert_id}/explain')
 async def explain(alert_id: str):
+    require_online()
     alert = get_alert(alert_id)
     if alert.get('origin_type'):
         raise HTTPException(400, '流水线会自动分析证据变化并重试，当前结果请在提醒详情查看')
@@ -299,6 +347,7 @@ async def history():
 
 @app.post('/api/history/replay')
 async def replay(body: ReplayInput):
+    require_online()
     if not replay_info()['available']:
         raise HTTPException(400, '没有可回放的原始新闻输入')
     store = app.state.store

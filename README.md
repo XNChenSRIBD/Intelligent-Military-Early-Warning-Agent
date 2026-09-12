@@ -64,6 +64,26 @@ GDELT 与 RSS 不会互相替代；来源名称始终对应实际选择。工作
 
 第二轮代码、部署与业务运行状态见 [ROUND2_DELIVERY.md](ROUND2_DELIVERY.md)。
 
+## 双案例历史自动回放
+
+第四轮增加 `PIPELINE_MODE=case_replay`，沿用同一应用、Qwen 消费队列和异常看板，依次处理哈尔科夫、霍尔木兹。启动后自动装入事前参考、按日释放观测、真实解析 RINEX、分析并更新异常；无需提问或逐批点击。默认仍是第三轮 `online` 模式。
+
+输入配置为 [哈尔科夫清单](cases/replay/kharkiv/manifest.json) 和 [霍尔木兹清单](cases/replay/hormuz/manifest.json)。GNSS 原文件通过 `REPLAY_ASSET_ROOT` 加清单相对路径定位；仓库中的 45 份辅助历史 JSON 使用 `root=repo`。当前 144 个 GNSS 条目只是旧索引定位，本地没有对应原文件，服务器当前存在性尚未核实。霍尔木兹 PortWatch 仍缺 2026-01-30 至 02-13 的前置日记录，不能将已有 13 日称为完整参考。
+
+在获准运行的工作台环境准备依赖和原文件后，从仓库根目录启动。以下 8081 是独立端口示例，尚不表示该端口或部署已经获准；模型地址应为该环境已运行的 vLLM 接口：
+
+```powershell
+python -m pip install -e .
+python -m pip install -r requirements-gnss.txt
+.\scripts\start_case_replay.ps1 -AssetRoot '..\..\public_data_chasing_lightning' -DataDir '.\runtime-round4' -ModelBaseUrl 'http://127.0.0.1:8000/v1' -Port 8081
+```
+
+该资产路径对应原工作区的相对位置；其他机器设置为其真实数据根。启动脚本保留 `.env`，通过进程环境选定两例、自动启动和独立数据目录。GNSS 可选依赖装在工作台 Python 环境，不修改模型服务环境。完整 Linux 启动方式、配置、缓存与两例状态见 [ROUND4_DELIVERY.md](ROUND4_DELIVERY.md)。
+
+看板新增案例、回放截止时间、处理进度、GNSS 分窗曲线及专业工具依据，保留 PortWatch 图和旧历史参考。GNSS 统计来自本版程序；同站历史和多站比较只读取本例已释放结果。真实 dB-Hz 值与未注明单位或离散质量值分开表示，缺测和参考不足不画成正常曲线。回放结束后 Web 保持可查看，正常重启沿用同一 `DATA_DIR` 续接。
+
+第四轮目前是代码与部分输入交付，尚未部署、执行真实回放或取得模型业务轨迹；当前 .16 页面不会因此变化。
+
 ## 既有研究方向
 
 - `mini-GDELT` / 新闻主题监测作为第一 monitor，用于识别 topic 升温、主体、事件类型与 heat。

@@ -1,0 +1,31 @@
+{
+  "date": "2026-03-01",
+  "aoi": "hormuz_core",
+  "source": "GPSJam daily H3 grid / archived regional aggregation",
+  "url": "https://gpsjam.org/data/2026-03-01-h3_4.csv",
+  "aoi_bounds": {
+    "longitude": [
+      52.0,
+      60.5
+    ],
+    "latitude": [
+      24.0,
+      28.8
+    ]
+  },
+  "original_artifact": "external_intel/adsb_ais_hormuz_prewarning/gpsjam_hormuz_20260214_20260305.csv",
+  "raw_artifact": "external_intel/adsb_ais_hormuz_prewarning/gpsjam_daily_h3/2026-03-01-h3_4.csv",
+  "data_note": "复用现存区域汇总计数；不是本轮重新聚合，不是原始航空器轨迹。good/bad为各H3网格航空器分类计数之和，并非区域去重航空器数。",
+  "units": {
+    "bad": "sum of count_bad_aircraft across selected cells",
+    "cells": "H3 resolution 4 cells",
+    "good": "sum of count_good_aircraft across selected cells",
+    "total": "sum of good + bad counts across selected cells"
+  },
+  "cells": 43,
+  "traffic_cells": 43,
+  "good": 279,
+  "bad": 85,
+  "total": 364,
+  "manifest_suspect": "false"
+}

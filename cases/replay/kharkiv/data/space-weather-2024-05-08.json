@@ -1,0 +1,39 @@
+{
+  "date": "2024-05-08",
+  "source": "GFZ Geomagnetic Observatory Niemegk archived Kp/ap/Ap/F10.7 daily table",
+  "url": "https://doi.org/10.5880/Kp.0001",
+  "original_artifact": "external_intel/space_weather/kp_ap_since_1932.txt",
+  "time_system": "UT",
+  "Kp_3hour": [
+    1.0,
+    1.667,
+    1.667,
+    1.667,
+    1.667,
+    2.0,
+    0.667,
+    1.0
+  ],
+  "ap_3hour": [
+    4,
+    6,
+    6,
+    6,
+    6,
+    7,
+    3,
+    4
+  ],
+  "Ap": 5,
+  "F10_7_observed": 227.1,
+  "F10_7_adjusted": 231.4,
+  "definitive_flag": 2,
+  "units": {
+    "Ap": "dimensionless",
+    "F10_7_adjusted": "sfu (10^-22 W m^-2 Hz^-1)",
+    "Kp_3hour": "dimensionless; ordered 00-03 through 21-24 UT",
+    "F10_7_observed": "sfu (10^-22 W m^-2 Hz^-1)",
+    "ap_3hour": "dimensionless; ordered 00-03 through 21-24 UT"
+  },
+  "data_note": "字段直接摘自现存原始历表；不含Dst、耀斑或射电暴观测，不将缺项写成未发生。D=0 Kp preliminary; D>=1 Kp definitive."
+}

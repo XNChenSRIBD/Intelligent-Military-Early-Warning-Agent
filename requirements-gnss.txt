@@ -1,0 +1,4 @@
+# Optional workbench-side RINEX processing; do not install in the model environment.
+georinex>=1.16.2,<2
+hatanaka>=2.8,<3
+numpy>=1.24,<3

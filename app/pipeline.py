@@ -22,19 +22,22 @@ def after(seconds):
 def material_input(material):
     return {key: material.get(key) for key in (
         'id', 'version', 'title', 'text', 'content_kind', 'url', 'source',
-        'observed_at', 'available_at', 'first_seen_at', 'time_note', 'extraction_error')}
+        'observed_at', 'available_at', 'first_seen_at', 'time_note', 'extraction_error',
+        'mode', 'case_id', 'as_of', 'replay_release_at', 'resource_id')}
 
 
 def material_ref(material):
     return {key: material.get(key) for key in (
-        'id', 'version', 'title', 'url', 'source', 'observed_at', 'available_at', 'first_seen_at')}
+        'id', 'version', 'title', 'url', 'source', 'observed_at', 'available_at', 'first_seen_at',
+        'case_id', 'as_of', 'replay_release_at', 'resource_id')}
 
 
 def alert_summary(alert):
     fields = ('id', 'origin_type', 'scope_id', 'monitor_id', 'title', 'status',
               'display_status', 'analysis_status', 'published_at', 'updated_at', 'detected_at',
               'read_at', 'observed_at', 'available_at', 'evidence_version', 'summary', 'origin',
-              'analysis_stale', 'started_on', 'resolved_on', 'last_evaluated_date', 'queued_work_id')
+              'analysis_stale', 'started_on', 'resolved_on', 'last_evaluated_date', 'queued_work_id',
+              'case_id', 'as_of', 'mode', 'replay_release_at', 'processing_version', 'resource_ids')
     result = {key: alert.get(key) for key in fields}
     if alert.get('analysis'):
         result['analysis'] = {key: alert['analysis'].get(key) for key in (
@@ -466,11 +469,16 @@ class Pipeline:
     def context_alerts(self, scope_id):
         return [alert for alert in self.recent_alerts(100) if alert['scope_id'] == scope_id][:5]
 
+    def work_context_alerts(self, work):
+        return self.context_alerts(work['scope_id'])
+
     async def analyze(self, batch):
         run = {'id': uuid4().hex, 'monitor_id': batch[0]['monitor_id'], 'mode': 'pipeline_analysis',
                'status': 'queued', 'stage': 'analyzing', 'started_at': now(), 'finished_at': None,
                'input_count': len(batch), 'new_count': 0, 'analyzed_count': 0, 'failed_count': 0,
                'source_status': 'not_required', 'steps': [], 'summary': '', 'error': None}
+        if batch[0].get('mode') == 'case_replay':
+            run.update(case_id=batch[0]['case_id'], as_of=batch[0]['as_of'], batch_id=batch[0].get('batch_id'))
         tool_materials = {m['id']: m for work in batch for m in work['input']['materials']}
         try:
             async with self.runner.model_lock:
@@ -484,12 +492,13 @@ class Pipeline:
                                     started_at=now(), run_id=run['id'])
                         self.store.save('work', work)
                         self.mark_numeric(work, 'running')
-                contexts = self.context_alerts(batch[0]['scope_id'])
+                contexts = self.work_context_alerts(batch[0])
                 async def handle_tool(name, args):
                     return await self.tool(name, args, batch, tool_materials, run)
                 result = await assess_update([work['input'] for work in batch],
                     [{key: alert.get(key) for key in ('id', 'origin_type', 'title', 'status', 'observed_at')}
-                     | {'summary': alert.get('summary', '')[:180]} for alert in contexts],
+                     | {'summary': alert.get('summary', '')[:180], 'case_id': alert.get('case_id'),
+                        'as_of': alert.get('as_of')} for alert in contexts],
                     self.config, handle_tool)
                 with self.store.atomic():
                     by_id = {item['input_id']: item for item in result['assessments']}
