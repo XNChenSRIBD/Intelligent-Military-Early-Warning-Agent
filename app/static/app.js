@@ -31,6 +31,7 @@ const ui = {
   runs: [],
   history: null,
   refreshing: false,
+  sourcePanel: null,
   saving: false,
   formLoaded: false,
   materialSignature: '',
@@ -95,6 +96,85 @@ function activeRun() { return ui.state?.runs.find((item) => String(item.id) === 
 function isPortWatch() { return (currentMonitor()?.source || $('source').value) === 'portwatch'; }
 function isPipeline() { return ui.mode === 'online' && ui.onlineView === 'pipeline'; }
 function isCaseReplay() { return ui.pipeline?.mode === 'case_replay'; }
+let detailReturnFocus = null;
+function openDetailPanel(title = '证据与分析') {
+  const panel = $('detail-panel');
+  if (panel.hidden) {
+    detailReturnFocus = document.activeElement;
+    panel.hidden = false;
+    $('detail-backdrop').hidden = false;
+    document.body.classList.add('detail-open');
+    document.querySelector('.controls').inert = true;
+    document.querySelector('.content-panel').inert = true;
+    $('detail-close').focus();
+  }
+  $('detail-panel-title').textContent = title;
+  $('detail-content').scrollTop = 0;
+}
+function closeDetailPanel() {
+  const wasOpen = !$('detail-panel').hidden;
+  $('detail-panel').hidden = true;
+  $('detail-backdrop').hidden = true;
+  document.body.classList.remove('detail-open');
+  document.querySelector('.controls').inert = false;
+  document.querySelector('.content-panel').inert = false;
+  ui.detail = null;
+  if (wasOpen && detailReturnFocus?.isConnected) detailReturnFocus.focus();
+}
+function closeSourcePanel() {
+  ui.sourcePanel = null;
+  $('source-panel').hidden = true;
+  ['gnss-content','portwatch-content','pipeline-pw-heading','news-source-content'].forEach((id) => $(id).hidden = true);
+}
+async function openSourcePanel(kind) {
+  ui.sourcePanel = kind;
+  $('source-panel').hidden = false;
+  $('source-panel-title').textContent = {gnss:'GNSS 观测数据',portwatch:'航运观测数据',news:'公开报道与来源'}[kind] || '支持资料';
+  $('gnss-content').hidden = kind !== 'gnss';
+  $('portwatch-content').hidden = kind !== 'portwatch';
+  $('pipeline-pw-heading').hidden = kind !== 'portwatch';
+  $('news-source-content').hidden = kind !== 'news';
+  if (kind === 'gnss') renderGnss();
+  if (kind === 'portwatch') renderPortWatch();
+  if (kind === 'news') await renderNewsSources();
+  if (ui.sourcePanel !== kind) return;
+  $('source-panel-title').setAttribute('tabindex','-1');
+  $('source-panel-title').focus({preventScroll:true});
+  $('source-panel').scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function renderNewsSources() {
+  const parent = $('news-source-content'), caseId = ui.replayCaseId;
+  parent.replaceChildren(el('p','small muted','读取已保存的公开资料…'));
+  const works = (isCaseReplay() ? ui.replayCase?.recent_work || [] : ui.pipeline?.recent_work || []).filter((work) => work.kind === 'news');
+  const sources = isCaseReplay() ? [] : (ui.pipeline?.sources || []).filter((source) => ['gdelt','rss'].includes(source.source));
+  try {
+    const batches = await Promise.all(sources.filter((source) => source.monitor_id).map((source) => api(`/api/monitors/${encodeURIComponent(source.monitor_id)}/materials`)));
+    if (ui.sourcePanel !== 'news' || ui.replayCaseId !== caseId) return;
+    parent.replaceChildren();
+    const materials = [...new Map(batches.flatMap((batch) => batch.materials || []).map((material) => [material.id,material])).values()];
+    const list = el('div','material-list');
+    materials.forEach((material) => {
+      const button = el('button','material-card'); button.type = 'button';
+      button.append(el('span','publisher',material.publisher || material.source),el('h3','',material.title),el('p','card-excerpt',material.text || '仅有标题'),el('span','small muted',date(material.observed_at || material.available_at)));
+      button.addEventListener('click',async () => {
+        try { const full = await api(`/api/materials/${encodeURIComponent(material.id)}`); ui.detail = 'source-material'; renderMaterial(full); openDetailPanel('公开报道'); }
+        catch (error) { notify(error.message); }
+      });
+      list.append(button);
+    });
+    if (materials.length) parent.append(list);
+    if (works.length) {
+      parent.append(el('h3','section-heading','已保存的报道分析'));
+      works.forEach((work) => {
+        const button = el('button','material-card'); button.type = 'button';
+        button.append(el('h3','',work.statement || label(work.decision || work.status)),el('span','small muted',date(work.as_of || work.completed_at || work.created_at)));
+        button.addEventListener('click',() => openBriefingWork(work)); parent.append(button);
+      });
+    }
+    if (!works.length && !materials.length) parent.append(el('p','small muted','当前区域尚无已保存的报道。'));
+    sources.forEach((source) => parent.append(el('p','small muted',`${source.name || source.source} · 资料截至 ${date(source.latest_observed_date)}${source.error ? ' · 最近获取未完成' : ''}`)));
+  } catch (error) { if (ui.sourcePanel === 'news') parent.replaceChildren(el('p','source-error',`资料读取失败：${error.message}`)); }
+}
 function selectedReplaySummary() { return ui.pipeline?.replay?.cases?.find((item) => item.case_id === ui.replayCaseId); }
 function pipelineAlerts() { return isCaseReplay() ? ui.replayCase?.alerts || (ui.pipeline?.alerts || []).filter((item) => item.case_id === ui.replayCaseId) : ui.pipeline?.alerts || []; }
 function utcDate(value) {
@@ -117,10 +197,13 @@ function renderSourceSettings() {
   }
 }
 function setMode(mode) {
+  closeDetailPanel();
+  closeSourcePanel();
   ui.mode = mode;
   remember();
   const history = mode === 'history';
   const acquisition = mode === 'acquisition';
+  $('region-navigation').hidden = history || acquisition;
   $('online-controls').hidden = history || acquisition;
   $('online-content').hidden = history || acquisition;
   $('history-controls').hidden = !history;
@@ -366,7 +449,7 @@ async function openAcquisitionResource(id) {
   actions.append(acquisitionButton('重试此资源',`/api/acquisition/resources/${encodeURIComponent(id)}/retry`,{},() => openAcquisitionResource(id)),acquisitionButton('请求重新获取原件',`/api/acquisition/resources/${encodeURIComponent(id)}/fetch`,{},() => openAcquisitionResource(id)));
   const fold = el('details','asset-block'); fold.append(el('summary','','完整资源登记与保留依据'),el('pre','work-record',format(resource))); parent.append(fold);
   if (ui.mode === 'acquisition') renderAcquisitionTasks();
-  document.querySelector('.details-panel').scrollTop = 0;
+  openDetailPanel(); $('detail-content').scrollTop = 0;
 }
 async function loadMaterials() {
   const monitorId = ui.monitorId;
@@ -412,8 +495,15 @@ function renderPipelineStatus() {
   const paused = pipeline.paused || !pipeline.enabled;
   const replayMode = isCaseReplay(), replay = pipeline.replay;
   $('pipeline-control-title').textContent = replayMode ? '历史自动回放' : '持续监测';
-  $('online-tab').textContent = replayMode ? '自动回放' : '自动监测';
-  $('history-tab').textContent = replayMode ? '历史参考' : '历史案例';
+  $('online-tab').textContent = '区域态势';
+  $('history-tab').textContent = '参考报告';
+  $('online-region').hidden = replayMode;
+  if (['8080','8081'].includes(location.port)) {
+    const destination = new URL(location.href); destination.port = replayMode ? '8080' : '8081'; destination.pathname = '/'; destination.search = ''; destination.hash = '';
+    $('instance-link').href = destination.href;
+    $('instance-link').textContent = replayMode ? '返回在线监测 ↗' : '查看历史双案例 ↗';
+    $('instance-link').hidden = false;
+  }
   $('pipeline-form').hidden = replayMode;
   $('replay-controls').hidden = !replayMode;
   $('replay-top-status').hidden = !replayMode;
@@ -516,17 +606,12 @@ function renderReplayCases() {
   ui.replayListSignature = signature;
   const list = $('replay-case-list'); list.replaceChildren();
   (replay?.cases || []).forEach((item) => {
-    const card = el('button',`replay-case${item.case_id === ui.replayCaseId ? ' active' : ''}`); card.type = 'button';
+    const card = el('button',`region-card replay-case${item.case_id === ui.replayCaseId ? ' active' : ''}`); card.type = 'button';
     card.setAttribute('aria-pressed',String(item.case_id === ui.replayCaseId));
-    const top = el('div','card-top'); top.append(el('strong','',item.label || item.case_id),badge(label(item.status || 'queued'),item.status === 'blocked' ? 'waiting' : ''));
-    card.append(top,el('p','',`已完成 ${item.completed_batches || 0}/${item.total_batches || 0} 批 · 已释放 ${item.released_batches || 0}`));
-    const progress = el('progress'); progress.max = Math.max(1,item.total_batches || 0); progress.value = item.completed_batches || 0; progress.setAttribute('aria-label',`${item.label || item.case_id} 已完成批次`); card.append(progress);
-    card.append(el('p','micro muted',replayCoverageText(item)),el('p','micro muted',`GNSS 观测资源 ${item.gnss_resources ?? '—'} · 已处理 ${item.processed_resources ?? '—'} · 分析排队 ${item.queued || 0} · 分析失败 ${item.failed || 0}`));
-    if (item.input_version != null || item.current_input_version != null) card.append(el('p','micro muted',`当前批次输入版本 ${item.input_version ?? item.current_input_version}`));
-    if (item.quality_status) card.append(el('p','micro muted',`结果质量：${label(item.quality_status)}`));
-    if (item.reason) card.append(el('p','source-error',item.reason));
-    if (item.case_id === replay.current_case_id) card.append(el('span','micro replay-current','后台当前案例'));
+    const hormuz = item.case_id.includes('hormuz');
+    card.append(el('strong','region-name',hormuz ? '霍尔木兹海峡' : item.case_id.includes('kharkiv') ? '哈尔科夫' : item.label || item.case_id),el('p','region-subtitle',hormuz ? '航运 · GNSS · 公开报道' : 'GNSS 观测'),el('span','region-status',item.as_of ? `历史观测 · ${item.as_of.slice(0,10)}` : '历史观测'));
     card.addEventListener('click',async () => {
+      closeDetailPanel(); closeSourcePanel(); $('alert-browser').hidden = true;
       ui.replayCaseId = item.case_id; localStorage.setItem('workspace-replay-case',item.case_id);
       ui.replayCase = null; ui.replayCaseSignature = ''; ui.gnssSignature = ''; ui.gnssSeriesKey = ''; ui.detail = null; ui.alertId = null; ui.metrics = null;
       renderPipeline();
@@ -626,7 +711,7 @@ function renderGnssDetail(row) {
   if (row.baseline_resource_ids?.length) { evidence.append(el('p','small muted','实际历史基线资源')); appendResourceLinks({resource_ids:row.baseline_resource_ids},evidence); }
   automaticReferences(row.baseline_refs || [],evidence);
   if (row.issues || row.limitations || row.time_note) section('质量与时间说明').append(el('p','',coverageText(row.issues || row.limitations || row.time_note)));
-  document.querySelector('.details-panel').scrollTop = 0;
+  openDetailPanel(); $('detail-content').scrollTop = 0;
 }
 function appendResourceLinks(value,parent) {
   const resources = value.resource_ids || (value.resource_id ? [value.resource_id] : []);
@@ -645,7 +730,7 @@ function appendResourceLinks(value,parent) {
         if (resource.raw_deleted_at) section('原件状态').append(el('p','',`原文件已清理，指标与报告保留。清理时间 ${date(resource.raw_deleted_at)}。`));
         if (resource.catalog_id) { const button = el('button','full subtle','查看服务器存储、保留结果与重取入口'); button.type = 'button'; button.addEventListener('click',() => openAcquisitionResource(resource.catalog_id).catch((error) => notify(error.message))); $('detail-content').append(button); }
         const fold = el('details','asset-block'); fold.append(el('summary','','登记的完整资源元数据'),el('pre','work-record',format(resource))); $('detail-content').append(fold);
-        document.querySelector('.details-panel').scrollTop = 0;
+        openDetailPanel(); $('detail-content').scrollTop = 0;
       } catch (error) { notify(error.message); }
     });
     parent.append(button);
@@ -654,13 +739,13 @@ function appendResourceLinks(value,parent) {
 function renderPipeline() {
   const pipeline = ui.pipeline;
   const replayMode = isCaseReplay(), replayCase = ui.replayCase || selectedReplaySummary();
-  $('content-kicker').textContent = replayMode ? '历史自动回放 / 已释放观测' : '持续监测 / 自动更新';
-  $('content-title').textContent = replayMode ? `${replayCase?.label || ui.replayCaseId || '双案例'} · 本次观测与异常` : '霍尔木兹海峡 · 公开资料异常动态';
+  $('content-kicker').textContent = replayMode ? '历史观测 / 区域态势' : '持续更新 / 区域态势';
+  $('content-title').textContent = replayMode ? (ui.replayCaseId.includes('kharkiv') ? '哈尔科夫' : ui.replayCaseId.includes('hormuz') ? '霍尔木兹海峡' : replayCase?.label || '选择关注区域') : '霍尔木兹海峡';
   renderPipelineStatus();
-  $('portwatch-content').hidden = replayMode ? !ui.replayCase?.portwatch_monitor_id : !(pipeline?.sources || []).some((source) => source.source === 'portwatch');
+  $('portwatch-content').hidden = ui.sourcePanel !== 'portwatch';
   $('pipeline-pw-heading').hidden = $('portwatch-content').hidden;
-  $('gnss-content').hidden = !replayMode;
-  if (replayMode) renderGnss();
+  $('gnss-content').hidden = !replayMode || ui.sourcePanel !== 'gnss';
+  if (!$('gnss-content').hidden) renderGnss();
   $('pw-alert-heading').hidden = true;
   $('pw-alert-list').hidden = true;
   if (!$('portwatch-content').hidden) renderPortWatch();
@@ -717,7 +802,7 @@ function renderPipeline() {
         section('本批结果').append(el('p','',work.statement || result.error || label(result.status)));
         appendWorkExecution(result,$('detail-content'));
         const fold = el('details','asset-block'); fold.append(el('summary','','完整输入、结论与补读记录')); const raw = el('pre','work-record'); raw.textContent = format(result); fold.append(raw); $('detail-content').append(fold);
-        document.querySelector('.details-panel').scrollTop = 0;
+        openDetailPanel(); $('detail-content').scrollTop = 0;
       } catch (error) { notify(error.message); }
     });
     recent.append(button);
@@ -736,20 +821,22 @@ function renderPipeline() {
         section('处理结果').append(el('p','',result.error || format(result.summary)));
         renderSteps(result,section('处理步骤'));
         const fold = el('details','asset-block'); fold.append(el('summary','','查看完整输入、输出与工具结果')); const raw = el('pre','work-record'); raw.textContent = format(result); fold.append(raw); $('detail-content').append(fold);
-        document.querySelector('.details-panel').scrollTop = 0;
+        openDetailPanel(); $('detail-content').scrollTop = 0;
       } catch (error) { notify(error.message); }
     });
     recent.append(button);
   });
   if (!ui.detail) emptyDetail();
+  if (typeof renderSituationBrief === 'function') renderSituationBrief();
 }
 async function openPipelineAlert(id, scroll = true, signature = '') {
   ui.alertId = id; ui.detail = 'pipeline-alert';
   const alert = await api(`/api/alerts/${encodeURIComponent(id)}`);
   if (ui.detail !== 'pipeline-alert' || String(ui.alertId) !== String(id) || !isPipeline()) return;
   ui.pipelineAlert = alert; ui.pipelineDetailSignature = signature;
-  const panel = document.querySelector('.details-panel'), previousScroll = panel.scrollTop;
+  const panel = $('detail-content'), previousScroll = panel.scrollTop;
   renderPipelineAlert(alert);
+  if (scroll) openDetailPanel('预警分析报告');
   panel.scrollTop = scroll ? 0 : previousScroll;
   renderPipeline();
 }
@@ -840,10 +927,13 @@ function renderOnline() {
   $('pipeline-content').hidden = !isPipeline();
   $('maintenance-content').hidden = isPipeline();
   $('pipeline-view').hidden = isPipeline();
-  $('gnss-content').hidden = !isPipeline() || !isCaseReplay();
+  $('gnss-content').hidden = !isPipeline() || !isCaseReplay() || ui.sourcePanel !== 'gnss';
   if (isPipeline()) { renderPipeline(); return; }
   const run = currentRun();
   const portwatch = isPortWatch();
+  $('source-panel').hidden = !portwatch;
+  $('news-source-content').hidden = true;
+  $('source-panel-title').textContent = '航运观测';
   $('portwatch-content').hidden = !portwatch;
   $('news-overview').hidden = portwatch;
   $('material-list').hidden = portwatch;
@@ -892,7 +982,7 @@ function renderOnline() {
     });
     if (!portwatch) renderArticleChart();
   }
-  const detailScroll = document.querySelector('.details-panel').scrollTop;
+  const detailScroll = $('detail-content').scrollTop;
   if (ui.detail === 'alert' && portwatch) {
     const alert = ui.alerts.find((item) => String(item.id) === String(ui.alertId));
     if (alert) renderAlert(alert); else emptyDetail();
@@ -900,9 +990,8 @@ function renderOnline() {
   else if (ui.detail === 'evidence-material' && ui.evidenceMaterial) renderMaterial(ui.evidenceMaterial);
   else if (ui.detail === 'run') renderRunDetail(run);
   else if (ui.detail === 'material' && ui.materials.some((item) => String(item.id) === String(ui.materialId))) renderMaterial(ui.materials.find((item) => String(item.id) === String(ui.materialId)));
-  else if (run && !ui.detail) { ui.detail = 'run'; renderRunDetail(run); }
   else if (!ui.detail) emptyDetail();
-  document.querySelector('.details-panel').scrollTop = detailScroll;
+  $('detail-content').scrollTop = detailScroll;
   $('mode-badge').textContent = portwatch ? '在线 · 数值监测' : run?.mode === 'replay' ? '原始材料回放' : '在线资料';
 }
 function emptyDetail() {
@@ -932,6 +1021,7 @@ function link(url, title, parent) {
   parent.append(anchor);
 }
 function renderMaterial(material) {
+  openDetailPanel('原始资料与分析');
   const parent = $('detail-content');
   parent.replaceChildren(badge(material.mode === 'case_replay' ? '历史自动回放 · 实际材料' : material.mode === 'replay' ? '原始材料回放' : '在线资料', 'accent'), el('h2', 'detail-heading', material.title), el('p', 'detail-meta', `${material.publisher || material.source} · ${label(material.content_kind)} · 版本 ${material.version || 1}`));
   const analysis = section(material.analysis_status === 'not_required' ? '数值材料' : 'Qwen 资料摘要');
@@ -968,6 +1058,7 @@ function renderReferences(ids, parent) {
 }
 function renderRunDetail(run) {
   if (!run) { emptyDetail(); return; }
+  openDetailPanel('运行记录');
   const parent = $('detail-content');
   parent.replaceChildren(badge(run.mode === 'replay' ? '原始材料回放' : '在线资料', 'accent'), el('h2', 'detail-heading', '本轮摘要与处理记录'), el('p', 'detail-meta', `${date(run.started_at)} · ${label(run.status)}`));
   const portwatch = currentMonitor()?.source === 'portwatch';
@@ -1084,7 +1175,7 @@ function renderPortWatch() {
     const top = el('div', 'card-top');
     top.append(el('span', 'publisher', metrics?.scope?.name || '霍尔木兹海峡'), badge(label(alert.status), ['active','recovering'].includes(alert.status) ? 'waiting' : ''));
     card.append(top, el('h3', '', 'PortWatch 可见通行量持续偏低提醒'), el('p', 'card-excerpt', alert.summary), el('div', 'card-meta', `观测 ${alert.started_on} 至 ${alert.resolved_on || alert.last_evaluated_date || '—'} · ${label(alert.origin)}`), el('p', 'alert-time', `系统首次记录 ${date(alert.detected_at)}`));
-    card.addEventListener('click', () => { ui.alertId = alert.id; ui.detail = 'alert'; renderOnline(); document.querySelector('.details-panel').scrollTop = 0; });
+    card.addEventListener('click', () => { ui.alertId = alert.id; ui.detail = 'alert'; renderOnline(); openDetailPanel(); $('detail-content').scrollTop = 0; });
     list.append(card);
   });
   const observations = metrics?.observations || [];
@@ -1154,7 +1245,7 @@ function appendDailyTable(rows, parent, showDetail = false) {
   const body = el('tbody');
   rows.forEach((row) => {
     const tr = el('tr'), day = el('td');
-    if (showDetail) { const button = el('button','text-button',row.observed_date); button.type = 'button'; button.addEventListener('click',() => { ui.detail = 'pw-observation'; renderDailyDetail(row); document.querySelector('.details-panel').scrollTop = 0; }); day.append(button); }
+    if (showDetail) { const button = el('button','text-button',row.observed_date); button.type = 'button'; button.addEventListener('click',() => { ui.detail = 'pw-observation'; renderDailyDetail(row); openDetailPanel(); $('detail-content').scrollTop = 0; }); day.append(button); }
     else day.textContent = row.observed_date;
     const reference = el('td');
     appendMaterialLink(row, reference);
@@ -1171,7 +1262,7 @@ function appendMaterialLink(row, parent) {
     const button = el('button', 'reference-button', `材料 ${row.material_id}${row.material_version != null ? ` · v${row.material_version}` : ''}`);
     button.type = 'button';
     button.addEventListener('click', async () => {
-      try { ui.evidenceMaterial = await api(`/api/materials/${encodeURIComponent(row.material_id)}`); ui.detail = 'evidence-material'; renderMaterial(ui.evidenceMaterial); document.querySelector('.details-panel').scrollTop = 0; }
+      try { ui.evidenceMaterial = await api(`/api/materials/${encodeURIComponent(row.material_id)}`); ui.detail = 'evidence-material'; renderMaterial(ui.evidenceMaterial); openDetailPanel(); $('detail-content').scrollTop = 0; }
       catch (error) { notify(error.message); }
     });
     parent.append(button);
@@ -1350,10 +1441,10 @@ async function loadHistory() {
     const replay=history.replay;
     $('replay-button').disabled=!replay.available || Boolean(isRunning(activeRun()));
     $('replay-description').textContent=replay.available?`${replay.label} · ${replay.count} 条可用材料，按顺序分批处理。`:replay.label || '当前案例仅提供既有结果快照，暂无可回放的原始材料。';
-    renderReport();
   } catch(error) {notify(error.message);}
 }
 function historyHeader(title,description) {
+  openDetailPanel('参考报告');
   $('detail-content').replaceChildren(badge('历史 · 结果快照','accent'),el('h2','detail-heading',title),el('p','detail-meta',description));
 }
 function renderReport() {
@@ -1416,6 +1507,20 @@ async function setOnlineView(view) {
   setMode('online'); await refresh();
 }
 $('online-tab').addEventListener('click',()=>setOnlineView('pipeline'));
+$('detail-close').addEventListener('click',closeDetailPanel);
+$('detail-backdrop').addEventListener('click',closeDetailPanel);
+$('source-panel-close').addEventListener('click',closeSourcePanel);
+$('alert-browser-close').addEventListener('click',()=>{$('alert-browser').hidden=true;});
+document.addEventListener('keydown',(event)=>{
+  if ($('detail-panel').hidden) return;
+  if (event.key === 'Escape') { event.preventDefault(); closeDetailPanel(); }
+  if (event.key === 'Tab') {
+    const nodes = [...$('detail-panel').querySelectorAll('button,a[href],input,select,textarea,summary,[tabindex="0"]')].filter((node)=>!node.disabled && node.getClientRects().length);
+    const first = nodes[0], last = nodes.at(-1);
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+  }
+});
 $('history-tab').addEventListener('click',()=>setMode('history'));
 $('acquisition-tab').addEventListener('click',()=>{setMode('acquisition');refresh();});
 $('acquisition-new-subscription').addEventListener('click',()=>{fillAcquisitionSubscription(null);renderAcquisition();$('acquisition-stations').focus();});
@@ -1470,7 +1575,7 @@ $('save-button').addEventListener('click',()=>action(async()=>{const monitor=awa
 $('schedule-button').addEventListener('click',()=>action(async()=>{const enabled=!currentMonitor()?.enabled;const monitor=await saveMonitor();if(!monitor)return;await api(`/api/monitors/${encodeURIComponent(monitor.id)}/schedule`,{enabled});}));
 $('cancel-button').addEventListener('click',()=>action(async()=>{const run=activeRun();if(run)await api(`/api/runs/${encodeURIComponent(run.id)}/cancel`,{});}));
 $('refresh-button').addEventListener('click',()=>{notify();refresh();});
-$('run-summary-button').addEventListener('click',()=>{ui.detail='run';renderRunDetail(currentRun());document.querySelector('.details-panel').scrollTop=0;});
+$('run-summary-button').addEventListener('click',()=>{ui.detail='run';renderRunDetail(currentRun());openDetailPanel(); $('detail-content').scrollTop=0;});
 $('replay-button').addEventListener('click',()=>action(async()=>{const run=await api('/api/history/replay',{batch_size:3});ui.onlineView='maintenance';ui.monitorId=String(run.monitor_id);ui.runId=String(run.id);ui.formLoaded=false;ui.detail='run';remember();setMode('online');}));
 setMode(ui.mode);
 refresh();

@@ -3,23 +3,23 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>公开资料工作台</title>
+  <title>区域态势 · 公开情报工作台</title>
   <link rel="stylesheet" href="/static/styles.css">
-  <script defer src="/static/app.js"></script>
+  <link rel="stylesheet" href="/static/dashboard.css?v=6">
+  <script defer src="/static/app.js?v=6"></script>
+  <script defer src="/static/briefing.js?v=6"></script>
 </head>
-<body>
+<body class="dashboard">
   <header class="topbar">
-    <div class="brand"><span class="brand-mark" aria-hidden="true">◈</span><div><h1>公开资料工作台</h1><p>PUBLIC INFORMATION WORKSPACE</p></div></div>
-    <div class="top-status"><span id="mode-badge" class="badge accent">自动监测</span><span id="pipeline-status" class="status-item">流水线 · 读取中</span><span id="model-status" class="status-item">Qwen · 尚无调用记录</span><span id="source-status" class="status-item">来源 · 尚无检查记录</span></div>
-    <div class="top-update"><span>最近采集 <strong id="last-success">尚无记录</strong></span><span>最近分析 <strong id="last-analysis">尚无记录</strong></span><span id="pipeline-backlog">待分析 —</span></div>
-    <div id="replay-top-status" class="replay-top-status" hidden></div>
+    <div class="brand"><span class="brand-mark" aria-hidden="true">◈</span><div><h1>公开情报工作台</h1><p>REGIONAL INTELLIGENCE</p></div></div>
+    <div class="top-status"><span id="mode-badge" class="badge accent">自动监测</span><span class="top-caption">区域态势与证据</span></div>
   </header>
   <div id="notice" class="notice" role="status" hidden></div>
   <main class="workspace">
     <aside class="controls panel">
-      <div class="panel-heading"><span class="eyebrow">工作空间</span><span class="tiny-label">01 / 配置</span></div>
-      <nav class="mode-switch" aria-label="资料模式"><button id="online-tab" class="active" type="button">自动监测</button><button id="history-tab" type="button">历史案例</button></nav>
-      <button id="acquisition-tab" class="full workspace-entry" type="button">数据获取与存储</button>
+      <div class="panel-heading"><span class="eyebrow">工作空间</span></div>
+      <nav class="mode-switch" aria-label="工作空间"><button id="online-tab" class="active" type="button">区域态势</button><button id="acquisition-tab" type="button">数据管理</button><button id="history-tab" type="button">参考报告</button></nav>
+      <div id="region-navigation"><div class="section-heading"><h2>关注区域</h2><span class="tiny-label">REGIONS</span></div><section id="replay-controls" hidden><div id="replay-case-list" class="replay-case-list"></div></section><div id="online-region" class="region-card replay-case active"><strong class="region-name">霍尔木兹海峡</strong><p class="region-subtitle">民用航运 · 公开报道</p><span class="region-status">在线监测</span></div><p class="region-caption">选择区域，查看结论与支持资料</p><a id="instance-link" class="instance-link" hidden></a></div>
       <section id="acquisition-controls" hidden>
         <div class="section-heading"><h2>GNSS 来源订阅</h2><button id="acquisition-new-subscription" class="text-button" type="button">＋ 新建</button></div>
         <p class="small muted">配置保存到服务器，由后台持续获取、计算和分析。</p>
@@ -38,10 +38,10 @@
         <div id="acquisition-subscription-status" class="small muted"></div>
       </section>
       <section id="online-controls">
+        <details id="monitoring-settings" class="maintenance-fold"><summary>监测设置</summary>
         <div class="section-heading"><h2 id="pipeline-control-title">持续监测</h2><span id="pipeline-enabled" class="badge">读取中</span></div>
         <p id="pipeline-scope" class="small muted">霍尔木兹海峡 · 民用航运公开资料</p>
         <button id="pipeline-pause" class="primary full" type="button" disabled>读取运行状态…</button>
-        <section id="replay-controls" hidden><div class="section-heading"><h3>本次案例</h3><span class="tiny-label">查看进度</span></div><div id="replay-case-list" class="replay-case-list"></div><p class="micro muted">后台自动顺序处理。选择案例仅切换查看内容，已完成结果持续保留。</p></section>
         <form id="pipeline-form">
           <label for="pipeline-news-topic">新闻主题词</label><textarea id="pipeline-news-topic" rows="2" required></textarea>
           <label for="pipeline-rss-terms">RSS 筛选词（每行一个）</label><textarea id="pipeline-rss-terms" rows="2"></textarea>
@@ -63,6 +63,7 @@
         </form>
         <div class="schedule-info" id="schedule-info">手动运行 · 周期更新未开启</div>
         </details>
+        </details>
       </section>
       <section id="history-controls" hidden>
         <div class="section-heading"><h2>霍尔木兹海峡</h2></div>
@@ -74,20 +75,27 @@
         <h3>原始材料回放</h3><p id="replay-description" class="small muted">正在读取历史材料状态…</p>
         <button id="replay-button" class="primary full" type="button" disabled>回放下一批 · 3 条</button>
       </section>
-      <details class="runtime-block maintenance-fold"><summary>手动运行进度 <span id="running-dot" class="dot"></span></summary><strong id="current-stage">等待运行</strong><p id="current-runtime" class="small muted">运行后显示真实处理进度</p><button id="cancel-button" class="full subtle" type="button" disabled>取消当前运行</button><p class="micro muted">取消将在当前处理步骤完成后生效。</p></details>
     </aside>
     <section class="content-panel panel">
       <div class="content-heading"><div><span class="eyebrow" id="content-kicker">持续监测 / 自动更新</span><h2 id="content-title">霍尔木兹海峡 · 公开资料异常动态</h2></div><button id="refresh-button" class="icon-button" type="button" title="刷新已保存的状态" aria-label="刷新已保存的状态">↻</button></div>
       <div id="online-content">
         <section id="pipeline-content">
+          <section id="situation-brief" class="situation-brief" aria-label="区域结论"><p class="muted">正在读取区域结论…</p></section>
+          <section id="source-browser" class="source-browser" aria-label="支持资料"></section>
+          <section id="alert-browser" hidden><div class="section-heading"><h3>区域预警记录</h3><button id="alert-browser-close" class="text-button" type="button">收起</button></div>
+          <div class="list-heading"><h3>预警与线索 <span id="pipeline-alert-count" class="count-label">0</span></h3><select id="pipeline-alert-filter" aria-label="筛选自动异常"><option value="all">全部动态</option><option value="unread">未读</option><option value="active">持续与待分析</option><option value="ended">解除与撤销</option></select></div>
+          <div id="pipeline-alert-list" class="material-list"></div></section>
+          <details id="operations-content" class="observation-fold"><summary>运行管理</summary>
+          <div class="top-update"><span id="pipeline-status" class="status-item">读取中</span><span id="model-status" class="status-item">Qwen · 尚无调用记录</span><span id="source-status" class="status-item">来源 · 尚无检查记录</span><span>最近采集 <strong id="last-success">尚无记录</strong></span><span>最近分析 <strong id="last-analysis">尚无记录</strong></span><span id="pipeline-backlog">待分析 —</span></div>
+          <div id="replay-top-status" class="replay-top-status" hidden></div>
           <div class="pipeline-overview"><p id="pipeline-summary">正在读取已保存的监测进度…</p><p id="pipeline-queue-info" class="small muted"></p><div id="pipeline-source-dates" class="source-dates"></div></div>
-          <div class="list-heading"><h3>异常动态 <span id="pipeline-alert-count" class="count-label">0</span></h3><select id="pipeline-alert-filter" aria-label="筛选自动异常"><option value="all">全部动态</option><option value="unread">未读</option><option value="active">持续与待分析</option><option value="ended">解除与撤销</option></select></div>
-          <div id="pipeline-alert-list" class="material-list"></div>
           <details class="observation-fold"><summary>最近资料处理记录</summary><div id="pipeline-recent-runs" class="material-list"></div></details>
+          <details class="runtime-block maintenance-fold"><summary>手动运行进度 <span id="running-dot" class="dot"></span></summary><strong id="current-stage">等待运行</strong><p id="current-runtime" class="small muted">运行后显示真实处理进度</p><button id="cancel-button" class="full subtle" type="button" disabled>取消当前运行</button><p class="micro muted">取消将在当前处理步骤完成后生效。</p></details>
+          </details>
+        </section>
+        <section id="source-panel" hidden><div class="source-panel-heading"><h3 id="source-panel-title">支持资料</h3><button id="source-panel-close" class="text-button" type="button">收起资料</button></div><div id="source-panel-body">
           <section id="gnss-content" hidden><div class="section-heading pipeline-chart-heading"><h3>GNSS 真实观测</h3><span class="tiny-label">CNR p10 · dB-Hz</span></div><p id="gnss-coverage" class="small muted"></p><label for="gnss-series-select" class="small muted">实际站点 / 信号</label><select id="gnss-series-select" aria-label="选择实际 GNSS 站点和信号"></select><div id="gnss-summary" class="gnss-summary"></div><div class="chart-card"><div id="gnss-chart"></div><div id="gnss-chart-legend" class="chart-legend"></div><p id="gnss-chart-note"></p></div><details class="observation-fold"><summary>观测窗口、质量与原始依据</summary><div id="gnss-observations" class="table-scroll"></div></details></section>
           <div id="pipeline-pw-heading" class="section-heading pipeline-chart-heading"><h3>数值观测</h3><span class="tiny-label">PortWatch · 日度资料</span></div>
-        </section>
-        <button id="pipeline-view" class="text-button" type="button" hidden>← 返回自动监测看板</button>
         <div id="portwatch-content" hidden>
           <p id="portwatch-current-note" class="current-state-note" hidden>当前指标与提醒状态，不是所选历史运行快照。</p>
           <div class="metrics portwatch-metrics"><div><span>最新可见通行量</span><strong id="pw-latest">—</strong><small id="pw-observed-date">尚无观测</small></div><div><span id="pw-baseline-label">近期参考中位数</span><strong id="pw-baseline">—</strong><small id="pw-ratio">比例 —</small></div><div><span>当前规则状态</span><strong id="pw-status" class="metric-status">尚无观测</strong><small id="pw-data-date">数据截至 —</small></div></div>
@@ -96,6 +104,9 @@
           <div id="pw-alert-list" class="material-list"></div>
           <details id="pw-observation-fold" class="observation-fold"><summary>日度数值与材料依据 <span id="pw-observation-count"></span></summary><div id="pw-observations" class="table-scroll"></div></details>
         </div>
+        <div id="news-source-content" hidden></div>
+        </div></section>
+        <button id="pipeline-view" class="text-button" type="button" hidden>← 返回区域态势</button>
         <div id="maintenance-content" hidden><div id="news-overview">
         <div class="metrics"><div><span>本轮新增</span><strong id="new-count">—</strong><small>条材料</small></div><div><span>已完成分析</span><strong id="analyzed-count">—</strong><small>条材料</small></div><div><span>失败</span><strong id="failed-count">—</strong><small>次处理</small></div></div>
         <div class="chart-card"><div class="section-heading"><h3>资料时间分布</h3><span class="tiny-label">当前列表 · 条</span></div><div id="article-chart" class="article-chart"></div></div>
@@ -121,7 +132,7 @@
         <div class="section-heading acquisition-heading"><h3>清理记录</h3><button id="acquisition-cleanup" class="text-button" type="button">提交缓存清理任务</button></div><div id="acquisition-cleanup-status" class="small muted"></div><div id="acquisition-cleanup-records"></div>
       </div>
     </section>
-    <aside class="details-panel panel"><div class="panel-heading"><span class="eyebrow">依据、分析与处理记录</span><span class="tiny-label">03 / 详情</span></div><div id="detail-content"><div class="empty-state detail-empty"><span class="empty-symbol" aria-hidden="true">≡</span><h3>查看异常依据</h3><p>选择一条动态，查看程序规则、Qwen 结论和原始材料。</p></div></div></aside>
+    <div id="detail-backdrop" hidden></div><aside id="detail-panel" class="details-panel panel" role="dialog" aria-modal="true" aria-labelledby="detail-panel-title" tabindex="-1" hidden><div class="drawer-heading"><span class="eyebrow" id="detail-panel-title">证据与分析</span><button id="detail-close" class="icon-button" type="button" aria-label="关闭详情">×</button></div><div id="detail-content"></div></aside>
   </main>
 </body>
 </html>
