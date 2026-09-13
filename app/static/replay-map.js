@@ -43,9 +43,9 @@
     const current=state.current, alert=current?.alert, work=current?.view.recent_work || [];
     if(!current)return null;
     const states={
-      normal:{status:'绿色 · 监测判定',title:'判定正常',summary:'当前观测判定正常，持续执行监测。',tone:'normal'},
-      attention:{status:'黄色 · 监测判定',title:'发现可疑信号',summary:'需扩大证据范围，持续核实与论证。',tone:'attention'},
-      warning:{status:'红色 · 监测判定',title:'明确预警信号',summary:'已达到预警条件，持续跟踪后续变化。',tone:'warning'}
+      normal:{title:'判定正常',summary:'当前观测判定正常，持续执行监测。',tone:'normal'},
+      attention:{title:'发现可疑信号',summary:'需扩大证据范围，持续核实与论证。',tone:'attention'},
+      warning:{title:'明确预警信号',summary:'已达到预警条件，持续跟踪后续变化。',tone:'warning'}
     };
     const result=(tone,evidence,observed=current.view.as_of)=>({...states[tone],evidence,observed});
     const maritime=current.metrics?.state;
@@ -157,7 +157,7 @@
     if(!data){if(state.popup)state.map.closePopup(state.popup);state.popup=null;$('case-date').textContent=`历史观测 · ${day(state.current?.view.as_of)}`;$('map-loading').hidden=false;$('map-loading').textContent='当前观测资料尚不足以作出监测判定';return;}
     const content=node('div','map-callout'); content.id='map-callout';content.dataset.tone=data.tone;
     const action=button('',()=>openReport('overview'),'callout-main'); action.id='case-conclusion';
-    action.append(node('span','callout-status',data.status),node('h2','callout-title',data.title),node('p','callout-summary',data.summary));
+    action.append(node('h2','callout-title',data.title),node('p','callout-summary',data.summary));
     const evidence=node('ul','callout-evidence');data.evidence.forEach((item)=>evidence.append(node('li','',item)));
     action.append(node('span','callout-evidence-label','判定依据'),evidence,node('span','callout-open','查看分析报告 →'));content.append(action);
     if(!state.popup)state.popup=L.popup({className:'case-popup',closeButton:false,closeOnClick:false,autoClose:false,minWidth:240,maxWidth:320,
@@ -236,7 +236,7 @@
   function renderOverview() {
     const data=conclusion(), alert=state.current.alert;
     const overview=section('区域结论');
-    if(data)overview.append(node('span',`report-status ${data.tone}`,data.status),node('h2','report-conclusion',data.title),node('p','',data.summary));
+    if(data)overview.append(node('h2','report-conclusion',data.title),node('p','',data.summary));
     else overview.append(node('p','','当前观测资料尚不足以作出监测判定。'));
     overview.append(node('p','report-date',`观测日期：${day(data?.observed || state.current.view.as_of)}`));
     if(alert?.analysis?.statement && !alert.analysis_stale)section('综合分析').append(node('p','',alert.analysis.statement));
