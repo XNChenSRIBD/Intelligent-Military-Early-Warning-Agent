@@ -169,7 +169,8 @@ def require_online():
 
 @app.get('/')
 async def index():
-    return FileResponse(ROOT / 'app' / 'static' / 'index.html')
+    page = 'replay-map.html' if settings.pipeline_mode == 'case_replay' else 'index.html'
+    return FileResponse(ROOT / 'app' / 'static' / page)
 
 
 @app.get('/api/state')

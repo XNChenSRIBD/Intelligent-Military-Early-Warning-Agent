@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>历史案例 · 地图情报</title>
+  <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="/static/replay-map.css?v=1">
+  <script defer src="/static/vendor/leaflet/leaflet.js"></script>
+  <script defer src="/static/replay-map.js?v=1"></script>
+</head>
+<body class="replay-map-app">
+  <main id="replay-map-scene">
+    <div id="map" aria-label="历史案例情报地图"></div>
+    <header class="map-topbar">
+      <div class="map-brand"><span class="brand-symbol" aria-hidden="true">◈</span><div><h1>公开情报</h1><p>HISTORICAL INTELLIGENCE</p></div></div>
+      <nav class="case-switch" aria-label="切换历史案例"><button class="case-button active" data-case="kharkiv" type="button" aria-pressed="true">哈尔科夫</button><button class="case-button" data-case="hormuz" type="button" aria-pressed="false">霍尔木兹</button></nav>
+      <div id="case-date" class="case-date">历史案例</div>
+    </header>
+    <aside id="layer-panel" class="layer-panel">
+      <details open id="layer-fold"><summary>情报图层 <span>LAYERS</span></summary>
+        <label class="layer-row"><input id="layer-gnss" type="checkbox" checked><span class="layer-symbol gnss-symbol" aria-hidden="true"></span><span>IGS 观测站<small id="gnss-layer-status">GNSS</small></span></label>
+        <label class="layer-row"><input id="layer-aircraft" type="checkbox"><span class="layer-symbol aircraft-symbol" aria-hidden="true"></span><span>航空活动<small id="aircraft-layer-status">航空轨迹</small></span></label>
+        <label class="layer-row"><input id="layer-shipping" type="checkbox" checked><span class="layer-symbol shipping-symbol" aria-hidden="true"></span><span>航运活动<small id="shipping-layer-status">航运观测</small></span></label>
+        <p id="layer-note"></p>
+      </details>
+    </aside>
+    <div id="map-loading" role="status">正在打开案例地图…</div>
+    <div id="map-legend"><span><i class="legend-station"></i>IGS 站点</span><span><i class="legend-area"></i>案例位置</span><span><i class="legend-shipping"></i>航运观测</span></div>
+    <button id="map-home-btn" type="button" aria-label="回到案例视野">回到案例</button>
+    <div id="map-attribution"><a href="https://www.naturalearthdata.com/about/terms-of-use/" target="_blank" rel="noopener">Natural Earth</a> · <a href="https://leafletjs.com/" target="_blank" rel="noopener">Leaflet</a></div>
+  </main>
+  <aside id="report-panel" class="report-panel" role="dialog" aria-modal="false" aria-labelledby="report-title" hidden>
+    <header class="report-heading"><div><span class="report-kicker">区域研判</span><h2 id="report-title">案例分析报告</h2></div><button id="report-close" type="button" aria-label="关闭分析报告">×</button></header>
+    <button id="report-back" class="text-button" type="button" hidden>← 返回案例报告</button>
+    <div id="report-body"></div>
+  </aside>
+</body>
+</html>

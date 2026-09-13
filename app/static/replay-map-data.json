@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "coordinate_order": "longitude,latitude",
+  "crs": "EPSG:4326",
+  "sources": {
+    "rinex_results": {
+      "label": "已保存 RINEX 观测计算结果",
+      "coordinate_field": "coordinates",
+      "coordinate_origin": "RINEX APPROX POSITION XYZ",
+      "conversion": "WGS84 ellipsoid conversion of approximate RINEX ECEF",
+      "processing_code": "app/gnss.py:_coordinates",
+      "note": "每站选取一份已完成观测结果的保存坐标；定位原文件近似测站位置，不表示异常影响范围。"
+    },
+    "kharkiv_focus": {
+      "label": "联合国 UNGEGN：Kharkiv 城市位置",
+      "url": "https://ungegn.un.org/dashboard/cities/details?id=1167",
+      "upstream": "NGA GEOnet Names Server",
+      "note": "城市地图焦点，不是观测站或异常定位结果。"
+    },
+    "portwatch_geography": {
+      "label": "IMF PortWatch 地点表；World Bank / Development Data Partnership 公开位置表",
+      "url": "https://datapartnership.org/red-sea-monitoring/notebooks/chokepoints/red-sea-chokepoints.html#locations",
+      "upstream_url": "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/PortWatch_chokepoints_database/FeatureServer/0",
+      "note": "chokepoint6 的 lat/lon 取自上述公开地点表；此点用于区域聚合标注，未提供统计边界。"
+    },
+    "portwatch_daily": {
+      "label": "IMF PortWatch：海峡每日通行量",
+      "url": "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/Daily_Chokepoints_Data/FeatureServer/0",
+      "case_example": "cases/replay/hormuz/data/portwatch-2026-02-27.json",
+      "value_field": "attributes.n_total",
+      "unit": "日通行量计数"
+    }
+  },
+  "cases": {
+    "kharkiv": {
+      "case_id": "kharkiv",
+      "label": "哈尔科夫",
+      "manifest": "cases/replay/kharkiv/manifest.json",
+      "focus": {"label": "哈尔科夫", "coordinates": [36.25, 50.0], "source_id": "kharkiv_focus"},
+      "regions": [
+        {"id": "kharkiv-focus", "kind": "case_focus", "label": "哈尔科夫案例区域", "geometry": {"type": "Point", "coordinates": [36.25, 50.0]}, "source_id": "kharkiv_focus", "aggregate": false}
+      ],
+      "stations": [
+        {
+          "id": "BOGI00POL", "station": "BOGI00POL", "observation_station_name": "BOGI",
+          "coordinates": [21.03520997540228, 52.47498894200675], "latitude": 52.47498894200675, "longitude": 21.03520997540228,
+          "observation_resource_count": 3,
+          "source": {"source_id": "rinex_results", "resource_id": "kharkiv-gnss-BOGI00POL_R_20241300000_01D_30S_MO", "filename": "BOGI00POL_R_20241300000_01D_30S_MO.crx.gz", "computed_at": "2026-09-12T14:38:25.190699Z"}
+        },
+        {
+          "id": "BUCU00ROU", "station": "BUCU00ROU", "observation_station_name": "BUCU",
+          "coordinates": [26.125736143434356, 44.463942216053866], "latitude": 44.463942216053866, "longitude": 26.125736143434356,
+          "observation_resource_count": 2,
+          "source": {"source_id": "rinex_results", "resource_id": "kharkiv-gnss-BUCU00ROU_R_20241300000_01D_30S_MO", "filename": "BUCU00ROU_R_20241300000_01D_30S_MO.crx.gz", "computed_at": "2026-09-12T14:37:46.060741Z"}
+        },
+        {
+          "id": "GANP00SVK", "station": "GANP00SVK", "observation_station_name": "GANP",
+          "coordinates": [20.322931265612922, 49.03471076058707], "latitude": 49.03471076058707, "longitude": 20.322931265612922,
+          "observation_resource_count": 3,
+          "source": {"source_id": "rinex_results", "resource_id": "kharkiv-gnss-GANP00SVK_R_20241310000_01D_30S_MO", "filename": "GANP00SVK_R_20241310000_01D_30S_MO.crx.gz", "computed_at": "2026-09-12T14:48:58.157479Z"}
+        },
+        {
+          "id": "GLSV00UKR", "station": "GLSV00UKR", "observation_station_name": "GLSV",
+          "coordinates": [30.496739310582907, 50.364178396583405], "latitude": 50.364178396583405, "longitude": 30.496739310582907,
+          "observation_resource_count": 3,
+          "source": {"source_id": "rinex_results", "resource_id": "kharkiv-gnss-GLSV00UKR_R_20241310000_01D_30S_MO", "filename": "GLSV00UKR_R_20241310000_01D_30S_MO.crx.gz", "computed_at": "2026-09-12T14:43:32.847247Z"}
+        },
+        {
+          "id": "JOZE00POL", "station": "JOZE00POL", "observation_station_name": "JOZE",
+          "coordinates": [21.03154305601093, 52.09727673278665], "latitude": 52.09727673278665, "longitude": 21.03154305601093,
+          "observation_resource_count": 3,
+          "source": {"source_id": "rinex_results", "resource_id": "kharkiv-gnss-JOZE00POL_R_20241310000_01D_30S_MO", "filename": "JOZE00POL_R_20241310000_01D_30S_MO.crx.gz", "computed_at": "2026-09-12T14:47:29.020086Z"}
+        },
+        {
+          "id": "MDVJ00RUS", "station": "MDVJ00RUS", "observation_station_name": "MDVJ",
+          "coordinates": [37.21451831170343, 56.02150402290135], "latitude": 56.02150402290135, "longitude": 37.21451831170343,
+          "observation_resource_count": 3,
+          "source": {"source_id": "rinex_results", "resource_id": "kharkiv-gnss-MDVJ00RUS_R_20241300000_01D_30S_MO", "filename": "MDVJ00RUS_R_20241300000_01D_30S_MO.crx.gz", "computed_at": "2026-09-12T14:36:38.222586Z"}
+        },
+        {
+          "id": "MIKL00UKR", "station": "MIKL00UKR", "observation_station_name": "MIKL",
+          "coordinates": [31.972827878310127, 46.97278936720311], "latitude": 46.97278936720311, "longitude": 31.972827878310127,
+          "observation_resource_count": 3,
+          "source": {"source_id": "rinex_results", "resource_id": "kharkiv-gnss-MIKL00UKR_R_20241310000_01D_30S_MO", "filename": "MIKL00UKR_R_20241310000_01D_30S_MO.crx.gz", "computed_at": "2026-09-12T14:39:26.148707Z"}
+        },
+        {
+          "id": "POLV00UKR", "station": "POLV00UKR", "observation_station_name": "POLV",
+          "coordinates": [34.542928829979864, 49.602613133247225], "latitude": 49.602613133247225, "longitude": 34.542928829979864,
+          "observation_resource_count": 3,
+          "source": {"source_id": "rinex_results", "resource_id": "kharkiv-gnss-POLV00UKR_R_20241310000_01D_30S_MO", "filename": "POLV00UKR_R_20241310000_01D_30S_MO.crx.gz", "computed_at": "2026-09-12T14:46:08.373772Z"}
+        },
+        {
+          "id": "RIGA00LVA", "station": "RIGA00LVA", "observation_station_name": "RIGA",
+          "coordinates": [24.058771042339885, 56.94861870401317], "latitude": 56.94861870401317, "longitude": 24.058771042339885,
+          "observation_resource_count": 3,
+          "source": {"source_id": "rinex_results", "resource_id": "kharkiv-gnss-RIGA00LVA_R_20241290000_01D_30S_MO", "filename": "RIGA00LVA_R_20241290000_01D_30S_MO.crx.gz", "computed_at": "2026-09-12T14:29:48.201823Z"}
+        },
+        {
+          "id": "SULP00UKR", "station": "SULP00UKR", "observation_station_name": "SULP",
+          "coordinates": [24.014483402383817, 49.835585877530356], "latitude": 49.835585877530356, "longitude": 24.014483402383817,
+          "observation_resource_count": 3,
+          "source": {"source_id": "rinex_results", "resource_id": "kharkiv-gnss-SULP00UKR_R_20241290000_01D_30S_MO", "filename": "SULP00UKR_R_20241290000_01D_30S_MO.crx.gz", "computed_at": "2026-09-12T14:27:23.053879Z"}
+        },
+        {
+          "id": "ZECK00RUS", "station": "ZECK00RUS", "observation_station_name": "ZECK",
+          "coordinates": [41.56508351012886, 43.78840958085113], "latitude": 43.78840958085113, "longitude": 41.56508351012886,
+          "observation_resource_count": 3,
+          "source": {"source_id": "rinex_results", "resource_id": "kharkiv-gnss-ZECK00RUS_R_20241310000_01D_30S_MO", "filename": "ZECK00RUS_R_20241310000_01D_30S_MO.crx.gz", "computed_at": "2026-09-12T14:45:15.332641Z"}
+        }
+      ],
+      "tracks": {"aircraft": [], "vessels": [], "availability": "not_in_case_inputs"},
+      "spatial_note": "案例观测站分布于乌克兰及东欧周边，未包含哈尔科夫市内站点；地图点位是测站位置，不能视作异常源定位。"
+    },
+    "hormuz": {
+      "case_id": "hormuz",
+      "label": "霍尔木兹海峡",
+      "manifest": "cases/replay/hormuz/manifest.json",
+      "focus": {"label": "霍尔木兹海峡", "coordinates": [56.859848, 26.296853], "source_id": "portwatch_geography"},
+      "regions": [
+        {
+          "id": "chokepoint6", "kind": "portwatch", "label": "霍尔木兹海峡日通行量",
+          "geometry": {"type": "Point", "coordinates": [56.859848, 26.296853]},
+          "source_id": "portwatch_geography", "data_source_id": "portwatch_daily", "portid": "chokepoint6",
+          "aggregate": true, "unit": "日通行量计数", "boundary": null,
+          "note": "海峡区域聚合数据的标注点，不是单船位置、航迹或统计边界。"
+        }
+      ],
+      "stations": [
+        {
+          "id": "BSHM00ISR", "station": "BSHM00ISR", "observation_station_name": "BSHM",
+          "coordinates": [35.02298684522373, 32.77898731697105], "latitude": 32.77898731697105, "longitude": 35.02298684522373,
+          "observation_resource_count": 14,
+          "source": {"source_id": "rinex_results", "resource_id": "hormuz-gnss-BSHM00ISR_R_20260641015_15M_01S_MO", "filename": "BSHM00ISR_R_20260641015_15M_01S_MO.crx.gz", "computed_at": "2026-09-12T13:05:59.067254Z"}
+        },
+        {
+          "id": "KITG00UZB", "station": "KITG00UZB", "observation_station_name": "KITG",
+          "coordinates": [66.88673816529156, 39.1333863953319], "latitude": 39.1333863953319, "longitude": 66.88673816529156,
+          "observation_resource_count": 14,
+          "source": {"source_id": "rinex_results", "resource_id": "hormuz-gnss-KITG00UZB_R_20260641015_15M_01S_MO", "filename": "KITG00UZB_R_20260641015_15M_01S_MO.crx.gz", "computed_at": "2026-09-12T13:05:42.057779Z"}
+        },
+        {
+          "id": "NICO00CYP", "station": "NICO00CYP", "observation_station_name": "NICO00CYP",
+          "coordinates": [33.39644996404402, 35.14098908238255], "latitude": 35.14098908238255, "longitude": 33.39644996404402,
+          "observation_resource_count": 14,
+          "source": {"source_id": "rinex_results", "resource_id": "hormuz-gnss-NICO00CYP_S_20260641015_15M_01S_MO", "filename": "NICO00CYP_S_20260641015_15M_01S_MO.crx.gz", "computed_at": "2026-09-12T13:02:54.195437Z"}
+        }
+      ],
+      "tracks": {"aircraft": [], "vessels": [], "availability": "not_in_case_inputs"},
+      "spatial_note": "三处 GNSS 观测站分别位于以色列、乌兹别克斯坦、塞浦路斯，均不在霍尔木兹海峡；海峡航运数据为 PortWatch 日聚合通行量。"
+    }
+  }
+}
