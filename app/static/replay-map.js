@@ -2,13 +2,13 @@
 (() => {
   'use strict';
   const $ = (id) => document.getElementById(id);
-  const state = {caseId:'kharkiv', snapshot:null, metadata:null, current:null, map:null,
-    cache:new Map(), request:0, detailRequest:0, popup:null, reportTab:'overview', station:null, busy:false,
+  const state = {caseId:'kharkiv', metadata:null, current:null, map:null,
+    request:0, detailRequest:0, popup:null, reportTab:'overview', station:null, busy:false,
     layerChoice:{gnss:true,shipping:true,aircraft:false}};
   const layers = {};
   const finite = (value) => typeof value === 'number' && Number.isFinite(value);
   const number = (value) => finite(value) ? value.toLocaleString('zh-CN',{maximumFractionDigits:2}) : '—';
-  const stamp = (value) => value ? String(value).replace('T',' ').replace(/(?:\.\d+)?Z$/,' UTC') : '时间未注明';
+  const stamp = (value) => value ? String(value).replace('T',' ').replace(/(?:\.\d+)?(?:Z|\+00:00)$/,' UTC') : '时间未注明';
   const day = (value) => value ? String(value).slice(0,10) : '—';
   const short = (value, length=115) => { const text=String(value || ''); return text.length>length ? `${text.slice(0,length)}…` : text; };
   const names = {gnss:'GNSS 观测',portwatch:'航运观测',news:'公开报道',aircraft:'航空活动'};
@@ -25,7 +25,7 @@
     const response=await fetch(url); if(!response.ok)throw new Error('资料暂时无法读取，请稍后重试。');
     return response.json();
   }
-  function showError(error) { $('map-loading').hidden=false; $('map-loading').textContent=error.message || '页面暂时无法加载。'; }
+  function showError() { $('map-loading').hidden=false; $('map-loading').textContent=state.current?'暂时无法更新，正在保留上次观测结论。':'暂时无法取得案例资料，连接恢复后会自动更新。'; }
   function caseMeta() { return state.metadata.cases[state.caseId]; }
   function caseName() { return state.caseId==='kharkiv' ? '哈尔科夫' : '霍尔木兹海峡'; }
   function coordinates(item) { return item.coordinates || item.geometry?.coordinates; }
@@ -40,56 +40,12 @@
       .sort((a,b)=>String(a.time).localeCompare(String(b.time)));
   }
   function conclusion() {
-    const current=state.current, alert=current?.alert, work=current?.view.recent_work || [];
-    if(!current)return null;
-    const states={
-      normal:{title:'判定正常',summary:'当前观测判定正常，持续执行监测。',tone:'normal'},
-      attention:{title:'发现可疑信号',summary:'需扩大证据范围，持续核实与论证。',tone:'attention'},
-      warning:{title:'明确预警信号',summary:'已达到预警条件，持续跟踪后续变化。',tone:'warning'}
-    };
-    const result=(tone,evidence,observed=current.view.as_of)=>({...states[tone],evidence,observed});
-    const maritime=current.metrics?.state;
-    const latestValue=maritime?.latest_value ?? alert?.latest_observation?.n_total;
-    const baseline=maritime?.baseline ?? alert?.baseline;
-    const shippingEvidence=[];
-    if(finite(latestValue) && finite(baseline))shippingEvidence.push(`海峡最新日通行量为 ${number(latestValue)} 艘次，历史参考为 ${number(baseline)} 艘次。`);
-    if(alert?.origin_type==='numeric_rule' && ['active','recovering'].includes(alert.status)) {
-      const rule=alert.rule;
-      if(rule?.trigger_days && finite(rule.trigger_ratio))shippingEvidence.push(`通行量连续 ${rule.trigger_days} 天低于历史参考的 ${number(rule.trigger_ratio*100)}%，达到预警条件。`);
-      shippingEvidence.push(alert.status==='recovering'?'通行量开始回升，但尚未满足持续恢复条件。':'通行量持续偏低，尚未满足预警解除条件。');
-      return result('warning',shippingEvidence,alert.latest_observation?.observed_date || alert.last_evaluated_date);
-    }
-    // Use the latest assessment batch for each source, not superseded historical decisions.
-    const latestBySource=new Map();
-    work.forEach((item)=>{if(item.decision && (!latestBySource.has(item.kind) || item.as_of>latestBySource.get(item.kind)))latestBySource.set(item.kind,item.as_of);});
-    const assessments=work.filter((item)=>item.decision && item.as_of===latestBySource.get(item.kind));
-    const latestRows=new Map();
-    gnssRows().forEach((row)=>latestRows.set(`${row.station}/${row.signal}`,row));
-    const comparable=[...latestRows.values()].filter((row)=>finite(row.delta) && finite(row.p10));
-    const stationCount=new Set(comparable.map((row)=>row.station)).size;
-    const lowerCount=new Set(comparable.filter((row)=>row.delta<0).map((row)=>row.station)).size;
-    const gnssEvidence=lowerCount?[`最新可比观测中，${stationCount} 个 IGS 站里有 ${lowerCount} 个站的部分卫星信号质量（CNR）低于历史参考。`]:[];
-    const limited=assessments.some((item)=>item.decision==='insufficient_evidence');
-    const clue=alert && !['resolved','revoked'].includes(alert.status);
-    const candidate=assessments.some((item)=>['candidate','update'].includes(item.decision));
-    const shippingCandidate=maritime?.current_status==='candidate';
-    const evidence=[...gnssEvidence];
-    if(shippingCandidate)evidence.push(...shippingEvidence,'海峡通行量单日偏低，需要继续观察是否持续。');
-    if(clue)evidence.push(alert.origin_type==='news_clue'?'公开报道中发现需核实的事件线索，详见来源报告。':'已有观测分析发现待核实线索，详见分析报告。');
-    if(clue || candidate || shippingCandidate || (limited && lowerCount)) {
-      if(lowerCount)evidence.push('信号下降的原因及影响范围仍需更多观测佐证。');
-      return result('attention',evidence.length?evidence:['已有来源分析发现待核实线索，需结合更多资料判断。']);
-    }
-    if(assessments.length && assessments.every((item)=>item.decision==='no_anomaly') && (!maritime || ['not_triggered','resolved'].includes(maritime.current_status))) {
-      const normalEvidence=[];
-      if(assessments.some((item)=>item.kind==='gnss'))normalEvidence.push('最新卫星信号观测经分析，未发现异常变化。');
-      if(maritime)normalEvidence.push(...shippingEvidence,maritime.current_status==='resolved'?'海峡通行量已满足持续恢复条件。':'海峡通行量未达到偏低预警条件。');
-      if(assessments.some((item)=>item.kind==='news'))normalEvidence.push('最新公开报道经分析，未发现新的异常线索。');
-      return result('normal',normalEvidence);
-    }
-    // Missing evidence is not a normal finding or a suspicious signal by itself.
-    return null;
+    const decision=state.current?.decision?.primary;
+    if(!decision)return null;
+    return {title:decision.title,summary:decision.summary,tone:decision.state || 'unavailable',
+      evidence:decision.brief_evidence || [],observed:decision.as_of,decision};
   }
+
   function initializeMap(world) {
     const map=state.map=L.map('map',{zoomControl:false,attributionControl:false,minZoom:2,maxZoom:9,worldCopyJump:false,preferCanvas:true});
     L.control.zoom({position:'bottomright',zoomInTitle:'放大地图',zoomOutTitle:'缩小地图'}).addTo(map);
@@ -154,7 +110,7 @@
   }
   function renderCallout() {
     const data=conclusion();
-    if(!data){if(state.popup)state.map.closePopup(state.popup);state.popup=null;$('case-date').textContent=`历史观测 · ${day(state.current?.view.as_of)}`;$('map-loading').hidden=false;$('map-loading').textContent='当前观测资料尚不足以作出监测判定';return;}
+    if(!data){if(state.popup)state.map.closePopup(state.popup);state.popup=null;$('case-date').textContent=`资料截至 · ${day(state.current?.view.as_of)}`;$('map-loading').hidden=false;$('map-loading').textContent='当前观测资料尚不足以作出监测判定';return;}
     const content=node('div','map-callout'); content.id='map-callout';content.dataset.tone=data.tone;
     const action=button('',()=>openReport('overview'),'callout-main'); action.id='case-conclusion';
     action.append(node('h2','callout-title',data.title),node('p','callout-summary',data.summary));
@@ -163,28 +119,31 @@
     if(!state.popup)state.popup=L.popup({className:'case-popup',closeButton:false,closeOnClick:false,autoClose:false,minWidth:240,maxWidth:320,
       autoPanPaddingTopLeft:[12,145],autoPanPaddingBottomRight:[12,100],offset:[18,-9]});
     state.popup.setLatLng(latLng(caseMeta().focus)).setContent(content).openOn(state.map);
-    $('case-date').textContent=`历史观测 · ${day(data.observed)}`;
+    $('case-date').textContent=`资料截至 · ${day(data.observed)}`;
   }
   async function loadCase(recenter=false) {
     const request=++state.request, id=state.caseId;
-    const summary=state.snapshot?.replay?.cases?.find((item)=>item.case_id===id);
-    if(!summary)throw new Error('此入口未配置历史案例，请打开历史回放服务。');
-    const signature=JSON.stringify([summary,(state.snapshot.alerts || []).filter((item)=>item.case_id===id)]);
-    let cached=state.cache.get(id);
-    if(cached?.signature!==signature) {
-      const view=await get(`/api/replay/cases/${encodeURIComponent(id)}`);
-      const alert=primaryAlert(view.alerts || []);
-      const shipping=state.metadata.cases[id].regions?.some((item)=>item.aggregate);
-      const [detail,metrics]=await Promise.all([alert?get(`/api/alerts/${encodeURIComponent(alert.id)}`):null,
-        shipping && view.portwatch_monitor_id?get(`/api/monitors/${encodeURIComponent(view.portwatch_monitor_id)}/metrics`):null]);
-      cached={signature,view,alert:detail,metrics};state.cache.set(id,cached);
-    }
+    const view=await get(`/api/replay/cases/${encodeURIComponent(id)}`);
     if(request!==state.request || id!==state.caseId)return;
-    const changed=state.current!==cached;state.current=cached;
     $('map-loading').hidden=true;
-    if(changed)renderMapFeatures();
+    const decision=view.decision_snapshot;
+    const cached=decision?{decision,view:decision.view,metrics:decision.metrics,
+      alert:primaryAlert(decision.view.alerts || [])}:{decision:null,view,metrics:null,alert:null};
+    const changed=state.current?.decision?.id!==decision?.id || !state.current;
+    if(!changed)return;
+    if(!recenter && !$('report-panel').hidden && state.current) {
+      state.pendingCurrent=cached;
+      let update=$('report-update');
+      if(!update){update=button('有新的观测结论，点击更新',()=>{
+        state.current=state.pendingCurrent;state.pendingCurrent=null;update.remove();
+        renderMapFeatures();openReport(state.reportTab,state.station);
+      },'evidence-button');update.id='report-update';$('report-panel').insertBefore(update,$('report-body'));}
+      return;
+    }
+    state.current=cached;$('map-loading').hidden=true;renderMapFeatures();
     if(recenter)fitCase();
   }
+
   async function selectCase(id) {
     if(!state.metadata?.cases[id])return;
     closeReport(); state.request++; state.caseId=id;state.current=null;
@@ -208,23 +167,34 @@
   function references(refs,parent) {
     const seen=new Set();(refs || []).forEach((ref,index)=>{
       const record=typeof ref==='string'?{id:ref}:ref, id=record.material_id || record.id;
-      if(id && !seen.has(id)){seen.add(id);parent.append(button(record.title || `引用资料 ${index+1}`,()=>openMaterial(id)));}
+      if(id && !seen.has(id)){seen.add(id);parent.append(button(evidenceTitle(record.title) || `引用资料 ${index+1}`,()=>openMaterial(id)));}
       else if(record.url)sourceLink(record.url,record.title,parent);
     });
   }
   function openReport(tab='overview',station=null) {
     if(!state.current)return;state.detailRequest++;state.reportTab=tab;state.station=station;
     $('report-panel').hidden=false;document.body.classList.add('report-open');$('report-back').hidden=true;
-    $('report-title').textContent=`${caseName()} · 分析报告`;renderReport();$('report-close').focus();
+    $('report-title').textContent=`${caseName()} · 分析报告`;renderReport();$('report-close').focus();keepCalloutVisible();
+  }
+  function evidenceTitle(title) {
+    return String(title || '').replace(/^station_history(?=\s*·|$)/,'同站历史对照')
+      .replace(/^multistation_check(?=\s*·|$)/,'同期多站对照');
+  }
+  function keepCalloutVisible() {
+    if(!state.popup || window.innerWidth<700)return;
+    const panel=$('report-panel'),fold=$('layer-fold');
+    state.popup.options.autoPanPaddingTopLeft=[fold.open?fold.getBoundingClientRect().right+12:12,145];
+    state.popup.options.autoPanPaddingBottomRight=[panel.hidden?12:panel.getBoundingClientRect().width+12,100];
+    state.popup.update();
   }
   function closeReport() {
     const opened=!$('report-panel').hidden;state.detailRequest++;$('report-panel').hidden=true;
-    document.body.classList.remove('report-open');if(opened)$('case-conclusion')?.focus({preventScroll:true});
+    document.body.classList.remove('report-open');if(state.pendingCurrent){state.current=state.pendingCurrent;state.pendingCurrent=null;$('report-update')?.remove();renderMapFeatures();}keepCalloutVisible();if(opened)$('case-conclusion')?.focus({preventScroll:true});
   }
   function renderReport() {
     const parent=$('report-body');parent.replaceChildren();parent.scrollTop=0;
     const nav=node('nav','report-tabs');nav.setAttribute('aria-label','报告与证据');
-    [['overview','综合研判'],['gnss','GNSS'],['portwatch','航运'],['news','公开报道']].forEach(([id,title])=>{
+    [['overview','综合研判'],['gnss','GNSS'],['portwatch','航运'],['news','公开资料']].forEach(([id,title])=>{
       const tab=button(title,()=>{state.detailRequest++;state.reportTab=id;state.station=null;renderReport();},state.reportTab===id?'active':'');
       tab.setAttribute('aria-current',state.reportTab===id?'page':'false');nav.append(tab);
     });parent.append(nav);
@@ -234,27 +204,54 @@
     else renderNews();
   }
   function renderOverview() {
-    const data=conclusion(), alert=state.current.alert;
-    const overview=section('区域结论');
+    const data=conclusion(), decision=data?.decision;
+    const overview=section('观测结论');
     if(data)overview.append(node('h2','report-conclusion',data.title),node('p','',data.summary));
     else overview.append(node('p','','当前观测资料尚不足以作出监测判定。'));
-    overview.append(node('p','report-date',`观测日期：${day(data?.observed || state.current.view.as_of)}`));
-    if(alert?.analysis?.statement && !alert.analysis_stale)section('综合分析').append(node('p','',alert.analysis.statement));
-    const sourceAssessments=new Map();
-    (state.current.view.recent_work || []).forEach((work)=>{if(work.statement && !sourceAssessments.has(work.kind))sourceAssessments.set(work.kind,work);});
-    if(sourceAssessments.size){const assessments=section('各来源研判');sourceAssessments.forEach((work,kind)=>{
-      const item=node('div','source-assessment');item.append(node('strong','',names[kind] || '观测资料'),node('p','',work.statement));assessments.append(item);
-    });}
-    const evidence=section('支持证据');
-    if(alert?.origin_type==='numeric_rule')metrics([['最新通行量',number(alert.latest_observation?.n_total)],['历史参考',number(alert.baseline)],['触发日期',`${day(alert.started_on)} 起`]],evidence);
+    overview.append(node('p','report-date',`可见资料截至：${stamp(data?.observed || state.current.view.as_of)}`));
+    if(decision?.scope_limit)overview.append(node('p','report-date',decision.scope_limit));
+    const evidence=section('判定依据');
     (data?.evidence || []).forEach((text)=>evidence.append(node('p','',text)));
+    const assessment=decision?.report?.assessment;
+    if(assessment?.statement)section('证据分析').append(node('p','',assessment.statement));
+    for(const item of Object.values(state.current.decision?.objects || {})) {
+      if(item.id===decision?.id)continue;
+      const block=section(item.risk_label);block.append(node('p','',item.title),node('p','report-date',item.summary));
+    }
+    const limits=decision?.availability?.limitations || [];
+    if(limits.length){const block=section('仍待回答的问题');limits.forEach((text)=>block.append(node('p','',text)));}
+    renderInvestigation(decision);
     const sources=node('div','evidence-list');
-    [['gnss','查看 GNSS 观测与分析'],['portwatch','查看航运观测与分析'],['news','查看公开报道与分析']].forEach(([id,title])=>sources.append(button(title,()=>{state.reportTab=id;state.station=null;renderReport();})));
+    [['gnss','查看 GNSS 观测与分析'],['portwatch','查看航运观测与分析'],['news','查看归档公开资料']].forEach(([id,title])=>sources.append(button(title,()=>{state.reportTab=id;state.station=null;renderReport();})));
     evidence.append(sources);
-    if(alert?.evidence_refs?.length)references(alert.evidence_refs,section('原始引用'));
-    const other=(state.current.view.alerts || []).filter((item)=>item.id!==alert?.id);
-    if(other.length){const block=section('其他区域线索');other.forEach((item)=>block.append(button(item.title || '查看线索',()=>openAlert(item.id))));}
+    const timeline=state.current.decision?.timeline || [];
+    if(timeline.length){const block=section('判定时间线');const table=node('table','report-table');
+      timeline.filter((item)=>item.risk_object===decision?.risk_object).forEach((item)=>{
+        const row=node('tr');row.append(node('td','',stamp(item.as_of)),node('td','',item.title));table.append(row);
+      });block.append(table);}
+    if(decision?.timing?.availability_basis==='simulated_arrival')section('时间依据').append(node('p','report-date','按历史观测结束时间模拟资料到达；来源当时的首次发布时间尚未核实，无法据此核定真实历史提前量。'));
   }
+  function renderInvestigation(decision) {
+    const tools=decision?.investigation?.tools || [];
+    const unaddressed=decision?.investigation?.explanation_coverage?.unaddressed || [];
+    if(!tools.length && !unaddressed.length)return;
+    const block=section('证据核查');
+    const labels={station_history:'同站历史对照',multistation_check:'同期多站对照',read_material:'原始资料核对',read_gnss:'完整观测核对'};
+    tools.forEach((tool)=>{
+      block.append(node('strong','',labels[tool.name] || '归档证据核查'));
+      if(tool.question)block.append(node('p','',tool.question));
+      const result=tool.result?.result || tool.result || {};
+      const explanation=result.summary || result.interpretation || result.message;
+      if(typeof explanation==='string')block.append(node('p','',explanation));
+      const materials=tool.result?.materials || [];
+      references(materials,block);
+    });
+    if(unaddressed.length) {
+      const pending=section('仍待解释的证据');
+      unaddressed.forEach((item)=>pending.append(node('p','report-date',`${item.date?item.date+'：':''}${item.summary}`)));
+    }
+  }
+
   function plot(rows,series,parent,unit) {
     const good=rows.filter((row)=>Number.isFinite(Date.parse(row.time))), values=good.flatMap((row)=>series.map((s)=>row[s.key]).filter(finite));
     if(!values.length){parent.append(node('p','report-empty','当前资料中没有可绘制的观测。'));return;}
@@ -277,25 +274,63 @@
     const legend=node('div','chart-legend');series.forEach((line)=>{const item=node('span','',line.title);item.style.color=line.color;legend.append(item);});legend.append(node('span','',unit));parent.append(legend);
   }
   function renderGnss() {
-    const meta=caseMeta(), block=section('GNSS 观测证据'), rows=gnssRows();
+    const meta=caseMeta(),block=section('接收站观测与参考');
     if(meta.spatial_note)block.append(node('p','report-date',meta.spatial_note));
-    const stations=[...new Set(rows.map((row)=>row.station))];
-    if(!stations.length){block.append(node('p','report-empty','本例尚无可展示的 GNSS 数值。'));renderWorkList('gnss');return;}
-    if(!stations.includes(state.station))state.station=stations[0];
-    const label=node('label','report-label','观测站与信号'),select=node('select','report-select');select.setAttribute('aria-label','选择观测站和信号');
-    const groups=[...new Set(rows.map((row)=>`${row.station} / ${row.signal}`))];
-    groups.forEach((key)=>select.add(new Option(key,key)));select.value=groups.find((key)=>key.startsWith(`${state.station} / `));
-    block.append(label,select);const details=node('div');block.append(details);
+    const files=(state.current.view.gnss?.summary || []).sort((a,b)=>String(a.window_start).localeCompare(String(b.window_start)));
+    const keys=[...new Set(files.flatMap((file)=>(file.signals || []).map((signal)=>`${file.station} / ${signal.signal}`)))];
+    if(!keys.length){block.append(node('p','report-empty','当前快照尚无可展示的接收站统计。'));return;}
+    const select=node('select','report-select');select.setAttribute('aria-label','选择观测站和信号');
+    keys.forEach((key)=>select.add(new Option(key,key)));
+    if(state.station)select.value=keys.find((key)=>key.startsWith(`${state.station} / `)) || keys[0];
+    block.append(node('label','report-label','观测站与卫星信号'),select);
+    const detail=node('div');block.append(detail);
     const draw=()=>{
-      details.replaceChildren();const key=select.value, data=rows.filter((row)=>`${row.station} / ${row.signal}`===key),latest=data.at(-1);
-      const station=(meta.stations || []).find((item)=>(item.station || item.id)===latest?.station);
-      if(station){const c=coordinates(station);details.append(node('p','report-date',`实际站点位置 ${number(c[1])}°N，${number(c[0])}°E`));}
-      metrics([['CNR p10',`${number(latest?.p10)} dB-Hz`],['可比历史',finite(latest?.baseline_p10)?`${number(latest.baseline_p10)} dB-Hz`:'参考不足'],['相对参考',finite(latest?.delta)?`${number(latest.delta)} dB`:'暂无可比值']],details);
-      plot(data,[{key:'p10',title:'观测信号',color:'#73d7d0'},...(data.some((row)=>finite(row.baseline_p10))?[{key:'baseline_p10',title:'可比历史',color:'#bf9f79',dashed:true}]:[])],details,'dB-Hz');
-      details.append(node('p','report-date',`最新窗口：${stamp(latest?.time)}。曲线按同站同信号比较，缺测处断开。`));
-      if(latest?.material_id)details.append(button('查看该窗口原始依据',()=>openMaterial(latest.material_id)));
+      detail.replaceChildren();const [station,signal]=select.value.split(' / ');
+      const records=files.filter((file)=>file.station===station).flatMap((file)=>(file.signals || []).filter((item)=>item.signal===signal).map((item)=>({...item,file})));
+      const latest=records.at(-1),cnr=latest?.unit==='dB-Hz';
+      metrics([['信号质量',cnr?`${number(latest?.cnr_p10)} dB-Hz`:`${number(latest?.strength_p10)} 接收机单位`],
+        ['有效信号样本',number(latest?.valid_count)],['可比窗口',number(latest?.matched_window_count)]],detail);
+      detail.append(node('p','report-date',cnr?'CNR 表示接收信号质量，此处数值为整份文件的低分位统计，越低表示部分接收信号越弱。':'原文件没有声明统一的 dB-Hz 单位。资料已解析，原始接收机值不能与标准 CNR 直接比较，也不代表信号为零。'));
+      const groups=latest?.reference_groups || [];
+      if(groups.length){
+        const table=node('table','report-table'),head=node('tr');['参考日期','窗口差值中位数','可比窗口'].forEach((text)=>head.append(node('th','',text)));table.append(head);
+        groups.forEach((group)=>{const tr=node('tr');tr.append(node('td','',(group.dates || []).join('、')),
+          node('td','',`${number(group.window_difference_median)} dB`),node('td','',number(group.matched_window_count)));table.append(tr);});detail.append(table);
+        detail.append(node('p','report-date','各组分别对照相同时间、信号与采样条件。窗口差值的中位数与整份文件分位数口径不同；有限历史范围不能解释为异常概率。'));
+      } else detail.append(node('p','report-date','本信号当前没有满足单位和窗口条件的参考比较。'));
+      const windowRows=gnssRows(station).filter((row)=>row.signal===signal);
+      if(windowRows.length) {
+        const groupNames=[...new Set(windowRows.flatMap((row)=>(row.reference_groups || []).map((group)=>group.date_group)))];
+        const plotRows=windowRows.map((row)=>({...row,...Object.fromEntries((row.reference_groups || []).map((group)=>[`ref_${group.date_group}`,group.sample_median]))}));
+        plot(plotRows,[{key:'p10',title:'五分钟信号质量',color:'#73d7d0'},...groupNames.map((group,i)=>({key:`ref_${group}`,title:`${group} 参考`,color:i?'#9ea9dc':'#bf9f79',dashed:true}))],detail,'dB-Hz');
+      } else if(cnr) {
+        plot(records.map((item)=>({time:item.file.window_start,p10:item.cnr_p10})),[{key:'p10',title:'每份文件的信号低分位',color:'#73d7d0'}],detail,'dB-Hz');
+      }
+      detail.append(node('p','report-date',`本次文件实际覆盖：${stamp(latest?.file.window_start)} 至 ${stamp(latest?.file.window_end)}。`));
     };
-    select.addEventListener('change',draw);draw();renderWorkList('gnss');
+    select.addEventListener('change',draw);draw();
+    const decision=state.current.decision?.objects?.gnss_observation_quality;
+    renderInvestigation(decision);renderEnvironment(decision);renderWorkList('gnss');
+  }
+  function renderEnvironment(decision) {
+    const context=decision?.report?.program?.environment_context;
+    if(!context?.rows?.length)return;
+    const block=section('归档环境参考');
+    block.append(node('p','report-date',context.scope_note));
+    context.rows.forEach((row)=>{
+      block.append(node('strong','',`${row.date} · ${row.relation}`));
+      const table=node('table','report-table');
+      [['Kp_3hour','Kp（三小时序列）'],['ap_3hour','ap（三小时序列）'],['Ap','Ap（日值）'],
+        ['F10_7_observed','太阳射电通量（观测值）'],['F10_7_adjusted','太阳射电通量（调整值）']].forEach(([key,label])=>{
+        if(row[key]==null)return;
+        const tr=node('tr'),value=Array.isArray(row[key])?row[key].map((item)=>number(item)).join(' · '):number(row[key]);
+        tr.append(node('th','',label),node('td','',value));table.append(tr);
+      });block.append(table);
+      references([{id:row.material_id,title:`GFZ ${row.date} 原始环境资料`}],block);
+    });
+    if(context.units)block.append(node('p','report-date',`原件单位：${typeof context.units==='string'?context.units:Object.entries(context.units).map(([key,value])=>`${key}：${value}`).join('；')}`));
+    if(context.time_system)block.append(node('p','report-date',`资料时间：${context.time_system}`));
+    block.append(node('p','report-date',context.availability_note));
   }
   function renderShipping() {
     const data=state.current.metrics,alert=state.current.alert?.origin_type==='numeric_rule'?state.current.alert:null;
@@ -306,15 +341,27 @@
     const rows=data.observations.map((row)=>({...row,time:row.observed_date,baseline})).sort((a,b)=>a.time.localeCompare(b.time));
     plot(rows,[{key:'n_total',title:'可见通行量',color:'#dbae78'},{key:'baseline',title:'历史参考',color:'#6aaab2',dashed:true}],block,'船／航次');
     block.append(node('p','report-date','PortWatch 海峡日度汇总。地图标记表示观测区域，数值单位为船／航次。'));
+    const decision=state.current.decision?.objects?.maritime_visible_flow;
+    const composition=decision?.report?.program?.flow_context;
+    if(composition?.changes) {
+      const detail=section('船流构成与名义运力');
+      detail.append(node('p','report-date',`${composition.previous?.observed_date || '前日无资料'} → ${composition.latest?.observed_date || '本日'}；名义运力是船舶容量指标，不代表实际货物装载量。`));
+      const labels={n_total:'总船次',n_tanker:'油轮船次',n_cargo:'货船船次',capacity:'名义总运力',capacity_tanker:'油轮名义运力',capacity_cargo:'货船名义运力',capacity_per_ship:'每船次名义运力',tanker_capacity_per_tanker:'每油轮名义运力'};
+      const table=node('table','report-table'),head=node('tr');['指标','前日','本日','变化'].forEach((text)=>head.append(node('th','',text)));table.append(head);
+      Object.entries(labels).forEach(([key,label])=>{const item=composition.changes[key] || {},tr=node('tr');
+        tr.append(node('td','',label),node('td','',number(item.previous)),node('td','',number(item.current)),node('td','',finite(item.change_pct)?`${number(item.change_pct)}%`:'不可计算'));table.append(tr);});detail.append(table);
+    }
+    renderInvestigation(decision);
     if(alert){const trigger=section('异常判据');trigger.append(node('p','',`连续 ${alert.rule.trigger_days} 天低于历史参考的 ${number(alert.rule.trigger_ratio*100)}%。参考时段为 ${alert.baseline_start} 至 ${alert.baseline_end}。`));
       (alert.trigger_observations || []).forEach((row)=>trigger.append(button(`${row.observed_date} · ${row.n_total} 船／航次 · 查看依据`,()=>openMaterial(row.material_id))));}
     const daily=section('日度数据');const table=node('table','report-table'),head=node('tr');['日期','通行量','原始资料'].forEach((title)=>head.append(node('th','',title)));table.append(head);
     [...rows].reverse().forEach((row)=>{const tr=node('tr'),link=node('td');if(row.material_id)link.append(button('查看',()=>openMaterial(row.material_id),'text-button'));tr.append(node('td','',row.observed_date),node('td','',number(row.n_total)),link);table.append(tr);});daily.append(table);renderWorkList('portwatch');
   }
   function renderNews() {
-    const works=(state.current.view.recent_work || []).filter((work)=>work.kind==='news' && work.statement);
-    if(!works.length)section('公开报道').append(node('p','report-empty','本例未收录可展示的报道分析。'));
-    renderWorkList('news');
+    const materials=Object.values(state.current.decision?.objects || {}).flatMap((item)=>item.report?.program?.archive_index || []);
+    const block=section('按当前时间可见的归档资料');
+    if(materials.length)references(materials,block);
+    else block.append(node('p','report-empty','当前判定没有引用可展开的环境观测或历史参考归档。'));
   }
   function renderWorkList(kind) {
     const works=(state.current.view.recent_work || []).filter((work)=>work.kind===kind && work.statement);
@@ -333,7 +380,7 @@
   function openWork(id) {
     return detailView('详细分析报告',`/api/work/${encodeURIComponent(id)}`,(work)=>{
       const assessment=work.assessment || {},block=section(names[work.kind] || '观测分析');
-      block.append(node('span','report-status',decisions[assessment.decision] || '分析结论'),node('h2','report-conclusion',assessment.title || '观测与研判'),node('p','',assessment.statement || '当前资料未形成分析结论。'),node('p','report-date',`历史观测截至 ${stamp(work.as_of)}`));
+      block.append(node('span','report-status',decisions[assessment.decision] || '分析结论'),node('h2','report-conclusion',assessment.title || '观测与研判'),node('p','',assessment.statement || '当前资料未形成分析结论。'),node('p','report-date',`可见资料截至 ${stamp(work.as_of)}`));
       const limits=Array.isArray(assessment.limitations)?assessment.limitations:assessment.limitations?[assessment.limitations]:[];
       if(limits.length){const limitsBlock=section('证据适用范围');limits.forEach((text)=>limitsBlock.append(node('p','',text)));}
       const materials=work.input?.materials || [],refs=assessment.evidence_refs || [];
@@ -346,11 +393,48 @@
     if(!id)return;
     return detailView('原始证据',`/api/materials/${encodeURIComponent(id)}`,(material)=>{
       const block=section(material.publisher || names[material.source] || '公开来源');
-      block.append(node('h2','report-conclusion',material.title || '原始观测资料'),node('p','report-date',`资料时间：${stamp(material.observed_at || material.available_at)}`));
+      block.append(node('h2','report-conclusion',evidenceTitle(material.title) || '原始观测资料'),node('p','report-date',`资料时间：${stamp(material.observed_at || material.available_at)}`));
       sourceLink(material.url,'打开原始来源',block);
       if(material.analysis?.summary)section('资料摘要').append(node('p','',typeof material.analysis.summary==='string'?material.analysis.summary:JSON.stringify(material.analysis.summary)));
-      section('来源内容').append(node('p','source-excerpt',material.text || '该资料为结构化观测，数值与曲线见对应证据页。'));
+      let structured=null;try{structured=JSON.parse(material.text);}catch{}
+      if(structured && typeof structured==='object') {
+        const details=section('观测与比较');
+        renderStructuredEvidence(structured,details);
+      } else section('来源内容').append(node('p','source-excerpt',material.text || '该资料为结构化观测，数值与曲线见对应证据页。'));
     });
+  }
+  function renderStructuredEvidence(data,parent) {
+    const labels={station:'接收站',signal:'卫星信号',unit:'单位',units:'单位',as_of:'可见截止',
+      window_start:'窗口开始',window_end:'窗口结束',current_window:'本次观测',
+      reference_groups:'按日期分组的参考',reference_dates:'参考日期',reference_days:'参考天数',
+      p10:'信号质量低分位',cnr_p10:'CNR 低分位',strength_p10:'接收机原始信号值',
+      sample_count:'有效样本',samples:'有效样本',epoch_count:'有效历元',
+      descriptive_departures:'历史样本比较',limitations:'适用限制',summary:'摘要',
+      result:'核查结果',groups:'比较组',comparisons:'窗口对照',stations:'接收站',
+      observed_date:'观测日',n_total:'总通行量',n_tanker:'油轮通行量',n_cargo:'货船通行量',
+      capacity:'名义总运力',capacity_tanker:'油轮名义运力',capacity_cargo:'货船名义运力',
+      interpretation:'解释',reason:'原因',spatial_limit:'空间范围',time_note:'时间说明'};
+    Object.assign(labels,{current_windows:'当前窗口',reference_windows:'参考窗口',date_group:'参考月份',dates:'参考日期',
+      reference_day_count:'参考天数',matched_window_count:'可比窗口数',current_p10:'当前信号低分位',
+      sample_min:'历史样本下界',sample_median:'历史样本中位数',sample_max:'历史样本上界',
+      window_difference_median:'窗口差值中位数',current_window_p10_median:'当前窗口低分位中位数',
+      reference_window_medians_median:'参考窗口中位数汇总',valid_count:'有效信号样本',valid_ratio:'有效比例',
+      epoch_coverage_ratio:'历元覆盖比例',missing_epoch_count:'缺失历元',interval_seconds:'采样间隔（秒）',
+      station_signal_summaries:'各站可比支持',unavailable_or_incomparable_stations:'未参与同期比较的站点',
+      reasons:'原因',concurrent_windows:'真实同期窗口',overlap_window_count:'同期窗口数',
+      coverage:'覆盖范围',current_windows_count:'当前窗口数',valid_cnr_windows:'有效 CNR 窗口',
+      matched_current_windows:'有参考的当前窗口',unit_limited_windows:'单位受限窗口',
+      comparability:'比较条件',selection_note:'资料选择依据',sampling_note:'展示范围'});
+    let shown=false;
+    Object.entries(data).forEach(([key,value])=>{
+      if(!(key in labels) || value==null)return;shown=true;
+      if(Array.isArray(value)) {
+        const details=node('details');details.append(node('summary','',`${labels[key]}（${value.length}）`));
+        value.forEach((item)=>{if(item && typeof item==='object')renderStructuredEvidence(item,details);else details.append(node('p','',String(item)));});parent.append(details);
+      } else if(typeof value==='object'){const details=node('details');details.append(node('summary','',labels[key]));renderStructuredEvidence(value,details);parent.append(details);}
+      else parent.append(node('p','',`${labels[key]}：${value}`));
+    });
+    if(!shown)parent.append(node('p','report-date','完整数值已保留在该来源资料中，相关信号和历史窗口可在证据页查看。'));
   }
   function openAlert(id) {
     return detailView('区域异常分析',`/api/alerts/${encodeURIComponent(id)}`,(alert)=>{
@@ -360,11 +444,11 @@
   }
   async function refresh() {
     if(document.hidden || state.busy || !state.metadata)return;state.busy=true;
-    try{state.snapshot=await get('/api/pipeline');await loadCase();}catch(error){showError(error);}finally{state.busy=false;}
+    try{await loadCase();}catch(error){showError(error);}finally{state.busy=false;}
   }
   async function start() {
-    const [metadata,world,snapshot]=await Promise.all([get('/static/replay-map-data.json'),get('/static/replay-world.geojson'),get('/api/pipeline')]);
-    state.metadata=metadata;state.snapshot=snapshot;initializeMap(world);
+    const [metadata,world]=await Promise.all([get('/static/replay-map-data.json'),get('/static/replay-world.geojson')]);
+    state.metadata=metadata;initializeMap(world);
     document.querySelectorAll('[data-case]').forEach((element)=>element.addEventListener('click',()=>selectCase(element.dataset.case).catch(showError)));
     ['gnss','aircraft','shipping'].forEach((kind)=>$(`layer-${kind}`).addEventListener('change',()=>{state.layerChoice[kind]=$(`layer-${kind}`).checked;toggleLayer(kind);}));
     $('map-home-btn').addEventListener('click',fitCase);$('report-close').addEventListener('click',closeReport);

@@ -1,0 +1,59 @@
+{
+  "kharkiv": {
+    "status": "reviewed",
+    "reviewed_at": "2026-09-13T17:20:48Z",
+    "snapshot_id": "snapshot:complete:kharkiv:2:v1",
+    "as_of": "2024-05-11T00:00:00+00:00",
+    "decision_id": "decision:replay:fa414cc4276140ad9e3c2cb7981dd312:kharkiv:2024-05-11T00:00:00+00:00:gnss_observation_quality:v1:round6_observation_v1",
+    "card_report_consistent": true,
+    "backend_logs_hidden": true,
+    "screenshots": [
+      "ROUND6_KHARKIV_MAP.png",
+      "ROUND6_KHARKIV_REPORT.png"
+    ],
+    "execution_resume": {
+      "status": "demonstrated",
+      "work_id": "replay:fa414cc4276140ad9e3c2cb7981dd312:kharkiv:2024-05-09T00:00:00+00:00:gnss_observation_quality:v1:round6_observation_v1",
+      "failed_run_id": "9fa1e5b0309b45c6a3d6f16628540d3b",
+      "resumed_at": "2026-09-13T14:37:32.580244+00:00",
+      "completed_run_id": "e45b3bd105fc45f6abc5791a75ed8de0",
+      "completed_at": "2026-09-13T14:46:28.573345+00:00",
+      "basis": "固定实例中该工作保留此前3次尝试，故障后从原工作完成续接。原工作及失败运行仍在库中，后续解释修订另有保留；本记录只证明执行续接，不作为最终业务结论。"
+    }
+  },
+  "hormuz": {
+    "status": "reviewed",
+    "execution_resume": {
+      "status": "demonstrated",
+      "work_id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-02-24T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1:interpretation-r1",
+      "failed_run_id": "2de4576aa30346a4a2d801047e7e8ffa",
+      "resumed_at": "2026-09-13T15:05:35.497851+00:00",
+      "completed_run_id": "f741385b56814d3782b5e35df49889a7",
+      "completed_at": "2026-09-13T15:15:06.259277+00:00",
+      "basis": "固定实例中该工作保留此前1次尝试，故障后从原工作完成续接。原工作及失败运行仍在库中，后续解释修订另有保留；本记录只证明执行续接，不作为最终业务结论。"
+    },
+    "reviewed_at": "2026-09-13T18:21:00.606236+00:00",
+    "snapshot_id": "snapshot:interpretation:replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-04T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1:interpretation-r2:snapshot:interpretation:replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-02-27T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1:interpretation-r2:interpretation-r3:interpretation-r4:interpretation-r5:interpretation-r6:interpretation-r7:interpretation-r8:snapshot:interpretation:replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-08T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1:interpretation-r1:snapshot:interpretation:replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-02-27T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1:interpretation-r2:interpretation-r3:interpretation-r4:interpretation-r5:interpretation-r6:interpretation-r7:snapshot:interpretation:replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1:snapshot:interpretation:replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-04T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1:snapshot:interpretation:replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-04T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1:snapshot:interpretation:replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1:snapshot:interpretation:replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1:snapshot:interpretation:replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1:snapshot:complete:hormuz:35:v3",
+    "as_of": "2026-03-09T00:00:00+00:00",
+    "decision_id": "decision:replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-09T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1",
+    "card_report_consistent": true,
+    "backend_logs_hidden": true,
+    "screenshots": [
+      "ROUND6_HORMUZ_MAP.png",
+      "ROUND6_HORMUZ_REPORT.png"
+    ],
+    "assessment_scope_notes": [
+      {
+        "work_id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-08T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1:interpretation-r1",
+        "run_id": "f6b218217cda4957ab4f33747e98f9f8",
+        "reviewed_at": "2026-09-13T18:18:00Z",
+        "question": "3月8日修订准确引用总船次变化（本次2→3，历史参考69→67），但未完成原名义运力对照问题的解释；“未达到显著异常水平”没有校准阈值或显著性检验依据，不能作为业务正常或取消既有规则预警的证明。",
+        "next_action": "从该工作已保存的名义总运力143→102414及历史3044613→1314529读取相同字段，分别解释绝对水平、小基数变化和通行量规则；保留当前规则红色及原解释记录。"
+      }
+    ]
+  },
+  "online_8080": {
+    "status": "unchanged",
+    "basis": "8081 使用 /home/xnchen/projects/Intelligent-Military-Early-Warning-Agent-round6 独立代码和固定 replays/round6 结果目录。实际部署记录到2026-09-13 18:10:17.859390 UTC 均保留在线8080 PID3899267；未覆盖8080原代码或调整其配置、数据和进程。"
+  }
+}

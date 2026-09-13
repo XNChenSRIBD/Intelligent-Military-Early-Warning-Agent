@@ -1,0 +1,22 @@
+{
+  "configuration_version": "round6_historical_composition_reference_v1",
+  "case_id": "hormuz",
+  "portid": "chokepoint6",
+  "source_url": "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/ArcGIS/rest/services/Daily_Chokepoints_Data/FeatureServer/0",
+  "selection_basis": "前期研究登记的 strict_historical_analogs 前两段日期窗口；仅沿登记日期复取原值，不使用旧报告数值或后续结论。",
+  "permitted_raw_dates": ["2020-10-03", "2020-10-04", "2019-11-01", "2019-11-02"],
+  "maximum_raw_dates": 4,
+  "reference_use": "historical_composition_reference_not_independent_validation",
+  "windows": [
+    {
+      "id": "hormuz-composition-reference-20201003-20201004",
+      "dates": ["2020-10-03", "2020-10-04"],
+      "archive_path": "external_intel/portwatch/round6/comparators/2020-10-03_2020-10-04.json"
+    },
+    {
+      "id": "hormuz-composition-reference-20191101-20191102",
+      "dates": ["2019-11-01", "2019-11-02"],
+      "archive_path": "external_intel/portwatch/round6/comparators/2019-11-01_2019-11-02.json"
+    }
+  ]
+}

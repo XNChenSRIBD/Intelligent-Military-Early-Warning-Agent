@@ -385,6 +385,25 @@ def _clock_key(row):
             round((_dt(row["window_end"]) - _dt(row["window_start"])).total_seconds(), 3))
 
 
+def _reference_date(result):
+    # The actual file midpoint identifies its reference date without turning
+    # its nominal filename or GPS-clock midnight into a UTC observation time.
+    start, end = _dt(result["window_start"]), _dt(result["window_end"])
+    return (start + (end - start) / 2).date().isoformat()
+
+
+def _reference_group(samples, current=None):
+    values = [row["cnr_p10"] for row in samples]
+    dates = sorted({row["reference_date"] for row in samples})
+    center = median(values)
+    return {"date_group": dates[0][:7], "dates": dates, "reference_day_count": len(dates),
+            "sample_count": len(samples), "sample_min": min(values), "sample_median": center,
+            "sample_max": max(values), "current_p10": current,
+            "delta_from_group_median": current - center if current is not None else None,
+            "outside_sample_range": (current < min(values) or current > max(values)) if current is not None else None,
+            "resource_ids": sorted({row["resource_id"] for row in samples})}
+
+
 def _attach_reference(result, baselines, as_of, replay_start):
     reference = defaultdict(list)
     for previous in baselines:
@@ -393,31 +412,236 @@ def _attach_reference(result, baselines, as_of, replay_start):
             continue
         for row in previous.get("series", []):
             if row.get("cnr_p10") is not None and not row.get("missing_epoch_count"):
-                reference[_clock_key(row)].append(row)
+                reference[_clock_key(row)].append(dict(row, reference_date=_reference_date(previous)))
     matched, references = 0, set()
     for row in result["series"]:
         samples = reference.get(_clock_key(row), [])
-        p10 = median(item["cnr_p10"] for item in samples) if samples else None
-        row.update({"baseline_p10": p10, "baseline_days": len({_dt(item["window_start"]).date() for item in samples}),
+        groups = defaultdict(list)
+        for sample in samples:
+            groups[sample["reference_date"][:7]].append(sample)
+        row["reference_groups"] = [_reference_group(group, row.get("cnr_p10"))
+                                   for _, group in sorted(groups.items())]
+        # A multi-season reference is not one stable population. The legacy
+        # scalar is available only for a single calendar group; tools retain
+        # every group's actual samples and never manufacture a red threshold.
+        p10 = median(item["cnr_p10"] for item in samples) if samples and len(groups) == 1 else None
+        row.update({"baseline_p10": p10, "baseline_days": len({item["reference_date"] for item in samples}),
                     "baseline_resource_ids": sorted({item["resource_id"] for item in samples}),
                     "delta_p10": row["cnr_p10"] - p10 if p10 is not None and row["cnr_p10"] is not None else None})
-        if row["delta_p10"] is not None:
+        if samples and row.get("cnr_p10") is not None:
             matched += 1
             references.update(row["baseline_resource_ids"])
     for signal in result["signals"]:
-        rows = [row for row in result["series"] if row["signal"] == signal["signal"] and row["delta_p10"] is not None]
+        rows = [row for row in result["series"] if row["signal"] == signal["signal"]
+                and row.get("cnr_p10") is not None and row["reference_groups"]]
+        scalar_rows = [row for row in rows if row["delta_p10"] is not None]
         signal["matched_window_count"] = len(rows)
         signal["matched_window_p10_median"] = median(row["cnr_p10"] for row in rows) if rows else None
-        signal["baseline_window_p10_median"] = median(row["baseline_p10"] for row in rows) if rows else None
-        signal["delta_window_p10_median"] = median(row["delta_p10"] for row in rows) if rows else None
+        signal["baseline_window_p10_median"] = median(row["baseline_p10"] for row in scalar_rows) if scalar_rows else None
+        signal["delta_window_p10_median"] = median(row["delta_p10"] for row in scalar_rows) if scalar_rows else None
+        signal["reference_groups"] = _group_comparisons(rows)
     result["baseline_resource_ids"] = sorted(references)
     result["summary"].update({"reference_status": "available" if matched else "insufficient_reference",
                                "matched_window_count": matched, "baseline_resource_count": len(references)})
-    result["reference_method"] = {"metric": "median of historical five-minute CNR p10 values at matching UTC clock windows",
+    result["reference_method"] = {"metric": "Each reference calendar-month group is compared separately at matching UTC clock windows",
                                   "matching": "same case, station, constellation, exact signal code, unit, sampling interval and window bounds",
                                   "replay_start": replay_start, "minimum_days": 1,
-                                  "coverage_note": "One available reference day is descriptive only; baseline_days reports actual support"}
+                                  "coverage_note": "Finite historical samples only, not a calibrated normal distribution or significance test",
+                                  "grouping_note": "Calendar groups retain exact dates; season, equipment and satellite-visibility differences remain possible",
+                                  "scalar_note": "baseline_p10/delta_p10 are null when multiple calendar groups are available; use reference_groups"}
     return result
+
+
+def _group_comparisons(rows):
+    grouped = defaultdict(list)
+    for row in rows:
+        for group in row.get("reference_groups", []):
+            if row.get("cnr_p10") is not None:
+                grouped[group["date_group"]].append((row, group))
+    summary = []
+    for label, entries in sorted(grouped.items()):
+        dates = sorted({day for _, group in entries for day in group["dates"]})
+        summary.append({"date_group": label, "dates": dates, "reference_day_count": len(dates),
+            "matched_window_count": len(entries),
+            "current_window_p10_median": median(row["cnr_p10"] for row, _ in entries),
+            "reference_window_medians_median": median(group["sample_median"] for _, group in entries),
+            "window_difference_median": median(group["delta_from_group_median"] for _, group in entries),
+            "below_sample_range_windows": sum(row["cnr_p10"] < group["sample_min"] for row, group in entries),
+            "above_sample_range_windows": sum(row["cnr_p10"] > group["sample_max"] for row, group in entries),
+            "resource_ids": sorted({identifier for _, group in entries for identifier in group["resource_ids"]}),
+            "finite_sample_only": True})
+    return summary
+
+
+def compact_gnss(result):
+    """Retain all signal identities and their cached descriptive statistics."""
+    compact = {key: result.get(key) for key in ("resource_id", "station", "coordinates", "window_start", "window_end",
+        "status", "interval_seconds", "time_system", "display_time_system", "processing_version", "summary",
+        "reference_method", "available_at", "replay_release_at")}
+    fields = ("signal", "unit", "value_kind", "cnr_p10", "strength_p10", "unit_source", "valid_count",
+              "valid_ratio", "satellite_count", "satellites", "matched_window_count", "matched_window_p10_median",
+              "baseline_window_p10_median", "delta_window_p10_median", "reference_groups")
+    compact["signals"] = [{key: signal.get(key) for key in fields}
+                          for signal in sorted(result.get("signals", []), key=lambda item: item["signal"])]
+    compact["available_signals"] = [signal["signal"] for signal in compact["signals"]]
+    compact["other_signal_count"] = 0
+    compact["selection_note"] = "完整信号目录；p10总体分位数、窗口p10中位数、窗口差中位数是不同统计口径，不混合相减"
+    # Library future-compatibility warnings stay in the original feature file.
+    # They do not affect the already computed sample values and are not gaps.
+    compact["notes"] = result.get("notes", [])
+    return compact
+
+
+def shared_observation_question(program):
+    """Find an actionable shared-signal question from the existing directory.
+
+    This only locates candidate coverage. The professional tool still has to
+    establish exact feature-window overlap and return the actual values.
+    """
+    candidates = defaultdict(list)
+    for observation in program.get("observations", []):
+        start, end = observation.get("window_start"), observation.get("window_end")
+        station, interval = observation.get("station"), observation.get("interval_seconds")
+        if not station or not start or not end or interval is None:
+            continue
+        start, end = _dt(start), _dt(end)
+        if start >= end:
+            continue
+        for group in observation.get("signal_directory", []):
+            if group.get("unit") != "dB-Hz":
+                continue
+            empty = set(group.get("empty_signals", []))
+            for signal in group.get("signals", []):
+                if signal not in empty:
+                    candidates[(signal, interval)].append((station, start, end))
+    fragments = program.get("comparison_fragments", [])
+    preferred = fragments[0].get("signal") if fragments else None
+    choices = []
+    for (signal, interval), windows in candidates.items():
+        for start in sorted({row[1] for row in windows}):
+            active = {}
+            for station, begin, end in windows:
+                if begin <= start < end:
+                    active[station] = max(end, active.get(station, end))
+            if len(active) < 2:
+                continue
+            end = min(active.values())
+            stations = sorted(active)
+            choices.append((signal != preferred, -len(stations), -(end - start).total_seconds(),
+                            signal, interval, start, end, stations))
+    if not choices:
+        return None
+    _, _, _, signal, interval, start, end, stations = min(choices)
+    arguments = {"stations": stations, "signal": signal, "window_start": _iso(start), "window_end": _iso(end)}
+    return {"question": (f"{', '.join(stations)} 已有 {signal}、dB-Hz、{interval:g} 秒采样的交叠文件覆盖。"
+                "这些站是否在真实相同 UTC 统计窗口出现同向、相反或不一致的历史变化？"
+                "现有同站结果不能回答同期支持；目录交集也不等于已经计算出同步变化。"),
+            "tool": "multistation_check", "arguments": arguments,
+            "stations": stations, "signal": signal, "window_start": _iso(start), "window_end": _iso(end)}
+
+
+def gnss_evidence(results, as_of, *, case_id=None, observation_resource_ids=None):
+    """Two-layer model input from the full cache, without duplicating its rows.
+
+    The directory is complete. A bounded set of comparison fragments is chosen
+    by coverage and code, with explicit selection, while exact details remain
+    available through station_history and multistation_check.
+    """
+    case_id = _tool_case(results, case_id)
+    visible = [item for item in results if _visible(item, as_of, case_id)]
+    wanted = set(observation_resource_ids) if observation_resource_ids is not None else None
+    observations = [item for item in visible if item.get("role") != "baseline"
+                    and (wanted is None or item.get("resource_id") in wanted)]
+    baselines = [item for item in visible if item.get("role") == "baseline"]
+    directory, candidates, unit_limited = [], [], []
+    valid_windows = matched_windows = usable_signals = 0
+    comparable_stations, reference_ids = set(), set()
+    for result in sorted(observations, key=lambda item: (item["station"], item["window_start"])):
+        grouped = defaultdict(lambda: {"signals": [], "comparable_signals": [], "empty_signals": []})
+        by_signal = defaultdict(list)
+        for row in result.get("series", []):
+            by_signal[row["signal"]].append(row)
+            valid_windows += row.get("cnr_p10") is not None
+            if row.get("cnr_p10") is not None and row.get("reference_groups"):
+                matched_windows += 1
+                comparable_stations.add(result["station"])
+                reference_ids.update(row.get("baseline_resource_ids", []))
+        for signal in sorted(result.get("signals", []), key=lambda item: item["signal"]):
+            key = (signal.get("unit"), signal.get("value_kind"), signal.get("unit_source"))
+            entry = grouped[key]
+            entry["signals"].append(signal["signal"])
+            if not signal.get("valid_count"):
+                entry["empty_signals"].append(signal["signal"])
+            if signal.get("cnr_p10") is not None:
+                usable_signals += 1
+            elif signal.get("valid_count"):
+                unit_limited.append(result["station"] + "/" + signal["signal"])
+            if signal.get("matched_window_count"):
+                entry["comparable_signals"].append(signal["signal"])
+                candidates.append((result, signal, by_signal[signal["signal"]]))
+        directory.append({"resource_id": result["resource_id"], "station": result["station"],
+            "material_id": result.get("material_id"), "window_start": result["window_start"], "window_end": result["window_end"],
+            "interval_seconds": result.get("interval_seconds"), "coordinates": result.get("coordinates"),
+            "epoch_count": result.get("summary", {}).get("epoch_count"),
+            "valid_count": result.get("summary", {}).get("valid_count"),
+            "valid_ratio": result.get("summary", {}).get("valid_ratio"),
+            "missing_epoch_count": result.get("summary", {}).get("missing_epoch_count"),
+            "signal_directory": [dict(value, unit=key[0], value_kind=key[1], unit_source=key[2]) for key, value in grouped.items()]})
+    # Pick by comparable coverage and station/code, not by the magnitude or
+    # direction of the change. Two examples fit the existing Qwen context.
+    candidates.sort(key=lambda item: (-item[1].get("matched_window_count", 0),
+                                     item[0]["station"], item[1]["signal"], item[0]["window_start"]))
+    selected, seen_stations = [], set()
+    for candidate in candidates:
+        if candidate[0]["station"] in seen_stations:
+            continue
+        selected.append(candidate)
+        seen_stations.add(candidate[0]["station"])
+        if len(selected) == 2:
+            break
+    fragments, questions = [], []
+    for result, signal, rows in selected:
+        comparable = sorted([row for row in rows if row.get("cnr_p10") is not None and row.get("reference_groups")],
+                            key=lambda row: row["window_start"])
+        groups = _group_comparisons(comparable)
+        fragments.append({"resource_id": result["resource_id"], "station": result["station"], "signal": signal["signal"],
+            "unit": signal["unit"], "whole_file_p10": signal.get("cnr_p10"),
+            "matched_window_p10_median": signal.get("matched_window_p10_median"),
+            "matched_window_count": len(comparable),
+            "reference_groups": [{key: value for key, value in group.items() if key != "resource_ids"} for group in groups],
+            "current_window_examples": [{key: row.get(key) for key in ("window_start", "window_end", "cnr_p10",
+                "valid_count", "valid_ratio", "missing_epoch_count")} for row in _temporal_sample(comparable, 3)]})
+        if any(group["below_sample_range_windows"] or group["above_sample_range_windows"] for group in groups):
+            questions.append({"question": f"{result['station']} 的 {signal['signal']} 有窗口落在有限历史样本范围外；"
+                "同站同信号逐日可比样本支持实际历史偏离，还是普通波动或参考限制？",
+                "tool": "station_history", "arguments": {"station": result["station"], "signal": signal["signal"],
+                    "window_start": result["window_start"], "window_end": result["window_end"]}})
+    if selected and len(comparable_stations) > 1:
+        result, signal, _ = selected[0]
+        questions.append({"question": "上述同站变化是否存在同一 UTC 窗口、同信号、同单位和同采样条件的其他站支持？不能用各站最负值代替同期核查。",
+            "tool": "multistation_check", "arguments": {"signal": signal["signal"],
+                "window_start": result["window_start"], "window_end": result["window_end"]}})
+    inventory = {"observation_present": any(item.get("summary", {}).get("valid_count", 0) for item in observations),
+        "reference_present": bool(reference_ids) or any(item.get("summary", {}).get("valid_count", 0) for item in baselines),
+        "observation_resource_count": len(observations), "reference_resource_count": len(reference_ids |
+            {item["resource_id"] for item in baselines}),
+        "observed_stations": sorted({item["station"] for item in observations}),
+        "comparable_stations": sorted(comparable_stations), "usable_signal_count": usable_signals,
+        "valid_cnr_window_count": valid_windows, "matched_window_count": matched_windows,
+        "comparable_window_count": matched_windows, "unit_limited_signals": sorted(set(unit_limited)),
+        "observed_start": min((item["window_start"] for item in observations), default=None),
+        "observed_end": max((item["window_end"] for item in observations), default=None),
+        "reference_sufficiency": "descriptive_only" if matched_windows else "no_comparable_reference",
+        "coverage_complete": bool(observations) and all(_coverage(item.get("series", []))["coverage_complete"] for item in observations),
+        "limitations": [SPATIAL_LIMIT, STATISTICAL_LIMIT, VISIBILITY_LIMIT]}
+    return {"observations": directory, "evidence_inventory": inventory, "comparison_fragments": fragments,
+        "investigation_questions": questions,
+        "statistics": {"whole_file_p10": "整份文件有效信号值的10%分位数",
+            "window_p10_median": "五分钟窗口各自10%分位数的中位数",
+            "window_difference_median": "逐一可比窗口差值的中位数；不同于总体p10相减",
+            "reference_groups": "年月分组保留实际日期；不视为同一稳定总体"},
+        "selection_note": "完整信号目录；片段按可比窗口覆盖、站名及信号码选择，每站最多一个，时间例子取首中末；没有按差值排序。细节工具读取完整已存缓存。",
+        "program_calculation_count": 1}
 
 
 def parsing_metadata(resource):
@@ -530,6 +754,7 @@ def _rows(results, as_of, case_id=None, station=None, signal=None, window_start=
     for result in results:
         if not _visible(result, as_of, case_id):
             continue
+        signals = {item["signal"]: item for item in result.get("signals", [])}
         for row in result.get("series", []):
             if station and row.get("station") != station:
                 continue
@@ -541,14 +766,24 @@ def _rows(results, as_of, case_id=None, station=None, signal=None, window_start=
                 continue
             if _dt(row["window_end"]) > _dt(as_of):
                 continue
-            selected.append({**row, "role": result.get("role"), "processing_version": result.get("processing_version")})
+            signal_info = signals.get(row.get("signal"), {})
+            selected.append({**row, "role": result.get("role"), "processing_version": result.get("processing_version"),
+                "reference_date": _reference_date(result) if result.get("role") == "baseline" else None,
+                "unit_source": signal_info.get("unit_source"), "coordinates": result.get("coordinates"),
+                "file_satellites": signal_info.get("satellites", [])})
     return selected
 
 
 def _compact_row(row):
-    fields = ("resource_id", "station", "signal", "unit", "window_start", "window_end", "interval_seconds",
+    fields = ("resource_id", "station", "signal", "system", "unit", "unit_source", "window_start", "window_end", "interval_seconds",
               "cnr_p10", "strength_p10", "baseline_p10", "delta_p10", "baseline_days",
-              "baseline_resource_ids", "valid_ratio", "missing_epoch_count", "role")
+              "baseline_resource_ids", "reference_groups", "valid_count", "valid_ratio", "epoch_count",
+              "epoch_coverage_ratio", "missing_epoch_count", "role", "reference_date", "file_satellites")
+    if row.get("role") == "baseline":
+        # Historical samples are raw comparison inputs at the current cutoff,
+        # not extra observations being judged against another reference date.
+        fields = tuple(key for key in fields if key not in (
+            "baseline_p10", "delta_p10", "baseline_days", "baseline_resource_ids", "reference_groups"))
     return {key: row.get(key) for key in fields}
 
 
@@ -561,39 +796,100 @@ def _tool_case(results, case_id):
     raise GnssProcessingError("A professional tool needs exactly one registered case scope")
 
 
+def _temporal_sample(rows, limit):
+    """Evenly spaced positions preserve the queried span, never its extrema."""
+    if len(rows) <= limit:
+        return rows
+    if limit == 1:
+        return [rows[len(rows) // 2]]
+    return [rows[index] for index in sorted({round(i * (len(rows) - 1) / (limit - 1)) for i in range(limit)})]
+
+
+def _departures(rows, limit=12):
+    departures = []
+    for row in sorted(rows, key=lambda item: (item["window_start"], item["station"], item["signal"])):
+        for group in row.get("reference_groups", []):
+            if row.get("missing_epoch_count") or not group.get("outside_sample_range"):
+                continue
+            departures.append({"station": row["station"], "signal": row["signal"], "unit": row["unit"],
+                "window_start": row["window_start"], "window_end": row["window_end"],
+                "interval_seconds": row["interval_seconds"], "current_p10": row["cnr_p10"],
+                "date_group": group["date_group"], "reference_dates": group["dates"],
+                "reference_day_count": group["reference_day_count"],
+                "sample_min": group["sample_min"], "sample_median": group["sample_median"], "sample_max": group["sample_max"],
+                "direction": "below" if row["cnr_p10"] < group["sample_min"] else "above",
+                "resource_ids": [row["resource_id"]] + group["resource_ids"], "finite_sample_only": True})
+    return _temporal_sample(departures, limit), len(departures)
+
+
+def _coverage(rows):
+    valid = [row for row in rows if row.get("cnr_p10") is not None]
+    matched = [row for row in valid if row.get("reference_groups")]
+    complete = bool(rows) and len(valid) == len(rows) and len(matched) == len(rows) and not any(
+        row.get("missing_epoch_count") for row in rows)
+    return {"current_windows": len(rows), "valid_cnr_windows": len(valid), "matched_current_windows": len(matched),
+            "unit_limited_windows": sum(row.get("unit") != "dB-Hz" for row in rows),
+            "windows_with_missing_epochs": sum(bool(row.get("missing_epoch_count")) for row in rows),
+            "coverage_complete": complete,
+            "definition": "Complete only within returned registered windows; not full-day, city or constellation coverage",
+            "reference_sufficiency": "descriptive_only" if matched else "no_comparable_reference"}
+
+
+SPATIAL_LIMIT = ("实际接收站观测不等于案例城市或海峡的直接覆盖；不定位异常源，不归因为人为干扰。")
+STATISTICAL_LIMIT = ("参考仅为所列历史样本；超出其范围不等于统计显著或命中业务异常阈值。")
+VISIBILITY_LIMIT = ("有效比例的分母是文件实际记录历元与该信号出现过的卫星；卫星集合来自整份文件，"
+                    "缓存没有逐窗口卫星可见集合，不能排除几何、设备或环境差异。")
+
+
 def station_history(results, station, signal, as_of, *, case_id=None, window_start=None, window_end=None, limit=12):
-    """Read only already released, registered, same-station/signal statistics."""
+    """Answer a same-station historical question using exact cached windows."""
     case_id = _tool_case(results, case_id)
     visible = [item for item in results if _visible(item, as_of, case_id)]
     registered = {(item.get("station"), row.get("signal")) for item in visible for row in item.get("signals", [])}
     selection_note = "Requested exact signal code"
     if signal is None:
-        available = sorted(code for registered_station, code in registered if registered_station == station)
-        signal = available[0] if available else None
-        selection_note = "First available exact signal code in alphabetical order; no value-based selection"
+        available = [row for row in _rows(visible, as_of, case_id, station) if row.get("role") != "baseline"]
+        coverage = defaultdict(int)
+        for row in available:
+            coverage[row["signal"]] += bool(row.get("reference_groups") and row.get("cnr_p10") is not None)
+        signal = sorted(coverage, key=lambda code: (-coverage[code], code))[0] if coverage else None
+        selection_note = "Most comparable observed windows, then exact signal code; no value-based selection"
     if (station, signal) not in registered:
         return {"status": "unavailable", "reason": "Station/signal is not registered and visible in this case", "resource_ids": []}
+    if window_end and _dt(window_end) > _dt(as_of):
+        return {"status": "unavailable", "reason": "Requested end is beyond immutable as_of", "resource_ids": []}
+    if window_start and window_end and _dt(window_start) >= _dt(window_end):
+        return {"status": "unavailable", "reason": "Requested start must precede end", "resource_ids": []}
     rows = _rows(visible, as_of, case_id, station, signal, window_start, window_end)
-    rows.sort(key=lambda row: row["window_end"], reverse=True)
-    current = [row for row in rows if row.get("role") != "baseline"]
+    current = sorted([row for row in rows if row.get("role") != "baseline"], key=lambda row: row["window_start"])
     references = [row for row in _rows(visible, as_of, case_id, station, signal) if row.get("role") == "baseline"]
     limit = min(max(int(limit), 1), 16)
-    shown = current[:limit]
-    reference_ids = {ref for row in shown for ref in row.get("baseline_resource_ids", [])}
+    shown = _temporal_sample(current, limit)
+    reference_ids = {ref for row in current for ref in row.get("baseline_resource_ids", [])}
     clock_keys = {_clock_key(row) for row in shown}
     comparable = [row for row in references if row["resource_id"] in reference_ids and _clock_key(row) in clock_keys]
-    comparable.sort(key=lambda row: row["window_end"], reverse=True)
-    # Explicitly show a small amount of matching history, not an old final verdict.
-    shown_reference = comparable[: min(4, limit)]
+    comparable.sort(key=lambda row: row["window_start"])
+    by_date_group = defaultdict(list)
+    for row in comparable:
+        by_date_group[row["reference_date"][:7]].append(row)
+    shown_reference = [row for group in by_date_group.values() for row in _temporal_sample(group, max(2, limit // max(1, len(by_date_group))))]
+    departures, departure_count = _departures(current, limit)
+    coverage = _coverage(current)
     return {"status": "computed" if shown else "insufficient_coverage", "case_id": case_id, "as_of": as_of,
             "station": station, "signal": signal, "selected_signal": signal, "selection_note": selection_note,
+            "observation_present": bool(current), "reference_present": bool(references),
             "visible_window_count": len(rows),
             "current_windows": [_compact_row(row) for row in shown],
             "reference_windows": [_compact_row(row) for row in shown_reference],
-            "resource_ids": sorted({row["resource_id"] for row in shown + shown_reference} | reference_ids),
-            "comparability": "Only pre-start same-station/system/signal UTC-clock, unit and interval matches have non-null baseline/delta",
-            "coverage": {"current_windows": len(current), "baseline_windows": len(references),
-                         "matched_current_windows": sum(row.get("delta_p10") is not None for row in current)},
+            "reference_groups": _group_comparisons(current),
+            "reference_window_count": len(comparable), "shown_reference_window_count": len(shown_reference),
+            "sampling_note": "Current and reference examples are evenly spaced in time; complete counts cover the queried span, no extreme-window selection",
+            "descriptive_departures": departures, "descriptive_departure_count": departure_count,
+            "coverage_complete": coverage["coverage_complete"],
+            "resource_ids": sorted({row["resource_id"] for row in current + shown_reference} | reference_ids),
+            "comparability": "Reference groups require pre-start same-station/system/signal UTC-clock, unit and interval matches; a scalar baseline/delta is supplied only for one calendar group",
+            "coverage": dict(coverage, baseline_windows=len(references)),
+            "limitations": [SPATIAL_LIMIT, STATISTICAL_LIMIT, VISIBILITY_LIMIT],
             "limits": "Five-minute descriptive statistics; no source attribution or second-level synchronization claim"}
 
 
@@ -604,8 +900,6 @@ def multistation_check(results, as_of, *, case_id=None, stations=None, signal=No
     visible = [item for item in results if _visible(item, as_of, case_id) and item.get("role") != "baseline"]
     registered = {item.get("station") for item in visible}
     requested = set(stations or registered)
-    if not requested.issubset(registered):
-        return {"status": "unavailable", "reason": "Requested station is not registered and visible in this case", "resource_ids": []}
     end = _dt(window_end) if window_end else _dt(as_of)
     start = _dt(window_start) if window_start else end - timedelta(days=1)
     if end > _dt(as_of) or start >= end:
@@ -628,34 +922,45 @@ def multistation_check(results, as_of, *, case_id=None, stations=None, signal=No
     for row in rows:
         grouped[(row["signal"], row["unit"], row["interval_seconds"], row["window_start"], row["window_end"])].append(row)
     overlap = [group for group in grouped.values() if len({row["station"] for row in group if row.get("cnr_p10") is not None}) >= 2]
-    summaries = []
+    overlap_rows = [row for group in overlap for row in group]
+    overlap_stations = {row["station"] for row in overlap_rows}
+    summaries, excluded = [], []
     for station in sorted(requested):
-        for sig in sorted({row["signal"] for row in rows if row["station"] == station}):
-            group = [row for row in rows if row["station"] == station and row["signal"] == sig]
-            finite = [row["cnr_p10"] for row in group if row.get("cnr_p10") is not None]
-            deltas = [row["delta_p10"] for row in group if row.get("delta_p10") is not None]
-            summaries.append({"station": station, "signal": sig, "unit": group[0]["unit"],
-                              "interval_seconds": sorted({row["interval_seconds"] for row in group}),
-                              "window_count": len(group), "valid_cnr_window_count": len(finite),
-                              "window_p10_median": median(finite) if finite else None,
-                              "delta_window_p10_median": median(deltas) if deltas else None,
-                              "missing_epoch_count": sum(row["missing_epoch_count"] for row in group),
-                              "resource_ids": sorted({row["resource_id"] for row in group})})
+        group = [row for row in rows if row["station"] == station]
+        concurrent = [row for row in overlap_rows if row["station"] == station]
+        reasons = []
+        if station not in registered:
+            reasons.append("该站在此案例截止前没有已释放观测")
+        elif not group:
+            reasons.append("所选信号或所选时间窗没有观测")
+        elif not any(row.get("cnr_p10") is not None for row in group):
+            reasons.append("信号已记录，但没有可用且单位明确的 CNR；未知单位不能按 dB-Hz 比较")
+        elif station not in overlap_stations:
+            reasons.append("没有与其他站同信号、单位、采样间隔和完整 UTC 窗口交叠的统计")
+        if reasons:
+            excluded.append({"station": station, "reasons": reasons})
+        summaries.append({"station": station, "signal": signal, "units": sorted({row["unit"] for row in group}),
+            "interval_seconds": sorted({row["interval_seconds"] for row in group}),
+            "window_count": len(group), "concurrent_window_count": len(concurrent),
+            "valid_cnr_window_count": sum(row.get("cnr_p10") is not None for row in group),
+            "reference_groups": _group_comparisons(concurrent), "coverage": _coverage(concurrent),
+            "resource_ids": sorted({row["resource_id"] for row in group})})
     limit = min(max(int(limit), 1), 16)
-    overlap.sort(key=lambda group: group[0]["window_start"], reverse=True)
-    shown, remaining = [], limit
-    for group in overlap:
-        if remaining < 2:
-            break
-        selected = group[:remaining]
-        shown.append(selected)
-        remaining -= len(selected)
+    overlap.sort(key=lambda group: group[0]["window_start"])
+    shown = _temporal_sample(overlap, min(limit, 6))
+    departures, departure_count = _departures(overlap_rows, limit)
     return {"status": "computed" if overlap else "insufficient_coverage", "case_id": case_id, "as_of": as_of,
             "window_start": _iso(start), "window_end": _iso(end), "stations": sorted(requested),
             "signal": signal, "signal_selection": signal_selection,
-            "station_signal_summaries": summaries[:limit], "summary_count": len(summaries),
+            "station_signal_summaries": summaries, "summary_count": len(summaries),
+            "unavailable_or_incomparable_stations": excluded,
             "concurrent_windows": [[_compact_row(row) for row in group] for group in shown],
             "overlap_window_count": len(overlap), "available_station_count": len({row["station"] for row in rows}),
-            "resource_ids": sorted({row["resource_id"] for row in rows}),
+            "coverage_complete": bool(overlap) and not excluded and _coverage(overlap_rows)["coverage_complete"],
+            "descriptive_departures": departures, "descriptive_departure_count": departure_count,
+            "sampling_note": "Examples are evenly spaced across true concurrent windows; all participating stations remain in each example",
+            "resource_ids": sorted({row["resource_id"] for row in rows} |
+                                   {identifier for row in overlap_rows for identifier in row.get("baseline_resource_ids", [])}),
             "comparability": "Overlap requires exact same UTC window, signal, unit and native sampling interval at two or more stations",
+            "limitations": [SPATIAL_LIMIT, STATISTICAL_LIMIT, VISIBILITY_LIMIT],
             "limits": "Concurrent observations are not a regional cause; single-station coverage or missing data cannot establish multi-station change"}

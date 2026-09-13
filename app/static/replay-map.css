@@ -337,3 +337,7 @@ body.replay-map-app {
   .replay-map-app .report-metrics strong { margin: 4px 0; }
   .replay-map-app .report-tabs button { font-size: 11px; }
 }
+
+.replay-map-app .map-callout[data-tone="unavailable"] { border-left-color: #879aa3; }
+.replay-map-app .map-callout[data-tone="unavailable"] .callout-title { color: #c5d4da; }
+.replay-map-app #report-update { margin: 12px 24px 0; width: calc(100% - 48px); }

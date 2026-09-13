@@ -1,0 +1,40 @@
+{
+  "purpose": "Evaluation only. Never imported into manifests, model inputs, evidence tools, or status rules.",
+  "checked_on": "2026-09-13",
+  "cases": {
+    "kharkiv": {
+      "event_definition": "2024年5月哈尔科夫地区新一轮跨境地面攻势的历史起日",
+      "event_date": "2024-05-10",
+      "precision": "calendar_day",
+      "source_timezone": null,
+      "time_note": "来源核实到日期，没有给出精确时刻与事件时区；不计算精确小时提前量。",
+      "source_title": "OHCHR / Protection of Civilians in Armed Conflict — May 2024",
+      "source_published_date": "2024-06-07",
+      "source_url": "https://ukraine.ohchr.org/en/protection-civilians-armed-conflict-may-2024",
+      "source_support": "OHCHR将哈尔科夫地区自5月10日起的攻击与新地面攻势关联。",
+      "military_prediction_validation": "not_validated",
+      "event_date_interval": {
+        "start_date": "2024-05-10",
+        "end_date_exclusive": "2024-05-11",
+        "timezone": null
+      }
+    },
+    "hormuz": {
+      "event_definition": "2026年2月美以对伊朗打击及随后地区交火的历史起日；不定义为海峡船流变化本身",
+      "event_date": "2026-02-28",
+      "precision": "calendar_day",
+      "source_timezone": null,
+      "time_note": "联合国报道核实当日事件，未给出统一精确事件时刻；只作日期层面的独立对照。",
+      "source_title": "UN News / Bombing of Iran and retaliatory strikes: Guterres",
+      "source_published_date": "2026-02-28",
+      "source_url": "https://turkiye.un.org/en/310903-bombing-iran-and-retaliatory-strikes-%E2%80%98-grave-threat-international-peace-and-security%E2%80%99",
+      "source_support": "联合国2月28日报道当天美以打击伊朗及后续反击，并记录安理会当天讨论。",
+      "military_prediction_validation": "not_validated",
+      "event_date_interval": {
+        "start_date": "2026-02-28",
+        "end_date_exclusive": "2026-03-01",
+        "timezone": null
+      }
+    }
+  }
+}

@@ -535,7 +535,7 @@ class Pipeline:
                 self.store.save('run', run)
             raise
         except Exception as error:
-            invalid = isinstance(error, ModelError) and error.code in ('invalid_model_output', 'length')
+            invalid = isinstance(error, ModelError) and error.code in ('invalid_model_input', 'invalid_model_output', 'length')
             with self.store.atomic():
                 for work in batch:
                     work.update(status='retry_wait', error=str(error), single_retry=invalid or work.get('single_retry', False),

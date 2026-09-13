@@ -295,6 +295,40 @@ async def replay_resource(resource_id: str):
     return record
 
 
+@app.get('/api/replay/cases/{case_id}/snapshots/{revision}')
+async def replay_snapshot(case_id: str, revision: str):
+    if settings.pipeline_mode != 'case_replay':
+        raise HTTPException(404, '当前不是历史回放实例')
+    record = app.state.pipeline.decision_snapshot(case_id, revision)
+    if record is None:
+        raise HTTPException(404, '找不到该历史结论快照')
+    return record
+
+
+@app.get('/api/replay/cases/{case_id}/timeline')
+async def replay_timeline(case_id: str):
+    if settings.pipeline_mode != 'case_replay' or not app.state.store.get('replay_case', case_id):
+        raise HTTPException(404, '找不到该回放案例')
+    return {'case_id': case_id, 'timeline': app.state.pipeline.timeline(case_id)}
+
+
+@app.post('/api/replay/cases/{case_id}/resume')
+async def replay_resume(case_id: str, body: dict):
+    if settings.pipeline_mode != 'case_replay':
+        raise HTTPException(404, '当前不是历史回放实例')
+    reason = str(body.get('reason') or '').strip()
+    if not reason:
+        raise HTTPException(422, '须注明已修复的实际问题')
+    work_ids = body.get('work_ids')
+    if work_ids is not None and (not isinstance(work_ids, list) or not work_ids or
+                                 any(not isinstance(identifier, str) for identifier in work_ids)):
+        raise HTTPException(422, 'work_ids 须为明确指定的工作编号列表')
+    try:
+        return app.state.pipeline.resume_failed_case(case_id, reason, work_ids=work_ids)
+    except ValueError as error:
+        raise HTTPException(409, str(error)) from error
+
+
 @app.post('/api/pipeline/config')
 async def pipeline_config(body: PipelineInput):
     changes = body.model_dump(exclude_none=True)
