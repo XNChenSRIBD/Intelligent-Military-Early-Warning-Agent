@@ -41,25 +41,54 @@
   }
   function conclusion() {
     const current=state.current, alert=current?.alert, work=current?.view.recent_work || [];
-    if(!current)return {status:'资料读取中',title:'正在打开区域结论',summary:'',tone:'neutral',evidence:[]};
-    if(alert && alert.origin_type==='numeric_rule') {
-      const latest=alert.latest_observation, baseline=alert.baseline;
-      const ratio=finite(latest?.n_total) && baseline>0 ? latest.n_total/baseline*100 : null;
-      return {status:decisions[alert.status] || '区域预警',
-        title:({active:'海峡通行量持续偏低',recovering:'海峡通行量正在恢复',resolved:'通行量预警已解除',revoked:'通行量预警已撤销'})[alert.status] || '海峡通行量发生变化',
-        summary:alert.status==='active' && finite(ratio)?`最新通行量仅为历史参考的 ${number(ratio)}%，持续偏低预警尚未解除。`:short(alert.summary),tone:['active','recovering'].includes(alert.status)?'warning':'neutral',
-        evidence:[finite(latest?.n_total)?`通行量 ${number(latest.n_total)} 船／航次`:null,finite(ratio)?`历史参考的 ${number(ratio)}%`:null].filter(Boolean),
-        observed:latest?.observed_date || alert.last_evaluated_date};
+    if(!current)return null;
+    const states={
+      normal:{status:'绿色 · 监测判定',title:'判定正常',summary:'当前观测判定正常，持续执行监测。',tone:'normal'},
+      attention:{status:'黄色 · 监测判定',title:'发现可疑信号',summary:'需扩大证据范围，持续核实与论证。',tone:'attention'},
+      warning:{status:'红色 · 监测判定',title:'明确预警信号',summary:'已达到预警条件，持续跟踪后续变化。',tone:'warning'}
+    };
+    const result=(tone,evidence,observed=current.view.as_of)=>({...states[tone],evidence,observed});
+    const maritime=current.metrics?.state;
+    const latestValue=maritime?.latest_value ?? alert?.latest_observation?.n_total;
+    const baseline=maritime?.baseline ?? alert?.baseline;
+    const shippingEvidence=[];
+    if(finite(latestValue) && finite(baseline))shippingEvidence.push(`海峡最新日通行量为 ${number(latestValue)} 艘次，历史参考为 ${number(baseline)} 艘次。`);
+    if(alert?.origin_type==='numeric_rule' && ['active','recovering'].includes(alert.status)) {
+      const rule=alert.rule;
+      if(rule?.trigger_days && finite(rule.trigger_ratio))shippingEvidence.push(`通行量连续 ${rule.trigger_days} 天低于历史参考的 ${number(rule.trigger_ratio*100)}%，达到预警条件。`);
+      shippingEvidence.push(alert.status==='recovering'?'通行量开始回升，但尚未满足持续恢复条件。':'通行量持续偏低，尚未满足预警解除条件。');
+      return result('warning',shippingEvidence,alert.latest_observation?.observed_date || alert.last_evaluated_date);
     }
-    if(alert) return {status:decisions[alert.status] || '异常线索',title:alert.title || '区域出现异常线索',
-      summary:short((!alert.analysis_stale && alert.analysis?.statement) || alert.statement || alert.summary),tone:'attention',
-      evidence:(alert.evidence_refs || []).slice(0,2).map((ref)=>short(ref.title || names[ref.source] || '观测依据',36)),observed:alert.observed_at || current.view.as_of};
-    const insufficient=work.some((item)=>item.decision==='insufficient_evidence');
-    const latest=gnssRows().filter((row)=>finite(row.delta) && finite(row.p10)).at(-1);
-    return {status:insufficient?'证据不足':'尚无已发布预警',title:insufficient?'区域异常尚待核实':'暂未形成区域预警',
-      summary:insufficient?'现有观测尚不足以确认区域异常，详细依据见分析报告。':'当前资料尚未形成已发布预警，可查看各来源的观测和分析。',
-      tone:insufficient?'attention':'neutral',evidence:latest?[`${latest.station} · ${latest.signal}`,`信号较参考 ${latest.delta>0?'+':''}${number(latest.delta)} dB`]:['已有观测可供查阅'],
-      observed:current.view.as_of};
+    // Use the latest assessment batch for each source, not superseded historical decisions.
+    const latestBySource=new Map();
+    work.forEach((item)=>{if(item.decision && (!latestBySource.has(item.kind) || item.as_of>latestBySource.get(item.kind)))latestBySource.set(item.kind,item.as_of);});
+    const assessments=work.filter((item)=>item.decision && item.as_of===latestBySource.get(item.kind));
+    const latestRows=new Map();
+    gnssRows().forEach((row)=>latestRows.set(`${row.station}/${row.signal}`,row));
+    const comparable=[...latestRows.values()].filter((row)=>finite(row.delta) && finite(row.p10));
+    const stationCount=new Set(comparable.map((row)=>row.station)).size;
+    const lowerCount=new Set(comparable.filter((row)=>row.delta<0).map((row)=>row.station)).size;
+    const gnssEvidence=lowerCount?[`最新可比观测中，${stationCount} 个 IGS 站里有 ${lowerCount} 个站的部分卫星信号质量（CNR）低于历史参考。`]:[];
+    const limited=assessments.some((item)=>item.decision==='insufficient_evidence');
+    const clue=alert && !['resolved','revoked'].includes(alert.status);
+    const candidate=assessments.some((item)=>['candidate','update'].includes(item.decision));
+    const shippingCandidate=maritime?.current_status==='candidate';
+    const evidence=[...gnssEvidence];
+    if(shippingCandidate)evidence.push(...shippingEvidence,'海峡通行量单日偏低，需要继续观察是否持续。');
+    if(clue)evidence.push(alert.origin_type==='news_clue'?'公开报道中发现需核实的事件线索，详见来源报告。':'已有观测分析发现待核实线索，详见分析报告。');
+    if(clue || candidate || shippingCandidate || (limited && lowerCount)) {
+      if(lowerCount)evidence.push('信号下降的原因及影响范围仍需更多观测佐证。');
+      return result('attention',evidence.length?evidence:['已有来源分析发现待核实线索，需结合更多资料判断。']);
+    }
+    if(assessments.length && assessments.every((item)=>item.decision==='no_anomaly') && (!maritime || ['not_triggered','resolved'].includes(maritime.current_status))) {
+      const normalEvidence=[];
+      if(assessments.some((item)=>item.kind==='gnss'))normalEvidence.push('最新卫星信号观测经分析，未发现异常变化。');
+      if(maritime)normalEvidence.push(...shippingEvidence,maritime.current_status==='resolved'?'海峡通行量已满足持续恢复条件。':'海峡通行量未达到偏低预警条件。');
+      if(assessments.some((item)=>item.kind==='news'))normalEvidence.push('最新公开报道经分析，未发现新的异常线索。');
+      return result('normal',normalEvidence);
+    }
+    // Missing evidence is not a normal finding or a suspicious signal by itself.
+    return null;
   }
   function initializeMap(world) {
     const map=state.map=L.map('map',{zoomControl:false,attributionControl:false,minZoom:2,maxZoom:9,worldCopyJump:false,preferCanvas:true});
@@ -80,7 +109,7 @@
     const width=state.map.getSize().x,narrow=width<700,reportOpen=!$('report-panel').hidden;
     state.map.fitBounds(L.latLngBounds(points).pad(.23),{paddingTopLeft:narrow?[18,145]:[Math.min(255,width*.18),110],
       paddingBottomRight:narrow?[18,120]:[Math.min(reportOpen?550:345,width*.28),95],maxZoom:6,animate:false});
-    if(state.popup)state.popup.openOn(state.map);
+    if(state.popup){state.popup.openOn(state.map);state.popup.update();}
   }
   function toggleLayer(kind) {
     if($(`layer-${kind}`).checked)layers[kind].addTo(state.map);else state.map.removeLayer(layers[kind]);
@@ -124,11 +153,13 @@
     renderCallout();
   }
   function renderCallout() {
-    const data=conclusion(), content=node('div','map-callout'); content.id='map-callout';content.dataset.tone=data.tone;
+    const data=conclusion();
+    if(!data){if(state.popup)state.map.closePopup(state.popup);state.popup=null;$('case-date').textContent=`历史观测 · ${day(state.current?.view.as_of)}`;$('map-loading').hidden=false;$('map-loading').textContent='当前观测资料尚不足以作出监测判定';return;}
+    const content=node('div','map-callout'); content.id='map-callout';content.dataset.tone=data.tone;
     const action=button('',()=>openReport('overview'),'callout-main'); action.id='case-conclusion';
     action.append(node('span','callout-status',data.status),node('h2','callout-title',data.title),node('p','callout-summary',data.summary));
-    const evidence=node('div','callout-evidence');data.evidence.forEach((item)=>evidence.append(node('span','',item)));
-    action.append(evidence,node('span','callout-open','查看分析报告 →'));content.append(action);
+    const evidence=node('ul','callout-evidence');data.evidence.forEach((item)=>evidence.append(node('li','',item)));
+    action.append(node('span','callout-evidence-label','判定依据'),evidence,node('span','callout-open','查看分析报告 →'));content.append(action);
     if(!state.popup)state.popup=L.popup({className:'case-popup',closeButton:false,closeOnClick:false,autoClose:false,minWidth:240,maxWidth:320,
       autoPanPaddingTopLeft:[12,145],autoPanPaddingBottomRight:[12,100],offset:[18,-9]});
     state.popup.setLatLng(latLng(caseMeta().focus)).setContent(content).openOn(state.map);
@@ -204,8 +235,10 @@
   }
   function renderOverview() {
     const data=conclusion(), alert=state.current.alert;
-    const overview=section('区域结论');overview.append(node('span',`report-status ${data.tone}`,data.status),node('h2','report-conclusion',data.title),node('p','',data.summary));
-    overview.append(node('p','report-date',`观测日期：${day(data.observed)}`));
+    const overview=section('区域结论');
+    if(data)overview.append(node('span',`report-status ${data.tone}`,data.status),node('h2','report-conclusion',data.title),node('p','',data.summary));
+    else overview.append(node('p','','当前观测资料尚不足以作出监测判定。'));
+    overview.append(node('p','report-date',`观测日期：${day(data?.observed || state.current.view.as_of)}`));
     if(alert?.analysis?.statement && !alert.analysis_stale)section('综合分析').append(node('p','',alert.analysis.statement));
     const sourceAssessments=new Map();
     (state.current.view.recent_work || []).forEach((work)=>{if(work.statement && !sourceAssessments.has(work.kind))sourceAssessments.set(work.kind,work);});
@@ -214,7 +247,7 @@
     });}
     const evidence=section('支持证据');
     if(alert?.origin_type==='numeric_rule')metrics([['最新通行量',number(alert.latest_observation?.n_total)],['历史参考',number(alert.baseline)],['触发日期',`${day(alert.started_on)} 起`]],evidence);
-    data.evidence.forEach((text)=>evidence.append(node('p','',text)));
+    (data?.evidence || []).forEach((text)=>evidence.append(node('p','',text)));
     const sources=node('div','evidence-list');
     [['gnss','查看 GNSS 观测与分析'],['portwatch','查看航运观测与分析'],['news','查看公开报道与分析']].forEach(([id,title])=>sources.append(button(title,()=>{state.reportTab=id;state.station=null;renderReport();})));
     evidence.append(sources);
