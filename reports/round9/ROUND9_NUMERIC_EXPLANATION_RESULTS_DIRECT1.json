@@ -1,16 +1,14 @@
 {
-  "created_at": "2026-09-14T04:38:58.680731Z",
+  "created_at": "2026-09-14T04:26:48.889799Z",
   "experiment": "round9_fixed_numeric_explanation",
-  "model_execution": "executed",
-  "requests_attempted": 16,
-  "responses_received": 16,
+  "model_execution": "not_executed",
+  "requests_attempted": 1,
+  "responses_received": 0,
   "connection_source": {
     "env_file": "D:\\Project_SRIBD\\22所_大模型\\github_work\\Intelligent-Military-Early-Warning-Agent\\.env.example",
     "profile": "C:\\Users\\NaNF2P\\.codex\\skills\\connect-sribd-server\\SKILL.md",
-    "endpoint": "http://127.0.0.1:18009/v1",
-    "environment_overrides": [
-      "MODEL_BASE_URL"
-    ]
+    "endpoint": "http://10.20.14.16:8000/v1",
+    "environment_overrides": []
   },
   "parameters": {
     "model": "qwen3-4b",
@@ -156,50 +154,27 @@
         }
       ],
       "program_facts_sent": false,
-      "status": "response_received",
-      "model_output": {
-        "answer": "对象A的首窗和末窗位于参考下界之上，对象B的首窗位于参考上界之下。没有总体显著性检验不会改变已知的范围关系。",
-        "supporting_row_ids": [
-          "r1",
-          "r2",
-          "r3"
-        ],
-        "unsupported_inferences": []
-      },
-      "response_text": "{\"answer\":\"对象A的首窗和末窗位于参考下界之上，对象B的首窗位于参考上界之下。没有总体显著性检验不会改变已知的范围关系。\",\"supporting_row_ids\":[\"r1\",\"r2\",\"r3\"],\"unsupported_inferences\":[]}",
-      "raw_response_body": "{\"id\":\"chatcmpl-b5f048d9c109f06e\",\"object\":\"chat.completion\",\"created\":1789360739,\"model\":\"qwen3-4b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"answer\\\":\\\"对象A的首窗和末窗位于参考下界之上，对象B的首窗位于参考上界之下。没有总体显著性检验不会改变已知的范围关系。\\\",\\\"supporting_row_ids\\\":[\\\"r1\\\",\\\"r2\\\",\\\"r3\\\"],\\\"unsupported_inferences\\\":[]}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.24.0-ffdba179\",\"usage\":{\"prompt_tokens\":383,\"total_tokens\":446,\"completion_tokens\":63,\"prompt_tokens_details\":null},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null}",
-      "mechanical_check": {
-        "json_structure": "pass",
-        "row_ids": "pass",
-        "unknown_row_ids": [],
-        "semantic_review": "completed_by_item_reading"
-      },
+      "status": "connection_failed",
+      "model_output": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
       "review": {
-        "status": "incorrect",
+        "status": "not_checked",
         "dimensions": {
-          "numbers_and_relations": "fail",
-          "answers_original_question": "fail",
-          "units_windows_groups_missing": "pass",
-          "unsupported_inferences": "pass",
-          "row_citations": "pass"
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
         },
-        "note": "三处大小关系全部说反：22.719<29.4848，22.219<33.469，38.25>33.4284。没有显著性检验不改变关系这一句正确。引用行真实存在，但不保证推导正确。",
-        "specific_quotes": [
-          "对象A的首窗和末窗位于参考下界之上，对象B的首窗位于参考上界之下。"
-        ]
+        "note": "连接被拒绝，没有模型回答可供检查",
+        "specific_quotes": []
       },
-      "started_at": "2026-09-14T04:38:58.682731Z",
-      "http_status": 200,
-      "response_model": "qwen3-4b",
-      "usage": {
-        "prompt_tokens": 383,
-        "total_tokens": 446,
-        "completion_tokens": 63,
-        "prompt_tokens_details": null
-      },
-      "finish_reason": "stop",
-      "finished_at": "2026-09-14T04:38:59.843146Z",
-      "elapsed_seconds": 1.159
+      "started_at": "2026-09-14T04:26:48.892318Z",
+      "error": "<urlopen error [WinError 10061] 由于目标计算机积极拒绝，无法连接。>",
+      "finished_at": "2026-09-14T04:26:51.003275Z",
+      "elapsed_seconds": 2.109,
+      "response_text": null
     },
     {
       "task_id": "N1",
@@ -401,48 +376,23 @@
         }
       ],
       "program_facts_sent": true,
-      "status": "response_received",
-      "model_output": {
-        "answer": "对象A的首窗和末窗均位于其参考下界之下，对象B的首窗位于其参考上界之上。没有总体显著性检验不会改变已经能计算的范围关系，未给出的另一侧边界保持未知。",
-        "supporting_row_ids": [
-          "r1",
-          "r2",
-          "r3"
-        ],
-        "unsupported_inferences": []
-      },
-      "response_text": "{\"answer\":\"对象A的首窗和末窗均位于其参考下界之下，对象B的首窗位于其参考上界之上。没有总体显著性检验不会改变已经能计算的范围关系，未给出的另一侧边界保持未知。\",\"supporting_row_ids\":[\"r1\",\"r2\",\"r3\"],\"unsupported_inferences\":[]}",
-      "raw_response_body": "{\"id\":\"chatcmpl-9174fb56b82984c5\",\"object\":\"chat.completion\",\"created\":1789360741,\"model\":\"qwen3-4b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"answer\\\":\\\"对象A的首窗和末窗均位于其参考下界之下，对象B的首窗位于其参考上界之上。没有总体显著性检验不会改变已经能计算的范围关系，未给出的另一侧边界保持未知。\\\",\\\"supporting_row_ids\\\":[\\\"r1\\\",\\\"r2\\\",\\\"r3\\\"],\\\"unsupported_inferences\\\":[]}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.24.0-ffdba179\",\"usage\":{\"prompt_tokens\":676,\"total_tokens\":752,\"completion_tokens\":76,\"prompt_tokens_details\":null},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null}",
-      "mechanical_check": {
-        "json_structure": "pass",
-        "row_ids": "pass",
-        "unknown_row_ids": [],
-        "semantic_review": "completed_by_item_reading"
-      },
+      "status": "not_executed",
+      "model_output": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
       "review": {
-        "status": "pass",
+        "status": "not_checked",
         "dimensions": {
-          "numbers_and_relations": "pass",
-          "answers_original_question": "pass",
-          "units_windows_groups_missing": "pass",
-          "unsupported_inferences": "pass",
-          "row_citations": "pass"
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
         },
-        "note": "正确回答A两窗低于下界、B首窗高于上界，未补造另一边界；区分已知关系与总体检验。此处范围关系由程序提供。",
+        "note": "接口不可用，未执行本项，无模型回答可供检查",
         "specific_quotes": []
       },
-      "started_at": "2026-09-14T04:38:59.846128Z",
-      "http_status": 200,
-      "response_model": "qwen3-4b",
-      "usage": {
-        "prompt_tokens": 676,
-        "total_tokens": 752,
-        "completion_tokens": 76,
-        "prompt_tokens_details": null
-      },
-      "finish_reason": "stop",
-      "finished_at": "2026-09-14T04:39:01.125368Z",
-      "elapsed_seconds": 1.284
+      "response_text": null
     },
     {
       "task_id": "N2",
@@ -628,49 +578,23 @@
         }
       ],
       "program_facts_sent": false,
-      "status": "response_received",
-      "model_output": {
-        "answer": "已有观测的大小关系未明确说明，分组汇总说明了不同窗口的相对关系，总体检验未提供。仅给出例窗和汇总时，不能声称逐行读到了其余窗口。",
-        "supporting_row_ids": [
-          "r4",
-          "r5"
-        ],
-        "unsupported_inferences": []
-      },
-      "response_text": "{\"answer\":\"已有观测的大小关系未明确说明，分组汇总说明了不同窗口的相对关系，总体检验未提供。仅给出例窗和汇总时，不能声称逐行读到了其余窗口。\",\"supporting_row_ids\":[\"r4\",\"r5\"],\"unsupported_inferences\":[]}",
-      "raw_response_body": "{\"id\":\"chatcmpl-b6fe6cef3672d663\",\"object\":\"chat.completion\",\"created\":1789360742,\"model\":\"qwen3-4b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"answer\\\":\\\"已有观测的大小关系未明确说明，分组汇总说明了不同窗口的相对关系，总体检验未提供。仅给出例窗和汇总时，不能声称逐行读到了其余窗口。\\\",\\\"supporting_row_ids\\\":[\\\"r4\\\",\\\"r5\\\"],\\\"unsupported_inferences\\\":[]}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.24.0-ffdba179\",\"usage\":{\"prompt_tokens\":478,\"total_tokens\":542,\"completion_tokens\":64,\"prompt_tokens_details\":null},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null}",
-      "mechanical_check": {
-        "json_structure": "pass",
-        "row_ids": "pass",
-        "unknown_row_ids": [],
-        "semantic_review": "completed_by_item_reading"
-      },
+      "status": "not_executed",
+      "model_output": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
       "review": {
-        "status": "incorrect",
+        "status": "not_checked",
         "dimensions": {
-          "numbers_and_relations": "fail",
-          "answers_original_question": "incomplete",
-          "units_windows_groups_missing": "incomplete",
-          "unsupported_inferences": "pass",
-          "row_citations": "incomplete"
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
         },
-        "note": "三个例窗及下界已经给出，均可计算为低于；却说大小关系未明确。未分别交代A四低、B前两低后两高，只引用汇总r4/r5，遗漏关键数值r1-r3。未声称读过其余逐窗数值这一点正确。",
-        "specific_quotes": [
-          "已有观测的大小关系未明确说明"
-        ]
+        "note": "接口不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
       },
-      "started_at": "2026-09-14T04:39:01.133644Z",
-      "http_status": 200,
-      "response_model": "qwen3-4b",
-      "usage": {
-        "prompt_tokens": 478,
-        "total_tokens": 542,
-        "completion_tokens": 64,
-        "prompt_tokens_details": null
-      },
-      "finish_reason": "stop",
-      "finished_at": "2026-09-14T04:39:02.231179Z",
-      "elapsed_seconds": 1.095
+      "response_text": null
     },
     {
       "task_id": "N2",
@@ -967,53 +891,23 @@
         }
       ],
       "program_facts_sent": true,
-      "status": "response_received",
-      "model_output": {
-        "answer": "已有观测的下界与参考比较，观测值低于参考；分组汇总说明了不同窗口组的相对关系；总体检验未提供。仅给出例窗和汇总时，不能声称逐行读到了其余窗口。",
-        "supporting_row_ids": [
-          "r1",
-          "r2",
-          "r3",
-          "r4",
-          "r5",
-          "r6"
-        ],
-        "unsupported_inferences": []
-      },
-      "response_text": "{\"answer\":\"已有观测的下界与参考比较，观测值低于参考；分组汇总说明了不同窗口组的相对关系；总体检验未提供。仅给出例窗和汇总时，不能声称逐行读到了其余窗口。\",\"supporting_row_ids\":[\"r1\",\"r2\",\"r3\",\"r4\",\"r5\",\"r6\"],\"unsupported_inferences\":[]}",
-      "raw_response_body": "{\"id\":\"chatcmpl-bd2726e4b9e0757e\",\"object\":\"chat.completion\",\"created\":1789360743,\"model\":\"qwen3-4b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"answer\\\":\\\"已有观测的下界与参考比较，观测值低于参考；分组汇总说明了不同窗口组的相对关系；总体检验未提供。仅给出例窗和汇总时，不能声称逐行读到了其余窗口。\\\",\\\"supporting_row_ids\\\":[\\\"r1\\\",\\\"r2\\\",\\\"r3\\\",\\\"r4\\\",\\\"r5\\\",\\\"r6\\\"],\\\"unsupported_inferences\\\":[]}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.24.0-ffdba179\",\"usage\":{\"prompt_tokens\":903,\"total_tokens\":985,\"completion_tokens\":82,\"prompt_tokens_details\":null},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null}",
-      "mechanical_check": {
-        "json_structure": "pass",
-        "row_ids": "pass",
-        "unknown_row_ids": [],
-        "semantic_review": "review_needed"
-      },
+      "status": "not_executed",
+      "model_output": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
       "review": {
-        "status": "review_needed",
+        "status": "not_checked",
         "dimensions": {
-          "numbers_and_relations": "pass",
-          "answers_original_question": "incomplete",
-          "units_windows_groups_missing": "review_needed",
-          "unsupported_inferences": "pass",
-          "row_citations": "pass"
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
         },
-        "note": "观测值低于参考与三个例窗一致，且正确说明未提供总体检验、不能声称读过其余窗口。但未写清A四低、B前两低后两高；“已有观测的下界与参考比较”混用了观测值和参考下界，无法确认其字段表述意图，保留原句待复核，不算完整通过。",
-        "specific_quotes": [
-          "已有观测的下界与参考比较，观测值低于参考；分组汇总说明了不同窗口组的相对关系；总体检验未提供。"
-        ]
+        "note": "接口不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
       },
-      "started_at": "2026-09-14T04:39:02.235007Z",
-      "http_status": 200,
-      "response_model": "qwen3-4b",
-      "usage": {
-        "prompt_tokens": 903,
-        "total_tokens": 985,
-        "completion_tokens": 82,
-        "prompt_tokens_details": null
-      },
-      "finish_reason": "stop",
-      "finished_at": "2026-09-14T04:39:03.655817Z",
-      "elapsed_seconds": 1.412
+      "response_text": null
     },
     {
       "task_id": "N3",
@@ -1175,52 +1069,23 @@
         }
       ],
       "program_facts_sent": false,
-      "status": "response_received",
-      "model_output": {
-        "answer": "对象A的数值方向为低于自身参考范围，对象B的数值方向为高于自身参考范围。元数据已明确说明各自对照自己的参考范围，未提供其他对象的单位缺口信息。",
-        "supporting_row_ids": [
-          "r1",
-          "r2",
-          "r3",
-          "r4",
-          "r5"
-        ],
-        "unsupported_inferences": []
-      },
-      "response_text": "{\"answer\":\"对象A的数值方向为低于自身参考范围，对象B的数值方向为高于自身参考范围。元数据已明确说明各自对照自己的参考范围，未提供其他对象的单位缺口信息。\",\"supporting_row_ids\":[\"r1\",\"r2\",\"r3\",\"r4\",\"r5\"],\"unsupported_inferences\":[]}",
-      "raw_response_body": "{\"id\":\"chatcmpl-ad5e19a15220e576\",\"object\":\"chat.completion\",\"created\":1789360744,\"model\":\"qwen3-4b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"answer\\\":\\\"对象A的数值方向为低于自身参考范围，对象B的数值方向为高于自身参考范围。元数据已明确说明各自对照自己的参考范围，未提供其他对象的单位缺口信息。\\\",\\\"supporting_row_ids\\\":[\\\"r1\\\",\\\"r2\\\",\\\"r3\\\",\\\"r4\\\",\\\"r5\\\"],\\\"unsupported_inferences\\\":[]}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.24.0-ffdba179\",\"usage\":{\"prompt_tokens\":449,\"total_tokens\":522,\"completion_tokens\":73,\"prompt_tokens_details\":null},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null}",
-      "mechanical_check": {
-        "json_structure": "pass",
-        "row_ids": "pass",
-        "unknown_row_ids": [],
-        "semantic_review": "completed_by_item_reading"
-      },
+      "status": "not_executed",
+      "model_output": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
       "review": {
-        "status": "incomplete",
+        "status": "not_checked",
         "dimensions": {
-          "numbers_and_relations": "pass",
-          "answers_original_question": "incomplete",
-          "units_windows_groups_missing": "incomplete",
-          "unsupported_inferences": "pass",
-          "row_citations": "pass"
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
         },
-        "note": "A低、B高正确。未列出已确认的C:S1P、dB-Hz、1秒、同窗，也未说明原因证据为空；反而谈其他对象的单位缺口。没有明确声称本题两对象单位未知，不能把遗漏升级成该事实错误。",
-        "specific_quotes": [
-          "元数据已明确说明各自对照自己的参考范围，未提供其他对象的单位缺口信息。"
-        ]
+        "note": "接口不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
       },
-      "started_at": "2026-09-14T04:39:03.658764Z",
-      "http_status": 200,
-      "response_model": "qwen3-4b",
-      "usage": {
-        "prompt_tokens": 449,
-        "total_tokens": 522,
-        "completion_tokens": 73,
-        "prompt_tokens_details": null
-      },
-      "finish_reason": "stop",
-      "finished_at": "2026-09-14T04:39:04.905687Z",
-      "elapsed_seconds": 1.237
+      "response_text": null
     },
     {
       "task_id": "N3",
@@ -1481,50 +1346,23 @@
         }
       ],
       "program_facts_sent": true,
-      "status": "response_received",
-      "model_output": {
-        "answer": "对象A的数值低于其参考范围，对象B的数值高于其参考范围。元数据明确说明了各自对照自己的参考范围，但未提供其他对象的单位缺口信息。",
-        "supporting_row_ids": [
-          "r1",
-          "r2",
-          "r3"
-        ],
-        "unsupported_inferences": []
-      },
-      "response_text": "{\"answer\":\"对象A的数值低于其参考范围，对象B的数值高于其参考范围。元数据明确说明了各自对照自己的参考范围，但未提供其他对象的单位缺口信息。\",\"supporting_row_ids\":[\"r1\",\"r2\",\"r3\"],\"unsupported_inferences\":[]}",
-      "raw_response_body": "{\"id\":\"chatcmpl-a71520b93ace4861\",\"object\":\"chat.completion\",\"created\":1789360746,\"model\":\"qwen3-4b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"answer\\\":\\\"对象A的数值低于其参考范围，对象B的数值高于其参考范围。元数据明确说明了各自对照自己的参考范围，但未提供其他对象的单位缺口信息。\\\",\\\"supporting_row_ids\\\":[\\\"r1\\\",\\\"r2\\\",\\\"r3\\\"],\\\"unsupported_inferences\\\":[]}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.24.0-ffdba179\",\"usage\":{\"prompt_tokens\":870,\"total_tokens\":934,\"completion_tokens\":64,\"prompt_tokens_details\":null},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null}",
-      "mechanical_check": {
-        "json_structure": "pass",
-        "row_ids": "pass",
-        "unknown_row_ids": [],
-        "semantic_review": "completed_by_item_reading"
-      },
+      "status": "not_executed",
+      "model_output": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
       "review": {
-        "status": "incomplete",
+        "status": "not_checked",
         "dimensions": {
-          "numbers_and_relations": "pass",
-          "answers_original_question": "incomplete",
-          "units_windows_groups_missing": "incomplete",
-          "unsupported_inferences": "pass",
-          "row_citations": "pass"
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
         },
-        "note": "A低、B高正确，但与A条件一样，没有回答具体可比元数据及原因缺项；未把其他对象缺单位明确套给A/B，按未答完整记录。",
-        "specific_quotes": [
-          "元数据明确说明了各自对照自己的参考范围，但未提供其他对象的单位缺口信息。"
-        ]
+        "note": "接口不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
       },
-      "started_at": "2026-09-14T04:39:04.912237Z",
-      "http_status": 200,
-      "response_model": "qwen3-4b",
-      "usage": {
-        "prompt_tokens": 870,
-        "total_tokens": 934,
-        "completion_tokens": 64,
-        "prompt_tokens_details": null
-      },
-      "finish_reason": "stop",
-      "finished_at": "2026-09-14T04:39:06.028474Z",
-      "elapsed_seconds": 1.11
+      "response_text": null
     },
     {
       "task_id": "N4",
@@ -1616,49 +1454,23 @@
         }
       ],
       "program_facts_sent": false,
-      "status": "response_received",
-      "model_output": {
-        "answer": "本次增量为102414 - 143 = 102271，相对增幅为(102414 - 143)/143 ≈ 714.43%。最终绝对值102414与历史值1(3044613)和历史值2(1314529)相比，数值差距较大，但未进行统计显著性检验，因此不能得出统计显著性结论。",
-        "supporting_row_ids": [
-          "r1"
-        ],
-        "unsupported_inferences": []
-      },
-      "response_text": "{\"answer\":\"本次增量为102414 - 143 = 102271，相对增幅为(102414 - 143)/143 ≈ 714.43%。最终绝对值102414与历史值1(3044613)和历史值2(1314529)相比，数值差距较大，但未进行统计显著性检验，因此不能得出统计显著性结论。\",\"supporting_row_ids\":[\"r1\"],\"unsupported_inferences\":[]}",
-      "raw_response_body": "{\"id\":\"chatcmpl-80bc8612cfed3d51\",\"object\":\"chat.completion\",\"created\":1789360747,\"model\":\"qwen3-4b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"answer\\\":\\\"本次增量为102414 - 143 = 102271，相对增幅为(102414 - 143)/143 ≈ 714.43%。最终绝对值102414与历史值1(3044613)和历史值2(1314529)相比，数值差距较大，但未进行统计显著性检验，因此不能得出统计显著性结论。\\\",\\\"supporting_row_ids\\\":[\\\"r1\\\"],\\\"unsupported_inferences\\\":[]}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.24.0-ffdba179\",\"usage\":{\"prompt_tokens\":295,\"total_tokens\":424,\"completion_tokens\":129,\"prompt_tokens_details\":null},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null}",
-      "mechanical_check": {
-        "json_structure": "pass",
-        "row_ids": "pass",
-        "unknown_row_ids": [],
-        "semantic_review": "completed_by_item_reading"
-      },
+      "status": "not_executed",
+      "model_output": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
       "review": {
-        "status": "incorrect",
+        "status": "not_checked",
         "dimensions": {
-          "numbers_and_relations": "fail",
-          "answers_original_question": "incomplete",
-          "units_windows_groups_missing": "pass",
-          "unsupported_inferences": "pass",
-          "row_citations": "pass"
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
         },
-        "note": "增量102271正确；增幅应为71518.1818%，原答714.43%错误。只说与历史“差距较大”，没明确最终值低于两历史值。仍在比较原容量字段，没有偷换成计数；未推断统计显著。",
-        "specific_quotes": [
-          "相对增幅为(102414 - 143)/143 ≈ 714.43%",
-          "数值差距较大"
-        ]
+        "note": "接口不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
       },
-      "started_at": "2026-09-14T04:39:06.030476Z",
-      "http_status": 200,
-      "response_model": "qwen3-4b",
-      "usage": {
-        "prompt_tokens": 295,
-        "total_tokens": 424,
-        "completion_tokens": 129,
-        "prompt_tokens_details": null
-      },
-      "finish_reason": "stop",
-      "finished_at": "2026-09-14T04:39:08.159869Z",
-      "elapsed_seconds": 2.127
+      "response_text": null
     },
     {
       "task_id": "N4",
@@ -1798,46 +1610,23 @@
         }
       ],
       "program_facts_sent": true,
-      "status": "response_received",
-      "model_output": {
-        "answer": "本次增量为102271，相对增幅为71518.18%，最终绝对值低于两个历史值。这些计算不能作为统计显著性结论，因为未进行统计检验。",
-        "supporting_row_ids": [
-          "r1"
-        ],
-        "unsupported_inferences": []
-      },
-      "response_text": "{\"answer\":\"本次增量为102271，相对增幅为71518.18%，最终绝对值低于两个历史值。这些计算不能作为统计显著性结论，因为未进行统计检验。\",\"supporting_row_ids\":[\"r1\"],\"unsupported_inferences\":[]}",
-      "raw_response_body": "{\"id\":\"chatcmpl-ab935d25a49a145a\",\"object\":\"chat.completion\",\"created\":1789360749,\"model\":\"qwen3-4b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"answer\\\":\\\"本次增量为102271，相对增幅为71518.18%，最终绝对值低于两个历史值。这些计算不能作为统计显著性结论，因为未进行统计检验。\\\",\\\"supporting_row_ids\\\":[\\\"r1\\\"],\\\"unsupported_inferences\\\":[]}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.24.0-ffdba179\",\"usage\":{\"prompt_tokens\":528,\"total_tokens\":592,\"completion_tokens\":64,\"prompt_tokens_details\":null},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null}",
-      "mechanical_check": {
-        "json_structure": "pass",
-        "row_ids": "pass",
-        "unknown_row_ids": [],
-        "semantic_review": "completed_by_item_reading"
-      },
+      "status": "not_executed",
+      "model_output": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
       "review": {
-        "status": "pass",
+        "status": "not_checked",
         "dimensions": {
-          "numbers_and_relations": "pass",
-          "answers_original_question": "pass",
-          "units_windows_groups_missing": "pass",
-          "unsupported_inferences": "pass",
-          "row_citations": "pass"
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
         },
-        "note": "增量102271、增幅71518.18%、最终值低于两历史值均正确；保留容量字段，没有作显著性结论。增幅和绝对比较均由程序预先计算。",
+        "note": "接口不可用，未执行本项，无模型回答可供检查",
         "specific_quotes": []
       },
-      "started_at": "2026-09-14T04:39:08.167395Z",
-      "http_status": 200,
-      "response_model": "qwen3-4b",
-      "usage": {
-        "prompt_tokens": 528,
-        "total_tokens": 592,
-        "completion_tokens": 64,
-        "prompt_tokens_details": null
-      },
-      "finish_reason": "stop",
-      "finished_at": "2026-09-14T04:39:09.241764Z",
-      "elapsed_seconds": 1.078
+      "response_text": null
     },
     {
       "task_id": "C1",
@@ -1923,49 +1712,23 @@
         }
       ],
       "program_facts_sent": false,
-      "status": "response_received",
-      "model_output": {
-        "answer": "组1的窗口计数为289，逐窗差值中位数为0.15；组2的窗口计数为289，逐窗差值中位数为-0.565。中位数接近零不能推出每个窗口都在参考范围内。两组不能合并为稳定总体。",
-        "supporting_row_ids": [
-          "r1",
-          "r2"
-        ],
-        "unsupported_inferences": []
-      },
-      "response_text": "{\"answer\":\"组1的窗口计数为289，逐窗差值中位数为0.15；组2的窗口计数为289，逐窗差值中位数为-0.565。中位数接近零不能推出每个窗口都在参考范围内。两组不能合并为稳定总体。\",\"supporting_row_ids\":[\"r1\",\"r2\"],\"unsupported_inferences\":[]}",
-      "raw_response_body": "{\"id\":\"chatcmpl-9632b4e4cc50789f\",\"object\":\"chat.completion\",\"created\":1789360750,\"model\":\"qwen3-4b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"answer\\\":\\\"组1的窗口计数为289，逐窗差值中位数为0.15；组2的窗口计数为289，逐窗差值中位数为-0.565。中位数接近零不能推出每个窗口都在参考范围内。两组不能合并为稳定总体。\\\",\\\"supporting_row_ids\\\":[\\\"r1\\\",\\\"r2\\\"],\\\"unsupported_inferences\\\":[]}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.24.0-ffdba179\",\"usage\":{\"prompt_tokens\":358,\"total_tokens\":451,\"completion_tokens\":93,\"prompt_tokens_details\":null},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null}",
-      "mechanical_check": {
-        "json_structure": "pass",
-        "row_ids": "pass",
-        "unknown_row_ids": [],
-        "semantic_review": "completed_by_item_reading"
-      },
+      "status": "not_executed",
+      "model_output": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
       "review": {
-        "status": "incomplete",
+        "status": "not_checked",
         "dimensions": {
-          "numbers_and_relations": "pass",
-          "answers_original_question": "incomplete",
-          "units_windows_groups_missing": "incomplete",
-          "unsupported_inferences": "pass",
-          "row_citations": "pass"
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
         },
-        "note": "两组289窗、中位差+0.150/-0.565及两条核心结论正确；未交代1天/3天参考和136低153高、104低89高这些分组计数，支持证据没说完整。没有把原历史末答重新标成错误。",
-        "specific_quotes": [
-          "组1的窗口计数为289，逐窗差值中位数为0.15；组2的窗口计数为289，逐窗差值中位数为-0.565。"
-        ]
+        "note": "接口不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
       },
-      "started_at": "2026-09-14T04:39:09.259138Z",
-      "http_status": 200,
-      "response_model": "qwen3-4b",
-      "usage": {
-        "prompt_tokens": 358,
-        "total_tokens": 451,
-        "completion_tokens": 93,
-        "prompt_tokens_details": null
-      },
-      "finish_reason": "stop",
-      "finished_at": "2026-09-14T04:39:10.801705Z",
-      "elapsed_seconds": 1.538
+      "response_text": null
     },
     {
       "task_id": "C1",
@@ -2097,49 +1860,23 @@
         }
       ],
       "program_facts_sent": true,
-      "status": "response_received",
-      "model_output": {
-        "answer": "组1的窗口计数为289，逐窗差值中位数为0.15；组2的窗口计数为289，逐窗差值中位数为-0.565。中位数接近零不能推出每个窗口都在参考范围内。两组不能合并为稳定总体。",
-        "supporting_row_ids": [
-          "r1",
-          "r2"
-        ],
-        "unsupported_inferences": []
-      },
-      "response_text": "{\"answer\":\"组1的窗口计数为289，逐窗差值中位数为0.15；组2的窗口计数为289，逐窗差值中位数为-0.565。中位数接近零不能推出每个窗口都在参考范围内。两组不能合并为稳定总体。\",\"supporting_row_ids\":[\"r1\",\"r2\"],\"unsupported_inferences\":[]}",
-      "raw_response_body": "{\"id\":\"chatcmpl-b62056c09196696c\",\"object\":\"chat.completion\",\"created\":1789360752,\"model\":\"qwen3-4b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"answer\\\":\\\"组1的窗口计数为289，逐窗差值中位数为0.15；组2的窗口计数为289，逐窗差值中位数为-0.565。中位数接近零不能推出每个窗口都在参考范围内。两组不能合并为稳定总体。\\\",\\\"supporting_row_ids\\\":[\\\"r1\\\",\\\"r2\\\"],\\\"unsupported_inferences\\\":[]}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.24.0-ffdba179\",\"usage\":{\"prompt_tokens\":579,\"total_tokens\":672,\"completion_tokens\":93,\"prompt_tokens_details\":null},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null}",
-      "mechanical_check": {
-        "json_structure": "pass",
-        "row_ids": "pass",
-        "unknown_row_ids": [],
-        "semantic_review": "completed_by_item_reading"
-      },
+      "status": "not_executed",
+      "model_output": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
       "review": {
-        "status": "incomplete",
+        "status": "not_checked",
         "dimensions": {
-          "numbers_and_relations": "pass",
-          "answers_original_question": "incomplete",
-          "units_windows_groups_missing": "incomplete",
-          "unsupported_inferences": "pass",
-          "row_citations": "pass"
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
         },
-        "note": "与A原答相同：核心结论及已报数字正确，遗漏参考天数及上下偏窗口计数。程序只保留输入汇总，没有重算逐窗原件。",
-        "specific_quotes": [
-          "组1的窗口计数为289，逐窗差值中位数为0.15；组2的窗口计数为289，逐窗差值中位数为-0.565。"
-        ]
+        "note": "接口不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
       },
-      "started_at": "2026-09-14T04:39:10.824801Z",
-      "http_status": 200,
-      "response_model": "qwen3-4b",
-      "usage": {
-        "prompt_tokens": 579,
-        "total_tokens": 672,
-        "completion_tokens": 93,
-        "prompt_tokens_details": null
-      },
-      "finish_reason": "stop",
-      "finished_at": "2026-09-14T04:39:12.390218Z",
-      "elapsed_seconds": 1.547
+      "response_text": null
     },
     {
       "task_id": "C2",
@@ -2181,50 +1918,23 @@
         }
       ],
       "program_facts_sent": false,
-      "status": "response_received",
-      "model_output": {
-        "answer": "有效比例是8/29，表示有效值占总可能值的比例；epoch_coverage_ratio是1.0，表示18秒窗口内没有缺历元。18秒和1历元不能直接推断为全天时间覆盖或全天持续变化。",
-        "supporting_row_ids": [
-          "r1"
-        ],
-        "unsupported_inferences": [
-          "推断18秒和1历元能代表全天时间覆盖或全天持续变化"
-        ]
-      },
-      "response_text": "{\"answer\":\"有效比例是8/29，表示有效值占总可能值的比例；epoch_coverage_ratio是1.0，表示18秒窗口内没有缺历元。18秒和1历元不能直接推断为全天时间覆盖或全天持续变化。\",\"supporting_row_ids\":[\"r1\"],\"unsupported_inferences\":[\"推断18秒和1历元能代表全天时间覆盖或全天持续变化\"]}",
-      "raw_response_body": "{\"id\":\"chatcmpl-908cc98cd0a66c30\",\"object\":\"chat.completion\",\"created\":1789360753,\"model\":\"qwen3-4b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"answer\\\":\\\"有效比例是8/29，表示有效值占总可能值的比例；epoch_coverage_ratio是1.0，表示18秒窗口内没有缺历元。18秒和1历元不能直接推断为全天时间覆盖或全天持续变化。\\\",\\\"supporting_row_ids\\\":[\\\"r1\\\"],\\\"unsupported_inferences\\\":[\\\"推断18秒和1历元能代表全天时间覆盖或全天持续变化\\\"]}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.24.0-ffdba179\",\"usage\":{\"prompt_tokens\":265,\"total_tokens\":357,\"completion_tokens\":92,\"prompt_tokens_details\":null},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null}",
-      "mechanical_check": {
-        "json_structure": "pass",
-        "row_ids": "pass",
-        "unknown_row_ids": [],
-        "semantic_review": "completed_by_item_reading"
-      },
+      "status": "not_executed",
+      "model_output": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
       "review": {
-        "status": "incomplete",
+        "status": "not_checked",
         "dimensions": {
-          "numbers_and_relations": "pass",
-          "answers_original_question": "incomplete",
-          "units_windows_groups_missing": "incomplete",
-          "unsupported_inferences": "pass",
-          "row_citations": "pass"
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
         },
-        "note": "8/29是正确的精确比例，1.0仅对应18秒窗且不扩成全天的说明也正确。不因省略百分比判为算错；缺的是说明29来自整份文件该信号的卫星集合，而非笼统“总可能值”。",
-        "specific_quotes": [
-          "有效比例是8/29，表示有效值占总可能值的比例"
-        ]
+        "note": "接口不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
       },
-      "started_at": "2026-09-14T04:39:12.393059Z",
-      "http_status": 200,
-      "response_model": "qwen3-4b",
-      "usage": {
-        "prompt_tokens": 265,
-        "total_tokens": 357,
-        "completion_tokens": 92,
-        "prompt_tokens_details": null
-      },
-      "finish_reason": "stop",
-      "finished_at": "2026-09-14T04:39:13.911754Z",
-      "elapsed_seconds": 1.514
+      "response_text": null
     },
     {
       "task_id": "C2",
@@ -2283,50 +1993,23 @@
         }
       ],
       "program_facts_sent": true,
-      "status": "response_received",
-      "model_output": {
-        "answer": "有效比例是8/29≈27.59%，表示有效值占总可能值的比例；epoch_coverage_ratio是1.0，表示18秒窗口内没有缺历元。无法推断出全天时间覆盖或全天持续变化。",
-        "supporting_row_ids": [
-          "r1"
-        ],
-        "unsupported_inferences": [
-          "推断全天时间覆盖或全天持续变化"
-        ]
-      },
-      "response_text": "{\"answer\":\"有效比例是8/29≈27.59%，表示有效值占总可能值的比例；epoch_coverage_ratio是1.0，表示18秒窗口内没有缺历元。无法推断出全天时间覆盖或全天持续变化。\",\"supporting_row_ids\":[\"r1\"],\"unsupported_inferences\":[\"推断全天时间覆盖或全天持续变化\"]}",
-      "raw_response_body": "{\"id\":\"chatcmpl-942ed18560ea5911\",\"object\":\"chat.completion\",\"created\":1789360755,\"model\":\"qwen3-4b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"answer\\\":\\\"有效比例是8/29≈27.59%，表示有效值占总可能值的比例；epoch_coverage_ratio是1.0，表示18秒窗口内没有缺历元。无法推断出全天时间覆盖或全天持续变化。\\\",\\\"supporting_row_ids\\\":[\\\"r1\\\"],\\\"unsupported_inferences\\\":[\\\"推断全天时间覆盖或全天持续变化\\\"]}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.24.0-ffdba179\",\"usage\":{\"prompt_tokens\":407,\"total_tokens\":488,\"completion_tokens\":81,\"prompt_tokens_details\":null},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null}",
-      "mechanical_check": {
-        "json_structure": "pass",
-        "row_ids": "pass",
-        "unknown_row_ids": [],
-        "semantic_review": "completed_by_item_reading"
-      },
+      "status": "not_executed",
+      "model_output": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
       "review": {
-        "status": "incomplete",
+        "status": "not_checked",
         "dimensions": {
-          "numbers_and_relations": "pass",
-          "answers_original_question": "incomplete",
-          "units_windows_groups_missing": "incomplete",
-          "unsupported_inferences": "pass",
-          "row_citations": "pass"
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
         },
-        "note": "增加了正确的27.59%，窗口覆盖含义和不推全天均正确；仍未解释分母29的来源。“总可能值”未说明整文件卫星集合这一关键定义。",
-        "specific_quotes": [
-          "有效比例是8/29≈27.59%，表示有效值占总可能值的比例"
-        ]
+        "note": "接口不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
       },
-      "started_at": "2026-09-14T04:39:13.916518Z",
-      "http_status": 200,
-      "response_model": "qwen3-4b",
-      "usage": {
-        "prompt_tokens": 407,
-        "total_tokens": 488,
-        "completion_tokens": 81,
-        "prompt_tokens_details": null
-      },
-      "finish_reason": "stop",
-      "finished_at": "2026-09-14T04:39:15.266736Z",
-      "elapsed_seconds": 1.347
+      "response_text": null
     },
     {
       "task_id": "C3",
@@ -2364,48 +2047,23 @@
         }
       ],
       "program_facts_sent": false,
-      "status": "response_received",
-      "model_output": {
-        "answer": "40 receiver_units表示接收器单位的数值为40，cnr_p10=null表示CNR_P10值未确认。",
-        "supporting_row_ids": [
-          "r1"
-        ],
-        "unsupported_inferences": []
-      },
-      "response_text": "{\"answer\":\"40 receiver_units表示接收器单位的数值为40，cnr_p10=null表示CNR_P10值未确认。\",\"supporting_row_ids\":[\"r1\"],\"unsupported_inferences\":[]}",
-      "raw_response_body": "{\"id\":\"chatcmpl-bfa218919934e3a6\",\"object\":\"chat.completion\",\"created\":1789360756,\"model\":\"qwen3-4b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"answer\\\":\\\"40 receiver_units表示接收器单位的数值为40，cnr_p10=null表示CNR_P10值未确认。\\\",\\\"supporting_row_ids\\\":[\\\"r1\\\"],\\\"unsupported_inferences\\\":[]}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.24.0-ffdba179\",\"usage\":{\"prompt_tokens\":237,\"total_tokens\":286,\"completion_tokens\":49,\"prompt_tokens_details\":null},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null}",
-      "mechanical_check": {
-        "json_structure": "pass",
-        "row_ids": "pass",
-        "unknown_row_ids": [],
-        "semantic_review": "completed_by_item_reading"
-      },
+      "status": "not_executed",
+      "model_output": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
       "review": {
-        "status": "incomplete",
+        "status": "not_checked",
         "dimensions": {
-          "numbers_and_relations": "pass",
-          "answers_original_question": "incomplete",
-          "units_windows_groups_missing": "incomplete",
-          "unsupported_inferences": "pass",
-          "row_citations": "pass"
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
         },
-        "note": "原单位40的表述正确，没有补成dB-Hz。但只说CNR_P10值未确认，未说明换算依据未确认，也未用900历元和17信号区分零值、缺文件、缺观测。现有文字不够具体，不虚构其曾断言缺文件。",
-        "specific_quotes": [
-          "cnr_p10=null表示CNR_P10值未确认。"
-        ]
+        "note": "接口不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
       },
-      "started_at": "2026-09-14T04:39:15.280139Z",
-      "http_status": 200,
-      "response_model": "qwen3-4b",
-      "usage": {
-        "prompt_tokens": 237,
-        "total_tokens": 286,
-        "completion_tokens": 49,
-        "prompt_tokens_details": null
-      },
-      "finish_reason": "stop",
-      "finished_at": "2026-09-14T04:39:16.097922Z",
-      "elapsed_seconds": 0.815
+      "response_text": null
     },
     {
       "task_id": "C3",
@@ -2460,48 +2118,23 @@
         }
       ],
       "program_facts_sent": true,
-      "status": "response_received",
-      "model_output": {
-        "answer": "40 receiver_units表示接收器单位的数值为40，cnr_p10=null表示CNR P10未确认，原因是没有确认到dB-Hz的换算依据。",
-        "supporting_row_ids": [
-          "r1"
-        ],
-        "unsupported_inferences": []
-      },
-      "response_text": "{\"answer\":\"40 receiver_units表示接收器单位的数值为40，cnr_p10=null表示CNR P10未确认，原因是没有确认到dB-Hz的换算依据。\",\"supporting_row_ids\":[\"r1\"],\"unsupported_inferences\":[]}",
-      "raw_response_body": "{\"id\":\"chatcmpl-8a031c7e24f7acab\",\"object\":\"chat.completion\",\"created\":1789360757,\"model\":\"qwen3-4b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"answer\\\":\\\"40 receiver_units表示接收器单位的数值为40，cnr_p10=null表示CNR P10未确认，原因是没有确认到dB-Hz的换算依据。\\\",\\\"supporting_row_ids\\\":[\\\"r1\\\"],\\\"unsupported_inferences\\\":[]}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.24.0-ffdba179\",\"usage\":{\"prompt_tokens\":317,\"total_tokens\":377,\"completion_tokens\":60,\"prompt_tokens_details\":null},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null}",
-      "mechanical_check": {
-        "json_structure": "pass",
-        "row_ids": "pass",
-        "unknown_row_ids": [],
-        "semantic_review": "completed_by_item_reading"
-      },
+      "status": "not_executed",
+      "model_output": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
       "review": {
-        "status": "incomplete",
+        "status": "not_checked",
         "dimensions": {
-          "numbers_and_relations": "pass",
-          "answers_original_question": "incomplete",
-          "units_windows_groups_missing": "incomplete",
-          "unsupported_inferences": "pass",
-          "row_citations": "pass"
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
         },
-        "note": "正确补充到dB-Hz的换算依据未确认，未捏造单位；仍未明确回答“不是零值、文件和观测存在”这些区别，未交代900历元、17信号。",
-        "specific_quotes": [
-          "cnr_p10=null表示CNR P10未确认，原因是没有确认到dB-Hz的换算依据。"
-        ]
+        "note": "接口不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
       },
-      "started_at": "2026-09-14T04:39:16.101010Z",
-      "http_status": 200,
-      "response_model": "qwen3-4b",
-      "usage": {
-        "prompt_tokens": 317,
-        "total_tokens": 377,
-        "completion_tokens": 60,
-        "prompt_tokens_details": null
-      },
-      "finish_reason": "stop",
-      "finished_at": "2026-09-14T04:39:17.117201Z",
-      "elapsed_seconds": 1.013
+      "response_text": null
     },
     {
       "task_id": "C4",
@@ -2596,48 +2229,23 @@
         }
       ],
       "program_facts_sent": false,
-      "status": "response_received",
-      "model_output": {
-        "answer": "存在数值冲突。D1到D2的变化是+1次，D2到D3的变化是-1次。",
-        "supporting_row_ids": [
-          "r1"
-        ],
-        "unsupported_inferences": []
-      },
-      "response_text": "{\"answer\":\"存在数值冲突。D1到D2的变化是+1次，D2到D3的变化是-1次。\",\"supporting_row_ids\":[\"r1\"],\"unsupported_inferences\":[]}",
-      "raw_response_body": "{\"id\":\"chatcmpl-9293a232b71486a0\",\"object\":\"chat.completion\",\"created\":1789360758,\"model\":\"qwen3-4b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"answer\\\":\\\"存在数值冲突。D1到D2的变化是+1次，D2到D3的变化是-1次。\\\",\\\"supporting_row_ids\\\":[\\\"r1\\\"],\\\"unsupported_inferences\\\":[]}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.24.0-ffdba179\",\"usage\":{\"prompt_tokens\":267,\"total_tokens\":312,\"completion_tokens\":45,\"prompt_tokens_details\":null},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null}",
-      "mechanical_check": {
-        "json_structure": "pass",
-        "row_ids": "pass",
-        "unknown_row_ids": [],
-        "semantic_review": "completed_by_item_reading"
-      },
+      "status": "not_executed",
+      "model_output": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
       "review": {
-        "status": "incorrect",
+        "status": "not_checked",
         "dimensions": {
-          "numbers_and_relations": "fail",
-          "answers_original_question": "fail",
-          "units_windows_groups_missing": "pass",
-          "unsupported_inferences": "pass",
-          "row_citations": "pass"
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
         },
-        "note": "两段变化+1/-1正确，日期范围也分开了，但把不同区间的涨跌说成数值冲突。D1→D2和D2→D3可以同时成立，不存在矛盾；没有引入原因或显著性解释。",
-        "specific_quotes": [
-          "存在数值冲突。"
-        ]
+        "note": "接口不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
       },
-      "started_at": "2026-09-14T04:39:17.120213Z",
-      "http_status": 200,
-      "response_model": "qwen3-4b",
-      "usage": {
-        "prompt_tokens": 267,
-        "total_tokens": 312,
-        "completion_tokens": 45,
-        "prompt_tokens_details": null
-      },
-      "finish_reason": "stop",
-      "finished_at": "2026-09-14T04:39:17.896656Z",
-      "elapsed_seconds": 0.774
+      "response_text": null
     },
     {
       "task_id": "C4",
@@ -2781,130 +2389,57 @@
         }
       ],
       "program_facts_sent": true,
-      "status": "response_received",
-      "model_output": {
-        "answer": "D1到D2的计数从2增加到3，D2到D3的计数从3减少到2。两份说明中数值变化方向不同，存在数值冲突。",
-        "supporting_row_ids": [
-          "r1",
-          "r2"
-        ],
-        "unsupported_inferences": []
-      },
-      "response_text": "{\"answer\":\"D1到D2的计数从2增加到3，D2到D3的计数从3减少到2。两份说明中数值变化方向不同，存在数值冲突。\",\"supporting_row_ids\":[\"r1\",\"r2\"],\"unsupported_inferences\":[]}",
-      "raw_response_body": "{\"id\":\"chatcmpl-9e3456fc8dfd4139\",\"object\":\"chat.completion\",\"created\":1789360759,\"model\":\"qwen3-4b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"answer\\\":\\\"D1到D2的计数从2增加到3，D2到D3的计数从3减少到2。两份说明中数值变化方向不同，存在数值冲突。\\\",\\\"supporting_row_ids\\\":[\\\"r1\\\",\\\"r2\\\"],\\\"unsupported_inferences\\\":[]}\",\"refusal\":null,\"annotations\":null,\"audio\":null,\"function_call\":null,\"reasoning\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null,\"routed_experts\":null}],\"service_tier\":null,\"system_fingerprint\":\"vllm-0.24.0-ffdba179\",\"usage\":{\"prompt_tokens\":447,\"total_tokens\":510,\"completion_tokens\":63,\"prompt_tokens_details\":null},\"prompt_logprobs\":null,\"prompt_token_ids\":null,\"prompt_text\":null,\"kv_transfer_params\":null}",
-      "mechanical_check": {
-        "json_structure": "pass",
-        "row_ids": "pass",
-        "unknown_row_ids": [],
-        "semantic_review": "completed_by_item_reading"
-      },
+      "status": "not_executed",
+      "model_output": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
       "review": {
-        "status": "incorrect",
+        "status": "not_checked",
         "dimensions": {
-          "numbers_and_relations": "fail",
-          "answers_original_question": "fail",
-          "units_windows_groups_missing": "pass",
-          "unsupported_inferences": "pass",
-          "row_citations": "pass"
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
         },
-        "note": "2→3和3→2均正确，却仍把方向不同误判为数值冲突。程序提供相邻变化没有解决这一逻辑错误；没有引入原因或显著性解释。",
-        "specific_quotes": [
-          "两份说明中数值变化方向不同，存在数值冲突。"
-        ]
+        "note": "接口不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
       },
-      "started_at": "2026-09-14T04:39:17.899650Z",
-      "http_status": 200,
-      "response_model": "qwen3-4b",
-      "usage": {
-        "prompt_tokens": 447,
-        "total_tokens": 510,
-        "completion_tokens": 63,
-        "prompt_tokens_details": null
-      },
-      "finish_reason": "stop",
-      "finished_at": "2026-09-14T04:39:18.967886Z",
-      "elapsed_seconds": 1.066
+      "response_text": null
     }
   ],
-  "finished_at": "2026-09-14T04:39:18.970879Z",
-  "review_method": {
-    "method": "本任务逐项阅读全部16份原答；未用关键词自动判定语义，也未发起额外模型评审。",
-    "outcomes": {
-      "pass": "五项检查完整通过",
-      "incorrect": "已确认事实或比较逻辑错误",
-      "incomplete": "已陈述的核心事实无明确错误，但原问题的重要部分未答完",
-      "review_needed": "存在明确遗漏，并有字段表述歧义，保留具体原句"
-    },
-    "citation_scope": "行ID存在且与回答相关；引用真实不代表数值推导正确。缺少原问题的关键行另记不完整。",
-    "inference_dimension_scope": "是否新增无依据的显著性、原因或范围推广；范围比较及日期一致性的事实错误在numbers_and_relations单列。"
-  },
+  "not_executed_reason": "接口不可用，保留本次失败；剩余项未执行，不重试。",
+  "finished_at": "2026-09-14T04:26:51.006270Z",
   "comparison_counts": {
     "A": {
-      "model_responses": 8,
-      "item_readings_completed": 8,
-      "outcomes": {
-        "pass": 0,
-        "incorrect": 4,
-        "incomplete": 4,
-        "review_needed": 0
-      },
-      "numbers_and_relations": {
-        "fail": 4,
-        "pass": 4
-      },
-      "json_structure_pass": 8,
-      "row_ids_exist_pass": 8
+      "planned": 8,
+      "http_attempted": 1,
+      "connection_failed": 1,
+      "not_attempted": 7,
+      "model_responses": 0,
+      "semantically_reviewed": 0,
+      "passed": 0,
+      "failed_answers": 0,
+      "unassessed": 8
     },
     "B": {
-      "model_responses": 8,
-      "item_readings_completed": 8,
-      "outcomes": {
-        "pass": 2,
-        "incorrect": 1,
-        "incomplete": 4,
-        "review_needed": 1
-      },
-      "numbers_and_relations": {
-        "pass": 7,
-        "fail": 1
-      },
-      "json_structure_pass": 8,
-      "row_ids_exist_pass": 8
+      "planned": 8,
+      "http_attempted": 0,
+      "connection_failed": 0,
+      "not_attempted": 8,
+      "model_responses": 0,
+      "semantically_reviewed": 0,
+      "passed": 0,
+      "failed_answers": 0,
+      "unassessed": 8
     }
   },
-  "comparison_conclusion": "在这8项有限任务中，A有4项明确事实或逻辑错误，B有1项；B完整通过2项，仍有4项未答完整和1项待复核。程序提供关系后，模型叙述与事实更一致，但C4逻辑错误未解决。",
-  "transport": {
-    "type": "temporary_ssh_local_forward",
-    "ssh_alias": "sribd-16",
-    "remote_endpoint": "http://127.0.0.1:8000/v1",
-    "local_forward": "127.0.0.1:18009",
-    "observed_listener": "LISTEN 127.0.0.1:8000",
-    "tunnel_closed_after_run": true,
-    "server_configuration_changed": false,
-    "authorization": "用户要求随机应变快速解决连接并开始验证，已在说明SSH转发后执行。"
-  },
-  "previous_connection_attempts": [
-    "reports/round9/ROUND9_NUMERIC_EXPLANATION_RESULTS_DIRECT1.json",
-    "reports/round9/ROUND9_NUMERIC_EXPLANATION_RESULTS_RETRY1.json"
-  ],
-  "request_accounting": {
-    "this_run_inference_requests": 16,
-    "previous_direct_connection_failures": 2,
-    "total_http_attempts_including_connection_failures": 18,
-    "model_responses_total": 16,
-    "format_repairs": 0,
-    "extra_inference_retries": 0
-  },
-  "source_mapping": "tools/numeric_explanation_check/source_mapping.json",
-  "review_expectations": "tools/numeric_explanation_check/review_expectations.json",
+  "comparison_conclusion": "没有模型原答，不能比较A/B；0条通过或错误回答仅为没有可评回答，不能解释为0%通过率。",
   "original_case_status_preserved": {
     "original_goal_status": "not_demonstrated",
     "strict_lead_hours": null,
     "runtime_modified": false
   },
-  "total_usage": {
-    "prompt_tokens": 7459,
-    "completion_tokens": 1191,
-    "total_tokens": 8650
-  }
+  "source_mapping": "tools/numeric_explanation_check/source_mapping.json",
+  "review_expectations": "tools/numeric_explanation_check/review_expectations.json"
 }
