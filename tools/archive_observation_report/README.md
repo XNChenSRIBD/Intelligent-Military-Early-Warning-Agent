@@ -2,6 +2,26 @@
 
 从已保存的本地资料生成两份可直接打开的历史事实报告。无需模型、服务器或 Node 构建链。
 
+## 查看现有报告
+
+直接打开 `outputs/archive_observation_report/index.html`，点击档案卡片切换两例。若浏览器不允许打开本地文件，可在仓库根目录运行：
+
+```powershell
+& 'D:/anaconda3/python.exe' -m http.server 8769 --bind 127.0.0.1 --directory outputs/archive_observation_report
+```
+
+然后访问 [报告入口](http://127.0.0.1:8769/index.html)。查看结束后，在启动服务的终端按 `Ctrl+C` 关闭。该命令只展示已有报告，不会重新构建或执行数值验证。
+
+离线压缩包为 `outputs/archive_observation_report/archive_observation_report.zip`。解压后，入口是 `archive_observation_report/index.html`；也可以在解压得到的 `archive_observation_report` 文件夹内打开终端，用已有 Python 3 运行：
+
+```bash
+python -m http.server 8769 --bind 127.0.0.1 --directory .
+```
+
+访问地址和关闭方式相同。整个报告目录可独立复制、离线查看，页面没有在线字体、脚本、接口或图片依赖。
+
+## 重新生成报告
+
 在仓库根目录执行：
 
 ```powershell
@@ -13,8 +33,6 @@
 ```bash
 python -B tools/archive_observation_report/build.py --output outputs/archive_observation_report
 ```
-
-打开 `outputs/archive_observation_report/index.html`，点击档案卡片切换两例。直接复制整个输出目录即可离线查阅，页面没有在线字体、脚本、接口或图片依赖。
 
 ## 输入和输出
 

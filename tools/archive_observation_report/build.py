@@ -40,7 +40,7 @@ def plain(value):
         return "；".join(plain(item) for item in value) or "未提供"
     if isinstance(value, dict):
         return "；".join(f"{key}：{plain(item)}" for key, item in value.items())
-    if isinstance(value, str) and value[:4].isdigit() and value[4:5] == "-" and "T" in value:
+    if isinstance(value, str) and value[:4].isdigit() and value[4:5] == "-" and value[10:11] == "T":
         return instant(value)
     return str(value)
 

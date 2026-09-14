@@ -3157,11 +3157,61 @@
       "preserved_review_notes": 16
     },
     "browser_review": {
-      "status": "blocked_by_browser_url_policy",
-      "attempted_entry": "index.html",
-      "opened_pages": [],
-      "interaction_checked": false,
-      "reason": "应用内浏览器拒绝访问 file:// 本地页面，未绕过限制；页面及包内链接已完成静态检查。"
-    }
+      "status": "passed",
+      "checked_at": "2026-09-14T14:16:32.058310+08:00",
+      "code_base_commit": "9a01523df8d8d1df8fa05d81b11108ba66f10394",
+      "workspace_change": "plain() only formats timestamps with T at position 10; kharkiv.html re-rendered from saved calculated results",
+      "browser": "Codex In-app Browser",
+      "access_method": "temporary loopback HTTP, serving only outputs/archive_observation_report",
+      "preview_url": "http://127.0.0.1:8769/index.html",
+      "preview_stopped": true,
+      "remaining_listener_count": 0,
+      "opened_pages": [
+        "index.html",
+        "kharkiv.html",
+        "hormuz.html"
+      ],
+      "page_checks": {
+        "kharkiv.html": {
+          "opened_from_index": true,
+          "source_expanded": true,
+          "source_collapsed": true,
+          "historical_quote_displayed": true,
+          "returned_to_index": true,
+          "wide_table_scrolled_horizontally": true
+        },
+        "hormuz.html": {
+          "opened_from_index": true,
+          "source_expanded": true,
+          "source_collapsed": true,
+          "historical_quote_displayed": true,
+          "returned_to_index": true,
+          "wide_table_scrolled_horizontally": true
+        }
+      },
+      "display_checks": {
+        "chinese_readable": true,
+        "table_contained_in_scroll_area": true,
+        "source_locations_are_plain_text": true,
+        "program_and_historical_answer_attribution_separate": true,
+        "missing_fields_visible": true
+      },
+      "screenshots": [
+        "screenshots/kharkiv-source.png",
+        "screenshots/hormuz-report.png"
+      ],
+      "new_model_calls": 0,
+      "numeric_checks_rerun": false,
+      "raw_facts_changed": false
+    },
+    "browser_review_history": [
+      {
+        "status": "blocked_by_browser_url_policy",
+        "attempted_entry": "index.html",
+        "opened_pages": [],
+        "interaction_checked": false,
+        "reason": "应用内浏览器拒绝访问 file:// 本地页面，未绕过限制；页面及包内链接已完成静态检查。"
+      }
+    ]
   }
 }

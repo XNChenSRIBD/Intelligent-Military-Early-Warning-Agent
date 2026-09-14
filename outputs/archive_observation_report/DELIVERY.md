@@ -29,11 +29,76 @@
 
 两份档案均展示已有材料支持的部分。完整逐窗序列、原因依据及部分源版本没有全部随包提供；来源区给出原文件和字段的文字定位，没有生成到未导出文件的失效链接。GFZ 已提供与原回答未完成环境论证分开记录；NICO 缺少单位换算依据不影响另外两站已经确认的单位。
 
-## 本次交付记录
+## 首次构建交付记录（保留原记录）
 
 - 构建成功，生成 3 个 HTML 页面、事实结果 JSON 和本说明；数值与本地链接核对通过。
 - 来源定位核对通过：16 个来源、35 行事实与全部补充字段均可定位；18 段历史原话逐字保留。
 - 哈尔科夫首窗、双参考、覆盖定义及两站例窗来自 Round7 结构化摘录；289 窗计数与中位差按原汇总声明展示。GFZ 数值已有记录，未另作原因解释。
 - 霍尔木兹范围比较采用 Round9 已有数值输入，并通过原映射对回 Round7；三条末答、信号切换、单位和版本关系来自已保存复核材料。四窗方向是原汇总声明；报告述评与模型原话分别标注。完整逐窗原始序列未随包提供。
 - 两页剩余具体字段包括：部分首末子窗起止、3 月 3 日例窗采样间隔、JOZE 参考具体日期、NICO 换算依据、名义运力及 GFZ 摘录中的绝对单位。
-- **实际打开检查尚未完成。** 应用内浏览器的 URL 策略拒绝打开本地 HTML，本次没有绕过限制，也没有把静态检查记为点击通过。请在本机双击 `index.html`，打开两份档案及“查看来源、历史原文与勘误”折叠区。
+- **首次交付时，实际打开检查尚未完成。** 当时应用内浏览器拒绝直接打开本地 HTML；该阻塞记录保留。本次经本地 HTTP 完成的实际浏览结果见下节。
+
+## 浏览交付已完成（2026-09-14）
+
+本节为这条静态报告支线的最终交付记录。两份报告已通过实际浏览检查，已提供独立 ZIP；此前“尚未完成浏览检查”的状态由本节更新，原事实、历史回答和业务验收结果不变。
+
+### 实际访问和操作
+
+- 检查时间：2026-09-14 **14:08～14:14，北京时间**。
+- 检查版本：基于仓库提交 `9a01523df8d8d1df8fa05d81b11108ba66f10394`，含本次时间格式显示修复；报告包原实现为 `5f6b2b9`。没有切回或覆盖已有后续成果。
+- 访问方式：Codex 应用内浏览器，通过 `http://127.0.0.1:8769/index.html` 读取临时本地静态服务；服务根仅为 `outputs/archive_observation_report`。
+
+| 实际操作 | 哈尔科夫 | 霍尔木兹 |
+|---|---|---|
+| 从统一入口进入案例 | 已完成 | 已完成 |
+| 中文、数值和正文正常显示 | 已确认 | 已确认 |
+| 宽表横向滚动，查看右侧参考与结果 | 已操作 | 已操作 |
+| 展开来源与历史原话，再收起 | 已操作 | 已操作 |
+| 返回统一入口，切换另一案例 | 已完成 | 已完成 |
+
+检查使用浏览器默认窄视口，表格保留在自身滚动区域内，正文未被覆盖。原文件来源以文字路径显示；本次程序事实的署名与历史回答分开，未知窗口、采样或单位等缺项仍可见。机器记录在 `results.json` 的 `checks.browser_review`，首次访问阻塞另保存在 `browser_review_history`。
+
+### 本次修复及文件变化
+
+实际浏览发现：一个已经写明 UTC 的时间区间被重复加上“时区未注明”。原因是显示函数把 UTC 中的字母 T 也当成 ISO 时间分隔符。已改为只识别日期后第 11 个字符的 T；重新打开后，该区间正确显示为 `2024-05-08 23:59:42 UTC 至 2024-05-09 00:00:00 UTC`。
+
+- `tools/archive_observation_report/build.py`：仅修正上述时间字符串识别。
+- `outputs/archive_observation_report/kharkiv.html`：更新对应显示。
+- `tools/archive_observation_report/README.md`：补本地预览、ZIP 解压和停止服务方法。
+- 本目录的 `DELIVERY.md`、`results.json`：追加实际浏览与交付记录。
+- 新增下列两张真实截图及 `archive_observation_report.zip`。
+
+页面刷新直接复用现有 `results.json` 的已计算结果；没有重算 GNSS、重跑数值验证或 A/B。`index.html` 和 `hormuz.html` 刷新后内容没有变化，`facts.json` 和历史原话未修改。
+
+### 下载、解压与查看
+
+ZIP 的仓库相对路径：`outputs/archive_observation_report/archive_observation_report.zip`。
+
+本机完整路径：`D:/Project_SRIBD/22所_大模型/github_work/Intelligent-Military-Early-Warning-Agent/outputs/archive_observation_report/archive_observation_report.zip`。
+
+压缩包内保留一层 `archive_observation_report/`，包含入口、两份报告、事实结果、交付说明和两张截图。解压后统一入口是 **`archive_observation_report/index.html`**。源码、原始观测文件、数据库、凭据、模型和日志均不在包内。
+
+在仓库根目录预览现有产物：
+
+```powershell
+& 'D:/anaconda3/python.exe' -B -m http.server 8769 --bind 127.0.0.1 --directory outputs/archive_observation_report
+```
+
+也可以在解压得到的 `archive_observation_report` 文件夹内，用已有 Python 3 执行：
+
+```bash
+python -m http.server 8769 --bind 127.0.0.1 --directory .
+```
+
+启动后在本机浏览器访问 `http://127.0.0.1:8769/index.html`；使用完在该终端按 Ctrl+C 结束。如果端口被占用，换一个临时端口并在地址中同步修改，不终止别人的进程。
+
+**本次临时服务和预览标签已关闭，127.0.0.1:8769 已无监听。上面的地址不是持续在线的交付网址。**
+
+### 实际截图
+
+- [哈尔科夫：已展开的来源和历史原话](screenshots/kharkiv-source.png)
+- [霍尔木兹：报告页面](screenshots/hormuz-report.png)
+
+两张均为本次浏览器的实际截图，其中哈尔科夫截图展示了展开后的历史原话。
+
+本次新模型调用 **0**。没有操作 `.16` 或 8080、8081、8000 上的实例。原系统及原 `original_goal_status=not_demonstrated`、`strict_lead_hours=null` 保持不变。本次完成的是既有静态报告包的浏览和打包交付，这条独立报告支线至此结束。
