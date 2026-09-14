@@ -113,7 +113,8 @@
     if(!data){if(state.popup)state.map.closePopup(state.popup);state.popup=null;$('case-date').textContent=`资料截至 · ${day(state.current?.view.as_of)}`;$('map-loading').hidden=false;$('map-loading').textContent='当前观测资料尚不足以作出监测判定';return;}
     const content=node('div','map-callout'); content.id='map-callout';content.dataset.tone=data.tone;
     const action=button('',()=>openReport('overview'),'callout-main'); action.id='case-conclusion';
-    action.append(node('h2','callout-title',data.title),node('p','callout-summary',data.summary));
+    const title={normal:'判定正常，持续监测',attention:'可能出现异常',warning:'明确异常'}[data.tone] || data.title;
+    action.append(node('h2','callout-title',title),node('p','callout-summary',data.summary));
     const evidence=node('ul','callout-evidence');data.evidence.forEach((item)=>evidence.append(node('li','',item)));
     action.append(node('span','callout-evidence-label','观测对比'),evidence,node('span','callout-open','查看分析报告 →'));content.append(action);
     if(!state.popup)state.popup=L.popup({className:'case-popup',closeButton:false,closeOnClick:false,autoClose:false,minWidth:240,maxWidth:320,

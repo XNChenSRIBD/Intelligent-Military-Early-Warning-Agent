@@ -62,7 +62,7 @@ body.replay-map-app {
   right: 26px;
   z-index: 500;
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) auto minmax(145px, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 24px;
   min-height: 78px;
@@ -78,8 +78,9 @@ body.replay-map-app {
 .replay-map-app .brand-symbol { color: #6fa0ad; font-size: 28px; line-height: 1; }
 .replay-map-app .map-brand h1 { margin: 0; color: #d8e8ee; font-size: 20px; line-height: 1.45; font-weight: 500; letter-spacing: .5px; }
 .replay-map-app .map-brand :is(p, small) { display: block; margin: 4px 0 0; color: #6d919f; font-size: 9px; letter-spacing: 2px; line-height: 1.5; }
-.replay-map-app .case-switch { display: flex; min-width: 0; gap: 4px; padding: 4px; border: 1px solid #3452616b; border-radius: 7px; background: #08151fcc; }
-.replay-map-app .case-button { min-width: 0; min-height: 38px; padding: 8px 22px; border-color: transparent; border-radius: 4px; background: transparent; color: #91a9b6; font-size: 13px; white-space: nowrap; }
+.replay-map-app .case-navigation { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--map-line); }
+.replay-map-app .case-switch { display: flex; flex-direction: column; min-width: 0; gap: 4px; padding: 4px; border: 1px solid #3452616b; border-radius: 7px; background: #08151fcc; }
+.replay-map-app .case-button { width: 100%; min-width: 0; min-height: 38px; padding: 8px 12px; text-align: left; border-color: transparent; border-radius: 4px; background: transparent; color: #91a9b6; font-size: 13px; white-space: nowrap; }
 .replay-map-app .case-button:hover { background: #162c39; border-color: transparent; color: #d7e8ed; }
 .replay-map-app .case-button.active { border-color: #487c806e; background: #1b3b43; color: #a0e0da; box-shadow: inset 0 -1px #6ab6b2; }
 .replay-map-app #case-date { min-width: 0; justify-self: end; color: #9fb9c4; text-align: right; font-size: 12px; line-height: 1.75; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
@@ -92,6 +93,10 @@ body.replay-map-app {
   z-index: 500;
   width: 200px;
   max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 170px);
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #36586a transparent;
   padding: 17px 17px 15px;
   border: 1px solid #40616e6b;
   border-radius: 9px;
@@ -286,7 +291,7 @@ body.replay-map-app {
 .replay-map-app .leaflet-tooltip.place-label::before { display: none; }
 
 @media (max-width: 980px) and (min-width: 701px) {
-  .replay-map-app .map-topbar { grid-template-columns: minmax(160px, 1fr) auto minmax(110px, 1fr); gap: 13px; padding: 15px 18px; }
+  .replay-map-app .map-topbar { grid-template-columns: minmax(0, 1fr) auto; gap: 13px; padding: 15px 18px; }
   .replay-map-app .map-brand h1 { font-size: 17px; }
   .replay-map-app .case-button { padding: 8px 14px; font-size: 12px; }
   .replay-map-app #case-date { font-size: 11px; }
@@ -299,7 +304,6 @@ body.replay-map-app {
   .replay-map-app .map-brand { gap: 8px; }
   .replay-map-app .brand-symbol { font-size: 23px; }
   .replay-map-app .map-brand :is(p, small) { font-size: 8px; letter-spacing: 1.4px; }
-  .replay-map-app .case-switch { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .replay-map-app .case-button { min-height: 34px; padding: 7px 10px; font-size: 12px; }
   .replay-map-app #case-date { grid-column: 2; grid-row: 1; max-width: 130px; font-size: 10px; }
   .replay-map-app .layer-panel { top: auto; left: 14px; bottom: 73px; width: 176px; max-height: calc(100dvh - 250px); padding: 13px 14px; overflow: auto; scrollbar-width: thin; scrollbar-color: #36586a transparent; }

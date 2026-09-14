@@ -3,21 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>历史案例 · 地图情报</title>
+  <title>开源情报分析系统</title>
   <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
-  <link rel="stylesheet" href="/static/replay-map.css?v=7">
+  <link rel="stylesheet" href="/static/replay-map.css?v=8">
   <script defer src="/static/vendor/leaflet/leaflet.js"></script>
-  <script defer src="/static/replay-map.js?v=7"></script>
+  <script defer src="/static/replay-map.js?v=8"></script>
 </head>
 <body class="replay-map-app">
   <main id="replay-map-scene">
     <div id="map" aria-label="历史案例情报地图"></div>
     <header class="map-topbar">
-      <div class="map-brand"><span class="brand-symbol" aria-hidden="true">◈</span><div><h1>公开情报</h1><p>HISTORICAL INTELLIGENCE</p></div></div>
-      <nav class="case-switch" aria-label="切换历史案例"><button class="case-button active" data-case="kharkiv" type="button" aria-pressed="true">哈尔科夫</button><button class="case-button" data-case="hormuz" type="button" aria-pressed="false">霍尔木兹</button></nav>
+      <div class="map-brand"><span class="brand-symbol" aria-hidden="true">◈</span><div><h1>开源情报分析系统</h1><p>OPEN SOURCE INTELLIGENCE</p></div></div>
       <div id="case-date" class="case-date">历史案例</div>
     </header>
     <aside id="layer-panel" class="layer-panel">
+      <section class="case-navigation" aria-labelledby="case-navigation-title">
+        <h2 id="case-navigation-title">历史案例</h2>
+        <nav class="case-switch" aria-label="切换历史案例"><button class="case-button active" data-case="kharkiv" type="button" aria-pressed="true">哈尔科夫</button><button class="case-button" data-case="hormuz" type="button" aria-pressed="false">霍尔木兹</button></nav>
+      </section>
       <details open id="layer-fold"><summary>情报图层 <span>LAYERS</span></summary>
         <label class="layer-row"><input id="layer-gnss" type="checkbox" checked><span class="layer-symbol gnss-symbol" aria-hidden="true"></span><span>IGS 观测站<small id="gnss-layer-status">GNSS</small></span></label>
         <label class="layer-row"><input id="layer-aircraft" type="checkbox"><span class="layer-symbol aircraft-symbol" aria-hidden="true"></span><span>航空活动<small id="aircraft-layer-status">航空轨迹</small></span></label>
