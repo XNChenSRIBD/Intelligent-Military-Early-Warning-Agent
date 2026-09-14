@@ -1,0 +1,2420 @@
+{
+  "created_at": "2026-09-14T04:32:15.365198Z",
+  "experiment": "round9_fixed_numeric_explanation",
+  "model_execution": "not_executed",
+  "requests_attempted": 1,
+  "responses_received": 0,
+  "connection_source": {
+    "env_file": "D:\\Project_SRIBD\\22所_大模型\\github_work\\Intelligent-Military-Early-Warning-Agent\\.env.example",
+    "profile": "C:\\Users\\NaNF2P\\.codex\\skills\\connect-sribd-server\\SKILL.md",
+    "endpoint": "http://10.20.14.16:8000/v1",
+    "environment_overrides": []
+  },
+  "parameters": {
+    "model": "qwen3-4b",
+    "temperature": 0,
+    "max_tokens": 1800,
+    "response_format": {
+      "type": "json_object"
+    },
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    }
+  },
+  "system_prompt": "你负责说明输入表中的数字。用简短、自然的中文，先直接回答所问问题，再给必要数字。只使用给出的数据和字段定义。具体没有依据的推断列入unsupported_inferences，没有则为空数组。supporting_row_ids引用实际输入行的row_id。只输出一个JSON对象，不输出Markdown或推理过程。字段固定为：{\"answer\":\"简短回答\",\"supporting_row_ids\":[\"输入行编号\"],\"unsupported_inferences\":[\"具体未获支持的推断\"]}。",
+  "timeout_seconds": 120.0,
+  "request_contract_source": "app/llm.py:_complete (read only; not imported)",
+  "conditions": {
+    "A": "原始表与问题",
+    "B": "相同表与问题，加程序事实"
+  },
+  "scope": "8项匿名简化任务；不是历史完整上下文复现",
+  "runs": [
+    {
+      "task_id": "N1",
+      "condition": "A",
+      "actual_input": {
+        "question": "对象A、B的这些给定窗口分别位于各自参考边界的哪一侧？没有总体显著性检验，是否会改变已经能计算的范围关系？未给出的另一侧边界保持未知。",
+        "rows": [
+          {
+            "row_id": "r1",
+            "kind": "bounds",
+            "object": "A",
+            "window": "首窗",
+            "value": 22.719,
+            "lower": 29.4848,
+            "upper": null,
+            "unit": "dB-Hz",
+            "comparison_allowed": true
+          },
+          {
+            "row_id": "r2",
+            "kind": "bounds",
+            "object": "A",
+            "window": "末窗",
+            "value": 22.219,
+            "lower": 33.469,
+            "upper": null,
+            "unit": "dB-Hz",
+            "comparison_allowed": true
+          },
+          {
+            "row_id": "r3",
+            "kind": "bounds",
+            "object": "B",
+            "window": "首窗",
+            "value": 38.25,
+            "lower": null,
+            "upper": 33.4284,
+            "unit": "dB-Hz",
+            "comparison_allowed": true
+          },
+          {
+            "row_id": "r4",
+            "kind": "metadata",
+            "field_definition": "value为窗口载噪比p10，lower/upper为给定参考下界/上界；null为该边界未提供",
+            "overall_significance_test": null
+          }
+        ]
+      },
+      "program_facts": [
+        {
+          "input_row_ids": [
+            "r1"
+          ],
+          "kind": "bounds",
+          "object": "A",
+          "window": "首窗",
+          "unit": "dB-Hz",
+          "comparisons": [
+            {
+              "boundary": "lower",
+              "reference": 29.4848,
+              "value": 22.719,
+              "difference": -6.7658,
+              "relation": "低于"
+            }
+          ],
+          "unprovided_boundaries": [
+            "upper"
+          ]
+        },
+        {
+          "input_row_ids": [
+            "r2"
+          ],
+          "kind": "bounds",
+          "object": "A",
+          "window": "末窗",
+          "unit": "dB-Hz",
+          "comparisons": [
+            {
+              "boundary": "lower",
+              "reference": 33.469,
+              "value": 22.219,
+              "difference": -11.25,
+              "relation": "低于"
+            }
+          ],
+          "unprovided_boundaries": [
+            "upper"
+          ]
+        },
+        {
+          "input_row_ids": [
+            "r3"
+          ],
+          "kind": "bounds",
+          "object": "B",
+          "window": "首窗",
+          "unit": "dB-Hz",
+          "comparisons": [
+            {
+              "boundary": "upper",
+              "reference": 33.4284,
+              "value": 38.25,
+              "difference": 4.8216,
+              "relation": "高于"
+            }
+          ],
+          "unprovided_boundaries": [
+            "lower"
+          ]
+        },
+        {
+          "input_row_ids": [
+            "r4"
+          ],
+          "kind": "metadata",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "field_definition": "value为窗口载噪比p10，lower/upper为给定参考下界/上界；null为该边界未提供",
+            "overall_significance_test": null
+          }
+        }
+      ],
+      "program_facts_sent": false,
+      "status": "connection_failed",
+      "model_output": null,
+      "response_text": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
+      "review": {
+        "status": "not_checked",
+        "dimensions": {
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
+        },
+        "note": "连接被拒绝，没有模型回答可供检查",
+        "specific_quotes": []
+      },
+      "started_at": "2026-09-14T04:32:15.368206Z",
+      "error": "<urlopen error [WinError 10061] 由于目标计算机积极拒绝，无法连接。>",
+      "finished_at": "2026-09-14T04:32:17.455150Z",
+      "elapsed_seconds": 2.085
+    },
+    {
+      "task_id": "N1",
+      "condition": "B",
+      "actual_input": {
+        "question": "对象A、B的这些给定窗口分别位于各自参考边界的哪一侧？没有总体显著性检验，是否会改变已经能计算的范围关系？未给出的另一侧边界保持未知。",
+        "rows": [
+          {
+            "row_id": "r1",
+            "kind": "bounds",
+            "object": "A",
+            "window": "首窗",
+            "value": 22.719,
+            "lower": 29.4848,
+            "upper": null,
+            "unit": "dB-Hz",
+            "comparison_allowed": true
+          },
+          {
+            "row_id": "r2",
+            "kind": "bounds",
+            "object": "A",
+            "window": "末窗",
+            "value": 22.219,
+            "lower": 33.469,
+            "upper": null,
+            "unit": "dB-Hz",
+            "comparison_allowed": true
+          },
+          {
+            "row_id": "r3",
+            "kind": "bounds",
+            "object": "B",
+            "window": "首窗",
+            "value": 38.25,
+            "lower": null,
+            "upper": 33.4284,
+            "unit": "dB-Hz",
+            "comparison_allowed": true
+          },
+          {
+            "row_id": "r4",
+            "kind": "metadata",
+            "field_definition": "value为窗口载噪比p10，lower/upper为给定参考下界/上界；null为该边界未提供",
+            "overall_significance_test": null
+          }
+        ],
+        "program_facts": [
+          {
+            "input_row_ids": [
+              "r1"
+            ],
+            "kind": "bounds",
+            "object": "A",
+            "window": "首窗",
+            "unit": "dB-Hz",
+            "comparisons": [
+              {
+                "boundary": "lower",
+                "reference": 29.4848,
+                "value": 22.719,
+                "difference": -6.7658,
+                "relation": "低于"
+              }
+            ],
+            "unprovided_boundaries": [
+              "upper"
+            ]
+          },
+          {
+            "input_row_ids": [
+              "r2"
+            ],
+            "kind": "bounds",
+            "object": "A",
+            "window": "末窗",
+            "unit": "dB-Hz",
+            "comparisons": [
+              {
+                "boundary": "lower",
+                "reference": 33.469,
+                "value": 22.219,
+                "difference": -11.25,
+                "relation": "低于"
+              }
+            ],
+            "unprovided_boundaries": [
+              "upper"
+            ]
+          },
+          {
+            "input_row_ids": [
+              "r3"
+            ],
+            "kind": "bounds",
+            "object": "B",
+            "window": "首窗",
+            "unit": "dB-Hz",
+            "comparisons": [
+              {
+                "boundary": "upper",
+                "reference": 33.4284,
+                "value": 38.25,
+                "difference": 4.8216,
+                "relation": "高于"
+              }
+            ],
+            "unprovided_boundaries": [
+              "lower"
+            ]
+          },
+          {
+            "input_row_ids": [
+              "r4"
+            ],
+            "kind": "metadata",
+            "origin": "输入声明，非程序逐窗重算",
+            "declared": {
+              "field_definition": "value为窗口载噪比p10，lower/upper为给定参考下界/上界；null为该边界未提供",
+              "overall_significance_test": null
+            }
+          }
+        ]
+      },
+      "program_facts": [
+        {
+          "input_row_ids": [
+            "r1"
+          ],
+          "kind": "bounds",
+          "object": "A",
+          "window": "首窗",
+          "unit": "dB-Hz",
+          "comparisons": [
+            {
+              "boundary": "lower",
+              "reference": 29.4848,
+              "value": 22.719,
+              "difference": -6.7658,
+              "relation": "低于"
+            }
+          ],
+          "unprovided_boundaries": [
+            "upper"
+          ]
+        },
+        {
+          "input_row_ids": [
+            "r2"
+          ],
+          "kind": "bounds",
+          "object": "A",
+          "window": "末窗",
+          "unit": "dB-Hz",
+          "comparisons": [
+            {
+              "boundary": "lower",
+              "reference": 33.469,
+              "value": 22.219,
+              "difference": -11.25,
+              "relation": "低于"
+            }
+          ],
+          "unprovided_boundaries": [
+            "upper"
+          ]
+        },
+        {
+          "input_row_ids": [
+            "r3"
+          ],
+          "kind": "bounds",
+          "object": "B",
+          "window": "首窗",
+          "unit": "dB-Hz",
+          "comparisons": [
+            {
+              "boundary": "upper",
+              "reference": 33.4284,
+              "value": 38.25,
+              "difference": 4.8216,
+              "relation": "高于"
+            }
+          ],
+          "unprovided_boundaries": [
+            "lower"
+          ]
+        },
+        {
+          "input_row_ids": [
+            "r4"
+          ],
+          "kind": "metadata",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "field_definition": "value为窗口载噪比p10，lower/upper为给定参考下界/上界；null为该边界未提供",
+            "overall_significance_test": null
+          }
+        }
+      ],
+      "program_facts_sent": true,
+      "status": "not_executed",
+      "model_output": null,
+      "response_text": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
+      "review": {
+        "status": "not_checked",
+        "dimensions": {
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
+        },
+        "note": "本次接口仍不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
+      }
+    },
+    {
+      "task_id": "N2",
+      "condition": "A",
+      "actual_input": {
+        "question": "分别说明已有观测和参考的大小关系、分组汇总说明了什么、总体检验是否提供。仅给出例窗和汇总时，能否声称逐行读到了其余窗口？",
+        "rows": [
+          {
+            "row_id": "r1",
+            "kind": "bounds",
+            "object": "A",
+            "window": "首窗",
+            "value": 32.4875,
+            "lower": 33.9063,
+            "upper": null,
+            "unit": "dB-Hz",
+            "comparison_allowed": true
+          },
+          {
+            "row_id": "r2",
+            "kind": "bounds",
+            "object": "A",
+            "window": "末窗",
+            "value": 24.438,
+            "lower": 33.125,
+            "upper": null,
+            "unit": "dB-Hz",
+            "comparison_allowed": true
+          },
+          {
+            "row_id": "r3",
+            "kind": "bounds",
+            "object": "B",
+            "window": "首窗",
+            "value": 31.6875,
+            "lower": 34.1533,
+            "upper": null,
+            "unit": "dB-Hz",
+            "comparison_allowed": true
+          },
+          {
+            "row_id": "r4",
+            "kind": "summary",
+            "object": "A",
+            "window_count": 4,
+            "below_own_reference": 4,
+            "detail_level": "已提供的分组汇总，不是四行原始数值"
+          },
+          {
+            "row_id": "r5",
+            "kind": "summary",
+            "object": "B",
+            "window_count": 4,
+            "ordered_groups": [
+              {
+                "windows": "前两窗",
+                "relation": "低于自身参考"
+              },
+              {
+                "windows": "后两窗",
+                "relation": "高于自身参考"
+              }
+            ],
+            "detail_level": "已提供的分组汇总，不是四行原始数值"
+          },
+          {
+            "row_id": "r6",
+            "kind": "metadata",
+            "field_definition": "value为窗口载噪比p10；lower为下界；upper=null为上界未提供",
+            "overall_significance_test": null
+          }
+        ]
+      },
+      "program_facts": [
+        {
+          "input_row_ids": [
+            "r1"
+          ],
+          "kind": "bounds",
+          "object": "A",
+          "window": "首窗",
+          "unit": "dB-Hz",
+          "comparisons": [
+            {
+              "boundary": "lower",
+              "reference": 33.9063,
+              "value": 32.4875,
+              "difference": -1.4188,
+              "relation": "低于"
+            }
+          ],
+          "unprovided_boundaries": [
+            "upper"
+          ]
+        },
+        {
+          "input_row_ids": [
+            "r2"
+          ],
+          "kind": "bounds",
+          "object": "A",
+          "window": "末窗",
+          "unit": "dB-Hz",
+          "comparisons": [
+            {
+              "boundary": "lower",
+              "reference": 33.125,
+              "value": 24.438,
+              "difference": -8.687,
+              "relation": "低于"
+            }
+          ],
+          "unprovided_boundaries": [
+            "upper"
+          ]
+        },
+        {
+          "input_row_ids": [
+            "r3"
+          ],
+          "kind": "bounds",
+          "object": "B",
+          "window": "首窗",
+          "unit": "dB-Hz",
+          "comparisons": [
+            {
+              "boundary": "lower",
+              "reference": 34.1533,
+              "value": 31.6875,
+              "difference": -2.4658,
+              "relation": "低于"
+            }
+          ],
+          "unprovided_boundaries": [
+            "upper"
+          ]
+        },
+        {
+          "input_row_ids": [
+            "r4"
+          ],
+          "kind": "summary",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "object": "A",
+            "window_count": 4,
+            "below_own_reference": 4,
+            "detail_level": "已提供的分组汇总，不是四行原始数值"
+          }
+        },
+        {
+          "input_row_ids": [
+            "r5"
+          ],
+          "kind": "summary",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "object": "B",
+            "window_count": 4,
+            "ordered_groups": [
+              {
+                "windows": "前两窗",
+                "relation": "低于自身参考"
+              },
+              {
+                "windows": "后两窗",
+                "relation": "高于自身参考"
+              }
+            ],
+            "detail_level": "已提供的分组汇总，不是四行原始数值"
+          }
+        },
+        {
+          "input_row_ids": [
+            "r6"
+          ],
+          "kind": "metadata",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "field_definition": "value为窗口载噪比p10；lower为下界；upper=null为上界未提供",
+            "overall_significance_test": null
+          }
+        }
+      ],
+      "program_facts_sent": false,
+      "status": "not_executed",
+      "model_output": null,
+      "response_text": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
+      "review": {
+        "status": "not_checked",
+        "dimensions": {
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
+        },
+        "note": "本次接口仍不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
+      }
+    },
+    {
+      "task_id": "N2",
+      "condition": "B",
+      "actual_input": {
+        "question": "分别说明已有观测和参考的大小关系、分组汇总说明了什么、总体检验是否提供。仅给出例窗和汇总时，能否声称逐行读到了其余窗口？",
+        "rows": [
+          {
+            "row_id": "r1",
+            "kind": "bounds",
+            "object": "A",
+            "window": "首窗",
+            "value": 32.4875,
+            "lower": 33.9063,
+            "upper": null,
+            "unit": "dB-Hz",
+            "comparison_allowed": true
+          },
+          {
+            "row_id": "r2",
+            "kind": "bounds",
+            "object": "A",
+            "window": "末窗",
+            "value": 24.438,
+            "lower": 33.125,
+            "upper": null,
+            "unit": "dB-Hz",
+            "comparison_allowed": true
+          },
+          {
+            "row_id": "r3",
+            "kind": "bounds",
+            "object": "B",
+            "window": "首窗",
+            "value": 31.6875,
+            "lower": 34.1533,
+            "upper": null,
+            "unit": "dB-Hz",
+            "comparison_allowed": true
+          },
+          {
+            "row_id": "r4",
+            "kind": "summary",
+            "object": "A",
+            "window_count": 4,
+            "below_own_reference": 4,
+            "detail_level": "已提供的分组汇总，不是四行原始数值"
+          },
+          {
+            "row_id": "r5",
+            "kind": "summary",
+            "object": "B",
+            "window_count": 4,
+            "ordered_groups": [
+              {
+                "windows": "前两窗",
+                "relation": "低于自身参考"
+              },
+              {
+                "windows": "后两窗",
+                "relation": "高于自身参考"
+              }
+            ],
+            "detail_level": "已提供的分组汇总，不是四行原始数值"
+          },
+          {
+            "row_id": "r6",
+            "kind": "metadata",
+            "field_definition": "value为窗口载噪比p10；lower为下界；upper=null为上界未提供",
+            "overall_significance_test": null
+          }
+        ],
+        "program_facts": [
+          {
+            "input_row_ids": [
+              "r1"
+            ],
+            "kind": "bounds",
+            "object": "A",
+            "window": "首窗",
+            "unit": "dB-Hz",
+            "comparisons": [
+              {
+                "boundary": "lower",
+                "reference": 33.9063,
+                "value": 32.4875,
+                "difference": -1.4188,
+                "relation": "低于"
+              }
+            ],
+            "unprovided_boundaries": [
+              "upper"
+            ]
+          },
+          {
+            "input_row_ids": [
+              "r2"
+            ],
+            "kind": "bounds",
+            "object": "A",
+            "window": "末窗",
+            "unit": "dB-Hz",
+            "comparisons": [
+              {
+                "boundary": "lower",
+                "reference": 33.125,
+                "value": 24.438,
+                "difference": -8.687,
+                "relation": "低于"
+              }
+            ],
+            "unprovided_boundaries": [
+              "upper"
+            ]
+          },
+          {
+            "input_row_ids": [
+              "r3"
+            ],
+            "kind": "bounds",
+            "object": "B",
+            "window": "首窗",
+            "unit": "dB-Hz",
+            "comparisons": [
+              {
+                "boundary": "lower",
+                "reference": 34.1533,
+                "value": 31.6875,
+                "difference": -2.4658,
+                "relation": "低于"
+              }
+            ],
+            "unprovided_boundaries": [
+              "upper"
+            ]
+          },
+          {
+            "input_row_ids": [
+              "r4"
+            ],
+            "kind": "summary",
+            "origin": "输入声明，非程序逐窗重算",
+            "declared": {
+              "object": "A",
+              "window_count": 4,
+              "below_own_reference": 4,
+              "detail_level": "已提供的分组汇总，不是四行原始数值"
+            }
+          },
+          {
+            "input_row_ids": [
+              "r5"
+            ],
+            "kind": "summary",
+            "origin": "输入声明，非程序逐窗重算",
+            "declared": {
+              "object": "B",
+              "window_count": 4,
+              "ordered_groups": [
+                {
+                  "windows": "前两窗",
+                  "relation": "低于自身参考"
+                },
+                {
+                  "windows": "后两窗",
+                  "relation": "高于自身参考"
+                }
+              ],
+              "detail_level": "已提供的分组汇总，不是四行原始数值"
+            }
+          },
+          {
+            "input_row_ids": [
+              "r6"
+            ],
+            "kind": "metadata",
+            "origin": "输入声明，非程序逐窗重算",
+            "declared": {
+              "field_definition": "value为窗口载噪比p10；lower为下界；upper=null为上界未提供",
+              "overall_significance_test": null
+            }
+          }
+        ]
+      },
+      "program_facts": [
+        {
+          "input_row_ids": [
+            "r1"
+          ],
+          "kind": "bounds",
+          "object": "A",
+          "window": "首窗",
+          "unit": "dB-Hz",
+          "comparisons": [
+            {
+              "boundary": "lower",
+              "reference": 33.9063,
+              "value": 32.4875,
+              "difference": -1.4188,
+              "relation": "低于"
+            }
+          ],
+          "unprovided_boundaries": [
+            "upper"
+          ]
+        },
+        {
+          "input_row_ids": [
+            "r2"
+          ],
+          "kind": "bounds",
+          "object": "A",
+          "window": "末窗",
+          "unit": "dB-Hz",
+          "comparisons": [
+            {
+              "boundary": "lower",
+              "reference": 33.125,
+              "value": 24.438,
+              "difference": -8.687,
+              "relation": "低于"
+            }
+          ],
+          "unprovided_boundaries": [
+            "upper"
+          ]
+        },
+        {
+          "input_row_ids": [
+            "r3"
+          ],
+          "kind": "bounds",
+          "object": "B",
+          "window": "首窗",
+          "unit": "dB-Hz",
+          "comparisons": [
+            {
+              "boundary": "lower",
+              "reference": 34.1533,
+              "value": 31.6875,
+              "difference": -2.4658,
+              "relation": "低于"
+            }
+          ],
+          "unprovided_boundaries": [
+            "upper"
+          ]
+        },
+        {
+          "input_row_ids": [
+            "r4"
+          ],
+          "kind": "summary",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "object": "A",
+            "window_count": 4,
+            "below_own_reference": 4,
+            "detail_level": "已提供的分组汇总，不是四行原始数值"
+          }
+        },
+        {
+          "input_row_ids": [
+            "r5"
+          ],
+          "kind": "summary",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "object": "B",
+            "window_count": 4,
+            "ordered_groups": [
+              {
+                "windows": "前两窗",
+                "relation": "低于自身参考"
+              },
+              {
+                "windows": "后两窗",
+                "relation": "高于自身参考"
+              }
+            ],
+            "detail_level": "已提供的分组汇总，不是四行原始数值"
+          }
+        },
+        {
+          "input_row_ids": [
+            "r6"
+          ],
+          "kind": "metadata",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "field_definition": "value为窗口载噪比p10；lower为下界；upper=null为上界未提供",
+            "overall_significance_test": null
+          }
+        }
+      ],
+      "program_facts_sent": true,
+      "status": "not_executed",
+      "model_output": null,
+      "response_text": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
+      "review": {
+        "status": "not_checked",
+        "dimensions": {
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
+        },
+        "note": "本次接口仍不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
+      }
+    },
+    {
+      "task_id": "N3",
+      "condition": "A",
+      "actual_input": {
+        "question": "分别描述对象A、B的数值方向，说明哪些可比元数据已经明确、哪些原因解释没有提供。按各自参考比较，不把其他对象的单位缺口带入本题，也不要声称读取了未给出的全部窗口数值。",
+        "rows": [
+          {
+            "row_id": "r1",
+            "kind": "bounds",
+            "object": "A",
+            "window": "W首窗",
+            "value": 19.9935,
+            "lower": 29.4848,
+            "upper": 33.3967,
+            "unit": "dB-Hz",
+            "comparison_allowed": true
+          },
+          {
+            "row_id": "r2",
+            "kind": "bounds",
+            "object": "B",
+            "window": "W首窗",
+            "value": 37.5217,
+            "lower": 33.0,
+            "upper": 33.4284,
+            "unit": "dB-Hz",
+            "comparison_allowed": true
+          },
+          {
+            "row_id": "r3",
+            "kind": "metadata",
+            "objects": [
+              "A",
+              "B"
+            ],
+            "signal": "C:S1P",
+            "unit": "dB-Hz",
+            "sampling_seconds": 1,
+            "same_window": true,
+            "field_definition": "窗口载噪比p10；各自对照自己的参考范围",
+            "cause_evidence": null
+          },
+          {
+            "row_id": "r4",
+            "kind": "summary",
+            "object": "A",
+            "window_count": 4,
+            "below_own_reference": 4,
+            "detail_level": "分组汇总，仅首窗提供逐行数值"
+          },
+          {
+            "row_id": "r5",
+            "kind": "summary",
+            "object": "B",
+            "window_count": 4,
+            "above_own_reference": 4,
+            "detail_level": "分组汇总，仅首窗提供逐行数值"
+          }
+        ]
+      },
+      "program_facts": [
+        {
+          "input_row_ids": [
+            "r1"
+          ],
+          "kind": "bounds",
+          "object": "A",
+          "window": "W首窗",
+          "unit": "dB-Hz",
+          "comparisons": [
+            {
+              "boundary": "lower",
+              "reference": 29.4848,
+              "value": 19.9935,
+              "difference": -9.4913,
+              "relation": "低于"
+            },
+            {
+              "boundary": "upper",
+              "reference": 33.3967,
+              "value": 19.9935,
+              "difference": -13.4032,
+              "relation": "低于"
+            }
+          ],
+          "unprovided_boundaries": []
+        },
+        {
+          "input_row_ids": [
+            "r2"
+          ],
+          "kind": "bounds",
+          "object": "B",
+          "window": "W首窗",
+          "unit": "dB-Hz",
+          "comparisons": [
+            {
+              "boundary": "lower",
+              "reference": 33.0,
+              "value": 37.5217,
+              "difference": 4.5217,
+              "relation": "高于"
+            },
+            {
+              "boundary": "upper",
+              "reference": 33.4284,
+              "value": 37.5217,
+              "difference": 4.0933,
+              "relation": "高于"
+            }
+          ],
+          "unprovided_boundaries": []
+        },
+        {
+          "input_row_ids": [
+            "r3"
+          ],
+          "kind": "metadata",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "objects": [
+              "A",
+              "B"
+            ],
+            "signal": "C:S1P",
+            "unit": "dB-Hz",
+            "sampling_seconds": 1,
+            "same_window": true,
+            "field_definition": "窗口载噪比p10；各自对照自己的参考范围",
+            "cause_evidence": null
+          }
+        },
+        {
+          "input_row_ids": [
+            "r4"
+          ],
+          "kind": "summary",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "object": "A",
+            "window_count": 4,
+            "below_own_reference": 4,
+            "detail_level": "分组汇总，仅首窗提供逐行数值"
+          }
+        },
+        {
+          "input_row_ids": [
+            "r5"
+          ],
+          "kind": "summary",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "object": "B",
+            "window_count": 4,
+            "above_own_reference": 4,
+            "detail_level": "分组汇总，仅首窗提供逐行数值"
+          }
+        }
+      ],
+      "program_facts_sent": false,
+      "status": "not_executed",
+      "model_output": null,
+      "response_text": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
+      "review": {
+        "status": "not_checked",
+        "dimensions": {
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
+        },
+        "note": "本次接口仍不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
+      }
+    },
+    {
+      "task_id": "N3",
+      "condition": "B",
+      "actual_input": {
+        "question": "分别描述对象A、B的数值方向，说明哪些可比元数据已经明确、哪些原因解释没有提供。按各自参考比较，不把其他对象的单位缺口带入本题，也不要声称读取了未给出的全部窗口数值。",
+        "rows": [
+          {
+            "row_id": "r1",
+            "kind": "bounds",
+            "object": "A",
+            "window": "W首窗",
+            "value": 19.9935,
+            "lower": 29.4848,
+            "upper": 33.3967,
+            "unit": "dB-Hz",
+            "comparison_allowed": true
+          },
+          {
+            "row_id": "r2",
+            "kind": "bounds",
+            "object": "B",
+            "window": "W首窗",
+            "value": 37.5217,
+            "lower": 33.0,
+            "upper": 33.4284,
+            "unit": "dB-Hz",
+            "comparison_allowed": true
+          },
+          {
+            "row_id": "r3",
+            "kind": "metadata",
+            "objects": [
+              "A",
+              "B"
+            ],
+            "signal": "C:S1P",
+            "unit": "dB-Hz",
+            "sampling_seconds": 1,
+            "same_window": true,
+            "field_definition": "窗口载噪比p10；各自对照自己的参考范围",
+            "cause_evidence": null
+          },
+          {
+            "row_id": "r4",
+            "kind": "summary",
+            "object": "A",
+            "window_count": 4,
+            "below_own_reference": 4,
+            "detail_level": "分组汇总，仅首窗提供逐行数值"
+          },
+          {
+            "row_id": "r5",
+            "kind": "summary",
+            "object": "B",
+            "window_count": 4,
+            "above_own_reference": 4,
+            "detail_level": "分组汇总，仅首窗提供逐行数值"
+          }
+        ],
+        "program_facts": [
+          {
+            "input_row_ids": [
+              "r1"
+            ],
+            "kind": "bounds",
+            "object": "A",
+            "window": "W首窗",
+            "unit": "dB-Hz",
+            "comparisons": [
+              {
+                "boundary": "lower",
+                "reference": 29.4848,
+                "value": 19.9935,
+                "difference": -9.4913,
+                "relation": "低于"
+              },
+              {
+                "boundary": "upper",
+                "reference": 33.3967,
+                "value": 19.9935,
+                "difference": -13.4032,
+                "relation": "低于"
+              }
+            ],
+            "unprovided_boundaries": []
+          },
+          {
+            "input_row_ids": [
+              "r2"
+            ],
+            "kind": "bounds",
+            "object": "B",
+            "window": "W首窗",
+            "unit": "dB-Hz",
+            "comparisons": [
+              {
+                "boundary": "lower",
+                "reference": 33.0,
+                "value": 37.5217,
+                "difference": 4.5217,
+                "relation": "高于"
+              },
+              {
+                "boundary": "upper",
+                "reference": 33.4284,
+                "value": 37.5217,
+                "difference": 4.0933,
+                "relation": "高于"
+              }
+            ],
+            "unprovided_boundaries": []
+          },
+          {
+            "input_row_ids": [
+              "r3"
+            ],
+            "kind": "metadata",
+            "origin": "输入声明，非程序逐窗重算",
+            "declared": {
+              "objects": [
+                "A",
+                "B"
+              ],
+              "signal": "C:S1P",
+              "unit": "dB-Hz",
+              "sampling_seconds": 1,
+              "same_window": true,
+              "field_definition": "窗口载噪比p10；各自对照自己的参考范围",
+              "cause_evidence": null
+            }
+          },
+          {
+            "input_row_ids": [
+              "r4"
+            ],
+            "kind": "summary",
+            "origin": "输入声明，非程序逐窗重算",
+            "declared": {
+              "object": "A",
+              "window_count": 4,
+              "below_own_reference": 4,
+              "detail_level": "分组汇总，仅首窗提供逐行数值"
+            }
+          },
+          {
+            "input_row_ids": [
+              "r5"
+            ],
+            "kind": "summary",
+            "origin": "输入声明，非程序逐窗重算",
+            "declared": {
+              "object": "B",
+              "window_count": 4,
+              "above_own_reference": 4,
+              "detail_level": "分组汇总，仅首窗提供逐行数值"
+            }
+          }
+        ]
+      },
+      "program_facts": [
+        {
+          "input_row_ids": [
+            "r1"
+          ],
+          "kind": "bounds",
+          "object": "A",
+          "window": "W首窗",
+          "unit": "dB-Hz",
+          "comparisons": [
+            {
+              "boundary": "lower",
+              "reference": 29.4848,
+              "value": 19.9935,
+              "difference": -9.4913,
+              "relation": "低于"
+            },
+            {
+              "boundary": "upper",
+              "reference": 33.3967,
+              "value": 19.9935,
+              "difference": -13.4032,
+              "relation": "低于"
+            }
+          ],
+          "unprovided_boundaries": []
+        },
+        {
+          "input_row_ids": [
+            "r2"
+          ],
+          "kind": "bounds",
+          "object": "B",
+          "window": "W首窗",
+          "unit": "dB-Hz",
+          "comparisons": [
+            {
+              "boundary": "lower",
+              "reference": 33.0,
+              "value": 37.5217,
+              "difference": 4.5217,
+              "relation": "高于"
+            },
+            {
+              "boundary": "upper",
+              "reference": 33.4284,
+              "value": 37.5217,
+              "difference": 4.0933,
+              "relation": "高于"
+            }
+          ],
+          "unprovided_boundaries": []
+        },
+        {
+          "input_row_ids": [
+            "r3"
+          ],
+          "kind": "metadata",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "objects": [
+              "A",
+              "B"
+            ],
+            "signal": "C:S1P",
+            "unit": "dB-Hz",
+            "sampling_seconds": 1,
+            "same_window": true,
+            "field_definition": "窗口载噪比p10；各自对照自己的参考范围",
+            "cause_evidence": null
+          }
+        },
+        {
+          "input_row_ids": [
+            "r4"
+          ],
+          "kind": "summary",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "object": "A",
+            "window_count": 4,
+            "below_own_reference": 4,
+            "detail_level": "分组汇总，仅首窗提供逐行数值"
+          }
+        },
+        {
+          "input_row_ids": [
+            "r5"
+          ],
+          "kind": "summary",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "object": "B",
+            "window_count": 4,
+            "above_own_reference": 4,
+            "detail_level": "分组汇总，仅首窗提供逐行数值"
+          }
+        }
+      ],
+      "program_facts_sent": true,
+      "status": "not_executed",
+      "model_output": null,
+      "response_text": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
+      "review": {
+        "status": "not_checked",
+        "dimensions": {
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
+        },
+        "note": "本次接口仍不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
+      }
+    },
+    {
+      "task_id": "N4",
+      "condition": "A",
+      "actual_input": {
+        "question": "只比较同一名义容量字段：算出本次增量和相对增幅，并分别比较最终绝对值与两个历史值。说明这些计算为何不是统计显著性结论，不改答其他数量指标。",
+        "rows": [
+          {
+            "row_id": "r1",
+            "kind": "series",
+            "field": "名义容量",
+            "unit": "原表同一字段，绝对单位未注明",
+            "comparison_allowed": true,
+            "observations": [
+              {
+                "label": "前值",
+                "value": 143
+              },
+              {
+                "label": "后值",
+                "value": 102414
+              }
+            ],
+            "references": [
+              {
+                "label": "历史值1",
+                "value": 3044613
+              },
+              {
+                "label": "历史值2",
+                "value": 1314529
+              }
+            ]
+          },
+          {
+            "row_id": "r2",
+            "kind": "metadata",
+            "overall_significance_test": null,
+            "statistical_threshold": null
+          }
+        ]
+      },
+      "program_facts": [
+        {
+          "input_row_ids": [
+            "r1"
+          ],
+          "kind": "series",
+          "field": "名义容量",
+          "unit": "原表同一字段，绝对单位未注明",
+          "adjacent_changes": [
+            {
+              "from": "前值",
+              "to": "后值",
+              "before": 143,
+              "after": 102414,
+              "difference": 102271.0,
+              "relative_change_percent": 71518.18181818182,
+              "relative_change_note": null
+            }
+          ],
+          "final_vs_references": [
+            {
+              "reference_label": "历史值1",
+              "reference": 3044613,
+              "final_value": 102414,
+              "difference": -2942199.0,
+              "relation": "低于"
+            },
+            {
+              "reference_label": "历史值2",
+              "reference": 1314529,
+              "final_value": 102414,
+              "difference": -1212115.0,
+              "relation": "低于"
+            }
+          ]
+        },
+        {
+          "input_row_ids": [
+            "r2"
+          ],
+          "kind": "metadata",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "overall_significance_test": null,
+            "statistical_threshold": null
+          }
+        }
+      ],
+      "program_facts_sent": false,
+      "status": "not_executed",
+      "model_output": null,
+      "response_text": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
+      "review": {
+        "status": "not_checked",
+        "dimensions": {
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
+        },
+        "note": "本次接口仍不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
+      }
+    },
+    {
+      "task_id": "N4",
+      "condition": "B",
+      "actual_input": {
+        "question": "只比较同一名义容量字段：算出本次增量和相对增幅，并分别比较最终绝对值与两个历史值。说明这些计算为何不是统计显著性结论，不改答其他数量指标。",
+        "rows": [
+          {
+            "row_id": "r1",
+            "kind": "series",
+            "field": "名义容量",
+            "unit": "原表同一字段，绝对单位未注明",
+            "comparison_allowed": true,
+            "observations": [
+              {
+                "label": "前值",
+                "value": 143
+              },
+              {
+                "label": "后值",
+                "value": 102414
+              }
+            ],
+            "references": [
+              {
+                "label": "历史值1",
+                "value": 3044613
+              },
+              {
+                "label": "历史值2",
+                "value": 1314529
+              }
+            ]
+          },
+          {
+            "row_id": "r2",
+            "kind": "metadata",
+            "overall_significance_test": null,
+            "statistical_threshold": null
+          }
+        ],
+        "program_facts": [
+          {
+            "input_row_ids": [
+              "r1"
+            ],
+            "kind": "series",
+            "field": "名义容量",
+            "unit": "原表同一字段，绝对单位未注明",
+            "adjacent_changes": [
+              {
+                "from": "前值",
+                "to": "后值",
+                "before": 143,
+                "after": 102414,
+                "difference": 102271.0,
+                "relative_change_percent": 71518.18181818182,
+                "relative_change_note": null
+              }
+            ],
+            "final_vs_references": [
+              {
+                "reference_label": "历史值1",
+                "reference": 3044613,
+                "final_value": 102414,
+                "difference": -2942199.0,
+                "relation": "低于"
+              },
+              {
+                "reference_label": "历史值2",
+                "reference": 1314529,
+                "final_value": 102414,
+                "difference": -1212115.0,
+                "relation": "低于"
+              }
+            ]
+          },
+          {
+            "input_row_ids": [
+              "r2"
+            ],
+            "kind": "metadata",
+            "origin": "输入声明，非程序逐窗重算",
+            "declared": {
+              "overall_significance_test": null,
+              "statistical_threshold": null
+            }
+          }
+        ]
+      },
+      "program_facts": [
+        {
+          "input_row_ids": [
+            "r1"
+          ],
+          "kind": "series",
+          "field": "名义容量",
+          "unit": "原表同一字段，绝对单位未注明",
+          "adjacent_changes": [
+            {
+              "from": "前值",
+              "to": "后值",
+              "before": 143,
+              "after": 102414,
+              "difference": 102271.0,
+              "relative_change_percent": 71518.18181818182,
+              "relative_change_note": null
+            }
+          ],
+          "final_vs_references": [
+            {
+              "reference_label": "历史值1",
+              "reference": 3044613,
+              "final_value": 102414,
+              "difference": -2942199.0,
+              "relation": "低于"
+            },
+            {
+              "reference_label": "历史值2",
+              "reference": 1314529,
+              "final_value": 102414,
+              "difference": -1212115.0,
+              "relation": "低于"
+            }
+          ]
+        },
+        {
+          "input_row_ids": [
+            "r2"
+          ],
+          "kind": "metadata",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "overall_significance_test": null,
+            "statistical_threshold": null
+          }
+        }
+      ],
+      "program_facts_sent": true,
+      "status": "not_executed",
+      "model_output": null,
+      "response_text": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
+      "review": {
+        "status": "not_checked",
+        "dimensions": {
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
+        },
+        "note": "本次接口仍不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
+      }
+    },
+    {
+      "task_id": "C1",
+      "condition": "A",
+      "actual_input": {
+        "question": "分别说明两个参考组的窗口计数和逐窗差值中位数。中位数接近零能否推出每个窗口都在参考范围内？说明这两组能否合并为稳定总体；不要把逐窗差值的中位数换成两个中位数之差。",
+        "rows": [
+          {
+            "row_id": "r1",
+            "kind": "summary",
+            "reference_group": "组1",
+            "reference_days": 1,
+            "paired_windows": 289,
+            "paired_difference_median": 0.15,
+            "unit": "dB",
+            "below_own_reference": 136,
+            "above_own_reference": 153
+          },
+          {
+            "row_id": "r2",
+            "kind": "summary",
+            "reference_group": "组2",
+            "reference_days": 3,
+            "paired_windows": 289,
+            "paired_difference_median": -0.565,
+            "unit": "dB",
+            "below_own_reference": 104,
+            "above_own_reference": 89
+          },
+          {
+            "row_id": "r3",
+            "kind": "metadata",
+            "field_definition": "paired_difference_median为同窗当前值减参考值所得差值的中位数；两个参考组分别统计",
+            "population_stability_evidence": null,
+            "remaining_window_categories": null
+          }
+        ]
+      },
+      "program_facts": [
+        {
+          "input_row_ids": [
+            "r1"
+          ],
+          "kind": "summary",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "reference_group": "组1",
+            "reference_days": 1,
+            "paired_windows": 289,
+            "paired_difference_median": 0.15,
+            "unit": "dB",
+            "below_own_reference": 136,
+            "above_own_reference": 153
+          }
+        },
+        {
+          "input_row_ids": [
+            "r2"
+          ],
+          "kind": "summary",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "reference_group": "组2",
+            "reference_days": 3,
+            "paired_windows": 289,
+            "paired_difference_median": -0.565,
+            "unit": "dB",
+            "below_own_reference": 104,
+            "above_own_reference": 89
+          }
+        },
+        {
+          "input_row_ids": [
+            "r3"
+          ],
+          "kind": "metadata",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "field_definition": "paired_difference_median为同窗当前值减参考值所得差值的中位数；两个参考组分别统计",
+            "population_stability_evidence": null,
+            "remaining_window_categories": null
+          }
+        }
+      ],
+      "program_facts_sent": false,
+      "status": "not_executed",
+      "model_output": null,
+      "response_text": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
+      "review": {
+        "status": "not_checked",
+        "dimensions": {
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
+        },
+        "note": "本次接口仍不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
+      }
+    },
+    {
+      "task_id": "C1",
+      "condition": "B",
+      "actual_input": {
+        "question": "分别说明两个参考组的窗口计数和逐窗差值中位数。中位数接近零能否推出每个窗口都在参考范围内？说明这两组能否合并为稳定总体；不要把逐窗差值的中位数换成两个中位数之差。",
+        "rows": [
+          {
+            "row_id": "r1",
+            "kind": "summary",
+            "reference_group": "组1",
+            "reference_days": 1,
+            "paired_windows": 289,
+            "paired_difference_median": 0.15,
+            "unit": "dB",
+            "below_own_reference": 136,
+            "above_own_reference": 153
+          },
+          {
+            "row_id": "r2",
+            "kind": "summary",
+            "reference_group": "组2",
+            "reference_days": 3,
+            "paired_windows": 289,
+            "paired_difference_median": -0.565,
+            "unit": "dB",
+            "below_own_reference": 104,
+            "above_own_reference": 89
+          },
+          {
+            "row_id": "r3",
+            "kind": "metadata",
+            "field_definition": "paired_difference_median为同窗当前值减参考值所得差值的中位数；两个参考组分别统计",
+            "population_stability_evidence": null,
+            "remaining_window_categories": null
+          }
+        ],
+        "program_facts": [
+          {
+            "input_row_ids": [
+              "r1"
+            ],
+            "kind": "summary",
+            "origin": "输入声明，非程序逐窗重算",
+            "declared": {
+              "reference_group": "组1",
+              "reference_days": 1,
+              "paired_windows": 289,
+              "paired_difference_median": 0.15,
+              "unit": "dB",
+              "below_own_reference": 136,
+              "above_own_reference": 153
+            }
+          },
+          {
+            "input_row_ids": [
+              "r2"
+            ],
+            "kind": "summary",
+            "origin": "输入声明，非程序逐窗重算",
+            "declared": {
+              "reference_group": "组2",
+              "reference_days": 3,
+              "paired_windows": 289,
+              "paired_difference_median": -0.565,
+              "unit": "dB",
+              "below_own_reference": 104,
+              "above_own_reference": 89
+            }
+          },
+          {
+            "input_row_ids": [
+              "r3"
+            ],
+            "kind": "metadata",
+            "origin": "输入声明，非程序逐窗重算",
+            "declared": {
+              "field_definition": "paired_difference_median为同窗当前值减参考值所得差值的中位数；两个参考组分别统计",
+              "population_stability_evidence": null,
+              "remaining_window_categories": null
+            }
+          }
+        ]
+      },
+      "program_facts": [
+        {
+          "input_row_ids": [
+            "r1"
+          ],
+          "kind": "summary",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "reference_group": "组1",
+            "reference_days": 1,
+            "paired_windows": 289,
+            "paired_difference_median": 0.15,
+            "unit": "dB",
+            "below_own_reference": 136,
+            "above_own_reference": 153
+          }
+        },
+        {
+          "input_row_ids": [
+            "r2"
+          ],
+          "kind": "summary",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "reference_group": "组2",
+            "reference_days": 3,
+            "paired_windows": 289,
+            "paired_difference_median": -0.565,
+            "unit": "dB",
+            "below_own_reference": 104,
+            "above_own_reference": 89
+          }
+        },
+        {
+          "input_row_ids": [
+            "r3"
+          ],
+          "kind": "metadata",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "field_definition": "paired_difference_median为同窗当前值减参考值所得差值的中位数；两个参考组分别统计",
+            "population_stability_evidence": null,
+            "remaining_window_categories": null
+          }
+        }
+      ],
+      "program_facts_sent": true,
+      "status": "not_executed",
+      "model_output": null,
+      "response_text": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
+      "review": {
+        "status": "not_checked",
+        "dimensions": {
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
+        },
+        "note": "本次接口仍不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
+      }
+    },
+    {
+      "task_id": "C2",
+      "condition": "A",
+      "actual_input": {
+        "question": "计算有效比例，解释它和epoch_coverage_ratio各在表达什么。18秒、1历元和这两个比例，能否推成全天时间覆盖或全天持续变化？",
+        "rows": [
+          {
+            "row_id": "r1",
+            "kind": "ratio",
+            "window_seconds": 18,
+            "epoch_count": 1,
+            "numerator": 8,
+            "denominator_factors": [
+              1,
+              29
+            ],
+            "definition": "有效值8个；分母为1个历元乘29，29是整份文件中该信号出现过的卫星集合数量",
+            "epoch_coverage_ratio": 1.0,
+            "epoch_coverage_definition": "按这个已定义的18秒窗口没有缺历元"
+          }
+        ]
+      },
+      "program_facts": [
+        {
+          "input_row_ids": [
+            "r1"
+          ],
+          "kind": "ratio",
+          "numerator": 8,
+          "denominator": 29.0,
+          "ratio": 0.27586206896551724,
+          "percent": 27.586206896551722,
+          "definition": "有效值8个；分母为1个历元乘29，29是整份文件中该信号出现过的卫星集合数量",
+          "window_seconds": 18,
+          "epoch_count": 1,
+          "epoch_coverage_ratio": 1.0,
+          "epoch_coverage_definition": "按这个已定义的18秒窗口没有缺历元"
+        }
+      ],
+      "program_facts_sent": false,
+      "status": "not_executed",
+      "model_output": null,
+      "response_text": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
+      "review": {
+        "status": "not_checked",
+        "dimensions": {
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
+        },
+        "note": "本次接口仍不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
+      }
+    },
+    {
+      "task_id": "C2",
+      "condition": "B",
+      "actual_input": {
+        "question": "计算有效比例，解释它和epoch_coverage_ratio各在表达什么。18秒、1历元和这两个比例，能否推成全天时间覆盖或全天持续变化？",
+        "rows": [
+          {
+            "row_id": "r1",
+            "kind": "ratio",
+            "window_seconds": 18,
+            "epoch_count": 1,
+            "numerator": 8,
+            "denominator_factors": [
+              1,
+              29
+            ],
+            "definition": "有效值8个；分母为1个历元乘29，29是整份文件中该信号出现过的卫星集合数量",
+            "epoch_coverage_ratio": 1.0,
+            "epoch_coverage_definition": "按这个已定义的18秒窗口没有缺历元"
+          }
+        ],
+        "program_facts": [
+          {
+            "input_row_ids": [
+              "r1"
+            ],
+            "kind": "ratio",
+            "numerator": 8,
+            "denominator": 29.0,
+            "ratio": 0.27586206896551724,
+            "percent": 27.586206896551722,
+            "definition": "有效值8个；分母为1个历元乘29，29是整份文件中该信号出现过的卫星集合数量",
+            "window_seconds": 18,
+            "epoch_count": 1,
+            "epoch_coverage_ratio": 1.0,
+            "epoch_coverage_definition": "按这个已定义的18秒窗口没有缺历元"
+          }
+        ]
+      },
+      "program_facts": [
+        {
+          "input_row_ids": [
+            "r1"
+          ],
+          "kind": "ratio",
+          "numerator": 8,
+          "denominator": 29.0,
+          "ratio": 0.27586206896551724,
+          "percent": 27.586206896551722,
+          "definition": "有效值8个；分母为1个历元乘29，29是整份文件中该信号出现过的卫星集合数量",
+          "window_seconds": 18,
+          "epoch_count": 1,
+          "epoch_coverage_ratio": 1.0,
+          "epoch_coverage_definition": "按这个已定义的18秒窗口没有缺历元"
+        }
+      ],
+      "program_facts_sent": true,
+      "status": "not_executed",
+      "model_output": null,
+      "response_text": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
+      "review": {
+        "status": "not_checked",
+        "dimensions": {
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
+        },
+        "note": "本次接口仍不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
+      }
+    },
+    {
+      "task_id": "C3",
+      "condition": "A",
+      "actual_input": {
+        "question": "区分此处的单位换算未确认、数值为零、缺文件和缺观测。说明40 receiver_units与cnr_p10=null各是什么意思，不自行补出dB-Hz单位。",
+        "rows": [
+          {
+            "row_id": "r1",
+            "kind": "missing_fields",
+            "epoch_count": 900,
+            "signal_count": 17,
+            "raw_signal_strength": 40,
+            "raw_unit": "receiver_units",
+            "cnr_p10": null,
+            "null_reason": "没有确认到dB-Hz的换算依据"
+          }
+        ]
+      },
+      "program_facts": [
+        {
+          "input_row_ids": [
+            "r1"
+          ],
+          "kind": "missing_fields",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "epoch_count": 900,
+            "signal_count": 17,
+            "raw_signal_strength": 40,
+            "raw_unit": "receiver_units",
+            "cnr_p10": null,
+            "null_reason": "没有确认到dB-Hz的换算依据"
+          }
+        }
+      ],
+      "program_facts_sent": false,
+      "status": "not_executed",
+      "model_output": null,
+      "response_text": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
+      "review": {
+        "status": "not_checked",
+        "dimensions": {
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
+        },
+        "note": "本次接口仍不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
+      }
+    },
+    {
+      "task_id": "C3",
+      "condition": "B",
+      "actual_input": {
+        "question": "区分此处的单位换算未确认、数值为零、缺文件和缺观测。说明40 receiver_units与cnr_p10=null各是什么意思，不自行补出dB-Hz单位。",
+        "rows": [
+          {
+            "row_id": "r1",
+            "kind": "missing_fields",
+            "epoch_count": 900,
+            "signal_count": 17,
+            "raw_signal_strength": 40,
+            "raw_unit": "receiver_units",
+            "cnr_p10": null,
+            "null_reason": "没有确认到dB-Hz的换算依据"
+          }
+        ],
+        "program_facts": [
+          {
+            "input_row_ids": [
+              "r1"
+            ],
+            "kind": "missing_fields",
+            "origin": "输入声明，非程序逐窗重算",
+            "declared": {
+              "epoch_count": 900,
+              "signal_count": 17,
+              "raw_signal_strength": 40,
+              "raw_unit": "receiver_units",
+              "cnr_p10": null,
+              "null_reason": "没有确认到dB-Hz的换算依据"
+            }
+          }
+        ]
+      },
+      "program_facts": [
+        {
+          "input_row_ids": [
+            "r1"
+          ],
+          "kind": "missing_fields",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "epoch_count": 900,
+            "signal_count": 17,
+            "raw_signal_strength": 40,
+            "raw_unit": "receiver_units",
+            "cnr_p10": null,
+            "null_reason": "没有确认到dB-Hz的换算依据"
+          }
+        }
+      ],
+      "program_facts_sent": true,
+      "status": "not_executed",
+      "model_output": null,
+      "response_text": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
+      "review": {
+        "status": "not_checked",
+        "dimensions": {
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
+        },
+        "note": "本次接口仍不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
+      }
+    },
+    {
+      "task_id": "C4",
+      "condition": "A",
+      "actual_input": {
+        "question": "一份说明比较D1到D2，另一份比较D2到D3。它们是否存在数值冲突？写清各自日期范围和变化，不引入显著性或原因解释。",
+        "rows": [
+          {
+            "row_id": "r1",
+            "kind": "series",
+            "field": "计数",
+            "unit": "次",
+            "comparison_allowed": true,
+            "observations": [
+              {
+                "label": "D1",
+                "value": 2
+              },
+              {
+                "label": "D2",
+                "value": 3
+              },
+              {
+                "label": "D3",
+                "value": 2
+              }
+            ],
+            "references": []
+          },
+          {
+            "row_id": "r2",
+            "kind": "metadata",
+            "first_comparison": [
+              "D1",
+              "D2"
+            ],
+            "second_comparison": [
+              "D2",
+              "D3"
+            ],
+            "date_relation": "三个相邻观测日"
+          }
+        ]
+      },
+      "program_facts": [
+        {
+          "input_row_ids": [
+            "r1"
+          ],
+          "kind": "series",
+          "field": "计数",
+          "unit": "次",
+          "adjacent_changes": [
+            {
+              "from": "D1",
+              "to": "D2",
+              "before": 2,
+              "after": 3,
+              "difference": 1.0,
+              "relative_change_percent": 50.0,
+              "relative_change_note": null
+            },
+            {
+              "from": "D2",
+              "to": "D3",
+              "before": 3,
+              "after": 2,
+              "difference": -1.0,
+              "relative_change_percent": -33.333333333333336,
+              "relative_change_note": null
+            }
+          ],
+          "final_vs_references": []
+        },
+        {
+          "input_row_ids": [
+            "r2"
+          ],
+          "kind": "metadata",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "first_comparison": [
+              "D1",
+              "D2"
+            ],
+            "second_comparison": [
+              "D2",
+              "D3"
+            ],
+            "date_relation": "三个相邻观测日"
+          }
+        }
+      ],
+      "program_facts_sent": false,
+      "status": "not_executed",
+      "model_output": null,
+      "response_text": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
+      "review": {
+        "status": "not_checked",
+        "dimensions": {
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
+        },
+        "note": "本次接口仍不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
+      }
+    },
+    {
+      "task_id": "C4",
+      "condition": "B",
+      "actual_input": {
+        "question": "一份说明比较D1到D2，另一份比较D2到D3。它们是否存在数值冲突？写清各自日期范围和变化，不引入显著性或原因解释。",
+        "rows": [
+          {
+            "row_id": "r1",
+            "kind": "series",
+            "field": "计数",
+            "unit": "次",
+            "comparison_allowed": true,
+            "observations": [
+              {
+                "label": "D1",
+                "value": 2
+              },
+              {
+                "label": "D2",
+                "value": 3
+              },
+              {
+                "label": "D3",
+                "value": 2
+              }
+            ],
+            "references": []
+          },
+          {
+            "row_id": "r2",
+            "kind": "metadata",
+            "first_comparison": [
+              "D1",
+              "D2"
+            ],
+            "second_comparison": [
+              "D2",
+              "D3"
+            ],
+            "date_relation": "三个相邻观测日"
+          }
+        ],
+        "program_facts": [
+          {
+            "input_row_ids": [
+              "r1"
+            ],
+            "kind": "series",
+            "field": "计数",
+            "unit": "次",
+            "adjacent_changes": [
+              {
+                "from": "D1",
+                "to": "D2",
+                "before": 2,
+                "after": 3,
+                "difference": 1.0,
+                "relative_change_percent": 50.0,
+                "relative_change_note": null
+              },
+              {
+                "from": "D2",
+                "to": "D3",
+                "before": 3,
+                "after": 2,
+                "difference": -1.0,
+                "relative_change_percent": -33.333333333333336,
+                "relative_change_note": null
+              }
+            ],
+            "final_vs_references": []
+          },
+          {
+            "input_row_ids": [
+              "r2"
+            ],
+            "kind": "metadata",
+            "origin": "输入声明，非程序逐窗重算",
+            "declared": {
+              "first_comparison": [
+                "D1",
+                "D2"
+              ],
+              "second_comparison": [
+                "D2",
+                "D3"
+              ],
+              "date_relation": "三个相邻观测日"
+            }
+          }
+        ]
+      },
+      "program_facts": [
+        {
+          "input_row_ids": [
+            "r1"
+          ],
+          "kind": "series",
+          "field": "计数",
+          "unit": "次",
+          "adjacent_changes": [
+            {
+              "from": "D1",
+              "to": "D2",
+              "before": 2,
+              "after": 3,
+              "difference": 1.0,
+              "relative_change_percent": 50.0,
+              "relative_change_note": null
+            },
+            {
+              "from": "D2",
+              "to": "D3",
+              "before": 3,
+              "after": 2,
+              "difference": -1.0,
+              "relative_change_percent": -33.333333333333336,
+              "relative_change_note": null
+            }
+          ],
+          "final_vs_references": []
+        },
+        {
+          "input_row_ids": [
+            "r2"
+          ],
+          "kind": "metadata",
+          "origin": "输入声明，非程序逐窗重算",
+          "declared": {
+            "first_comparison": [
+              "D1",
+              "D2"
+            ],
+            "second_comparison": [
+              "D2",
+              "D3"
+            ],
+            "date_relation": "三个相邻观测日"
+          }
+        }
+      ],
+      "program_facts_sent": true,
+      "status": "not_executed",
+      "model_output": null,
+      "response_text": null,
+      "raw_response_body": null,
+      "mechanical_check": null,
+      "review": {
+        "status": "not_checked",
+        "dimensions": {
+          "numbers_and_relations": "not_checked",
+          "answers_original_question": "not_checked",
+          "units_windows_groups_missing": "not_checked",
+          "unsupported_inferences": "not_checked",
+          "row_citations": "not_checked"
+        },
+        "note": "本次接口仍不可用，未执行本项，无模型回答可供检查",
+        "specific_quotes": []
+      }
+    }
+  ],
+  "not_executed_reason": "接口不可用，保留本次失败；剩余项未执行，不重试。",
+  "finished_at": "2026-09-14T04:32:17.457145Z",
+  "retry_context": {
+    "authorization": "用户明确要求：再试一次。我可以连接到服务器。",
+    "previous_result": "reports/round9/ROUND9_NUMERIC_EXPLANATION_RESULTS.json",
+    "same_questions_and_parameters": true,
+    "automatic_retry": false
+  },
+  "comparison_conclusion": "本次1次连接尝试、0份模型回答，无法进行A/B解释比较。"
+}
