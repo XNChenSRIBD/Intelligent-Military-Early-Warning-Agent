@@ -1,0 +1,1103 @@
+{
+  "index_type": "historical_report_errata",
+  "source_instance_id": "fa414cc4276140ad9e3c2cb7981dd312",
+  "analysis_version": "round6_observation_v1",
+  "source_report": "reports/round7/ROUND7_DELIVERY.md",
+  "source_review": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+  "entry_count": 20,
+  "classification_definitions": {
+    "current_error_confirmed": "当前回答或原报告标签中已确认的问题；具体对象见scope",
+    "intermediate_error_corrected": "相应中间错误原句已被后续回答修正",
+    "intermediate_error_confirmed": "已确认的中间原句错误，不将其等同当前末答或假定整项已纠正",
+    "explanation_incomplete": "证据已提供或引用，但对应问题未解释完整",
+    "error_quote_not_found": "仅在Round7已审查记录内未找到所指错误原句",
+    "record_correct": "本项指定数字、字段或保存关系已核正确",
+    "evidence_limitation": "范围、原因、统计意义或时间证明仍有限，不当作已证实事实错误",
+    "superseded_error_confirmed": "已被后续解释版本替代的旧回答错误仍有明确原记录"
+  },
+  "locator_note": "round7.json_pointer按源JSON数组位置定位；original_records保留源文件完整ID与原字段路径，不复制请求或材料表。多分类分别适用于scope和correct_statement中的不同部分。",
+  "cases": [
+    {
+      "case_id": "kharkiv",
+      "original_goal_status": "not_demonstrated",
+      "strict_lead_hours": null,
+      "historical_availability_status": "unknown"
+    },
+    {
+      "case_id": "hormuz",
+      "original_goal_status": "not_demonstrated",
+      "strict_lead_hours": null,
+      "historical_availability_status": "unknown"
+    }
+  ],
+  "execution_code_commit": null,
+  "execution_code_note": "Round7引用的76970fe是Round6交付文档线索，d75723f是后来的页面文案线索；不据此回填每次模型调用的执行提交。",
+  "runtime_modified": false,
+  "new_model_calls": 0,
+  "new_downloads": 0,
+  "entries": [
+    {
+      "claim_id": "K-C1",
+      "case_id": "kharkiv",
+      "categories": [
+        "record_correct",
+        "evidence_limitation"
+      ],
+      "scope": "首黄最终回答及所选窗口",
+      "correct_statement": "首黄所选BUCU00ROU/C:S1P首窗为43.78 dB-Hz；2023年1日与2024年4月3日参考分列。后一天约42.6的数值不能回填；拼写缺损不另造站点或信号。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/0/claim_reviews/0",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.1 哈尔科夫",
+        "claim_heading": "K-C1"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-k-c1"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:kharkiv:2024-05-10T00:00:00+00:00:gnss_observation_quality:v1:round6_observation_v1"
+        ],
+        "run_ids": [
+          "97d718dc24b544d69eace3f54e3cf129"
+        ],
+        "statement_locators": [
+          "work $.assessment.model_interpretation；原文包含站名/信号拼写丢字，规范身份由已选结构化事实保留"
+        ],
+        "evidence_locators": [
+          "work $.assessment.fact_evidence[0:4].comparison",
+          "work $.tool_results[0].result.result.current_windows[0]",
+          "work $.tool_results[0].result.result.current_windows[11]"
+        ],
+        "alert_versions": null
+      }
+    },
+    {
+      "claim_id": "K-C2",
+      "case_id": "kharkiv",
+      "categories": [
+        "explanation_incomplete",
+        "error_quote_not_found"
+      ],
+      "scope": "已提供资料与最终解释的关系",
+      "correct_statement": "四次请求均已有5月8、9日GFZ指标，两日Ap均为5；最终没有环境论证。不是输入遗漏，也未找到原答声称已排除自然因素。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/0/claim_reviews/1",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.1 哈尔科夫",
+        "claim_heading": "K-C2"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-k-c2"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:kharkiv:2024-05-10T00:00:00+00:00:gnss_observation_quality:v1:round6_observation_v1"
+        ],
+        "run_ids": [
+          "97d718dc24b544d69eace3f54e3cf129"
+        ],
+        "statement_locators": [
+          "ROUND6_DELIVERY.md:99；对应实际 run 四次请求及 work 最终评估"
+        ],
+        "evidence_locators": [
+          "run $.steps[0].detail.attempts[0..3].request.messages[1].content（解码 JSON）.inputs[0].program.environment_context",
+          "work $.assessment.evidence_refs",
+          "work $.assessment.model_interpretation；同 run 最终 $.steps[0].detail.attempts[3].response_text"
+        ],
+        "alert_versions": null
+      }
+    },
+    {
+      "claim_id": "K-C3",
+      "case_id": "kharkiv",
+      "categories": [
+        "intermediate_error_corrected",
+        "evidence_limitation"
+      ],
+      "scope": "同一run初答错误已修订，非当前末答原句",
+      "correct_statement": "初答用逐窗差值中位数+0.150推断没有窗口超出参考，末答已改为承认有限偏离；差值中位数不一定等于两中位数之差，1日和3日参考不得合成稳定总体。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/0/claim_reviews/2",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.1 哈尔科夫",
+        "claim_heading": "K-C3"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-k-c3"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:kharkiv:2024-05-10T00:00:00+00:00:gnss_observation_quality:v1:round6_observation_v1"
+        ],
+        "run_ids": [
+          "97d718dc24b544d69eace3f54e3cf129"
+        ],
+        "statement_locators": [
+          "run $.steps[0].detail.attempts[0].response_text（解码 JSON）.assessments[0].statement；这是同 run 中间回答，非当前最终回答"
+        ],
+        "evidence_locators": [
+          "work $.tool_results[0].result.result.reference_groups[0]",
+          "work $.tool_results[0].result.result.reference_groups[1]",
+          "work $.assessment.fact_evidence[0:4].comparison"
+        ],
+        "alert_versions": null
+      }
+    },
+    {
+      "claim_id": "K-C4",
+      "case_id": "kharkiv",
+      "categories": [
+        "record_correct",
+        "evidence_limitation",
+        "error_quote_not_found"
+      ],
+      "scope": "窗口代表性及有效比例定义",
+      "correct_statement": "首窗仅18秒、1个历元；有效比例8/(1×29)=27.59%不是全天时间覆盖率。未找到最终回答宣称全天持续异常的原句。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/0/claim_reviews/3",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.1 哈尔科夫",
+        "claim_heading": "K-C4"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-k-c4"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:kharkiv:2024-05-10T00:00:00+00:00:gnss_observation_quality:v1:round6_observation_v1"
+        ],
+        "run_ids": [
+          "97d718dc24b544d69eace3f54e3cf129"
+        ],
+        "statement_locators": [
+          "ROUND6_DELIVERY.md:107；原工具窗口及保存的统计定义"
+        ],
+        "evidence_locators": [
+          "work $.tool_results[0].result.result.current_windows[0].{window_start,window_end,epoch_count,valid_count,file_satellites,valid_ratio,missing_epoch_count,epoch_coverage_ratio}",
+          "work $.tool_results[0].result.result.current_windows[11]",
+          "material09615acaf400442b9ef4ccc72bb5e524 v1 $.archive.computed.valid_ratio_definition",
+          "work $.tool_results[0].result.result.reference_groups"
+        ],
+        "alert_versions": null
+      }
+    },
+    {
+      "claim_id": "K-C5",
+      "case_id": "kharkiv",
+      "categories": [
+        "explanation_incomplete"
+      ],
+      "scope": "多站工具返回与最终关系解释",
+      "correct_statement": "BUCU与JOZE的同窗工具已调用、已送达且部分引用；各参考组既有同向也有异向，最终未解释站间关系。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/0/claim_reviews/4",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.1 哈尔科夫",
+        "claim_heading": "K-C5"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-k-c5"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:kharkiv:2024-05-10T00:00:00+00:00:gnss_observation_quality:v1:round6_observation_v1"
+        ],
+        "run_ids": [
+          "97d718dc24b544d69eace3f54e3cf129"
+        ],
+        "statement_locators": [
+          "work $.tool_results[1].question；最终 $.assessment.model_interpretation 与 $.assessment.fact_refs"
+        ],
+        "evidence_locators": [
+          "work $.tool_results[1].result.result.concurrent_windows",
+          "work $.tool_results[1].result.result.station_signal_summaries",
+          "work $.assessment.fact_evidence[4:8]",
+          "work $.assessment.model_interpretation"
+        ],
+        "alert_versions": null
+      }
+    },
+    {
+      "claim_id": "H-C1",
+      "case_id": "hormuz",
+      "categories": [
+        "record_correct",
+        "error_quote_not_found",
+        "evidence_limitation"
+      ],
+      "scope": "初答数值方向正确，末答原因未获支持",
+      "correct_statement": "初答正确区分平均每船次名义运力下降约0.60%与平均每油轮上升约3.13%；未找到平均单船上升原句。末答季节或操作原因没有两日日表支持。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/1/claim_reviews/0",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.2 霍尔木兹",
+        "claim_heading": "H-C1"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-h-c1"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-02-26T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1:interpretation-r1:interpretation-r2:interpretation-r3:interpretation-r4:interpretation-r5:interpretation-r6"
+        ],
+        "run_ids": [
+          "85835044a21b477b9a0f9464d8f52296"
+        ],
+        "statement_locators": [
+          {
+            "record_kind": "run",
+            "json_pointer": "/steps/0/detail/attempts/0/response_text",
+            "decoded_response_pointer": "/assessments/0/statement",
+            "role": "initial_response"
+          },
+          {
+            "record_kind": "run",
+            "json_pointer": "/steps/0/detail/attempts/2/response_text",
+            "decoded_response_pointer": "/assessments/0/statement",
+            "role": "final_response"
+          }
+        ],
+        "evidence_locators": [
+          "/input/program/flow_context",
+          "/steps/0/detail/attempts/0/request/messages/1/content",
+          "/tool_results/0/result/materials/0/text [JSON decoded] /rows"
+        ],
+        "alert_versions": null
+      }
+    },
+    {
+      "claim_id": "H-C2",
+      "case_id": "hormuz",
+      "categories": [
+        "record_correct",
+        "evidence_limitation"
+      ],
+      "scope": "当前末答主要数值与末句泛化",
+      "correct_statement": "112→86船次、5545881→1823647名义运力及每船次约49516.79→21205.20有依据。原答已列货船本次下降、历史上升；整体相似和异常意义的末句概括须限定。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/1/claim_reviews/1",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.2 霍尔木兹",
+        "claim_heading": "H-C2"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-h-c2"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-02-27T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1:interpretation-r1:interpretation-r2"
+        ],
+        "run_ids": [
+          "dc5d7e68646a46a888c27a3518be0681"
+        ],
+        "statement_locators": [
+          {
+            "record_kind": "run",
+            "json_pointer": "/steps/0/detail/attempts/2/response_text",
+            "decoded_response_pointer": "/assessments/0/statement",
+            "role": "final_response"
+          }
+        ],
+        "evidence_locators": [
+          "/input/program/flow_context",
+          "/steps/0/detail/attempts/2/request/messages/1/content",
+          "/tool_results/0/result/materials/0/text [JSON decoded] /rows"
+        ],
+        "alert_versions": null
+      }
+    },
+    {
+      "claim_id": "H-C6-old",
+      "case_id": "hormuz",
+      "categories": [
+        "superseded_error_confirmed"
+      ],
+      "scope": "被解释修订替代的旧capacity回答",
+      "correct_statement": "143→102414的大百分比不证明绝对水平高；102414低于所引历史两日3044613和1314529。旧高于历史平均说法已证实与数字冲突，原回答仍保留。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/1/claim_reviews/2",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.2 霍尔木兹",
+        "claim_heading": "H-C6-old"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-h-c6-old"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-08T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1"
+        ],
+        "run_ids": [
+          "009531a82ec64f58b21b844d8d9f1620"
+        ],
+        "statement_locators": [
+          {
+            "record_kind": "run",
+            "json_pointer": "/steps/0/detail/attempts/2/response_text",
+            "decoded_response_pointer": "/assessments/0/statement",
+            "role": "final_response"
+          }
+        ],
+        "evidence_locators": [
+          "/assessment/fact_evidence",
+          "/steps/0/detail/attempts/2/request/messages/1/content",
+          "/tool_results/0/result/materials/0/text [JSON decoded] /rows"
+        ],
+        "alert_versions": [
+          {
+            "kind": "alert_version",
+            "id": "30cae7f8fa7944709c07a8c17345a139",
+            "evidence_version": null
+          }
+        ]
+      }
+    },
+    {
+      "claim_id": "H-C6-revision",
+      "case_id": "hormuz",
+      "categories": [
+        "explanation_incomplete",
+        "evidence_limitation"
+      ],
+      "scope": "当前r1解释未完成原问题",
+      "correct_statement": "r1改选总船次2→3对历史69→67，没有回答原运力问题；未达到显著异常水平无对应检验或阈值支持，不代表规则恢复。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/1/claim_reviews/3",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.2 霍尔木兹",
+        "claim_heading": "H-C6-revision"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-h-c6-revision"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-08T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1:interpretation-r1"
+        ],
+        "run_ids": [
+          "f6b218217cda4957ab4f33747e98f9f8"
+        ],
+        "statement_locators": [
+          {
+            "record_kind": "run",
+            "json_pointer": "/steps/0/detail/attempts/2/response_text",
+            "decoded_response_pointer": "/assessments/0/statement",
+            "role": "final_response"
+          }
+        ],
+        "evidence_locators": [
+          "/assessment/fact_evidence",
+          "/input/program/flow_context",
+          "/input/program/rule",
+          "/tool_results/0/result/materials/0/text",
+          "/steps/0/detail/attempts/2/request/messages/1/content"
+        ],
+        "alert_versions": [
+          {
+            "kind": "alert_version",
+            "id": "6951f20f29e248249e889edd91e6bb10",
+            "evidence_version": null
+          }
+        ]
+      }
+    },
+    {
+      "claim_id": "H-C7",
+      "case_id": "hormuz",
+      "categories": [
+        "record_correct",
+        "evidence_limitation"
+      ],
+      "scope": "相邻两次分析的日期及解释",
+      "correct_statement": "3月6、7、8日船次依次2、3、2；2→3和3→2属于不同日期，没有数值冲突。历史同期实际引用2019年11月1→2日，显著性措辞也无检验支持。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/1/claim_reviews/4",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.2 霍尔木兹",
+        "claim_heading": "H-C7"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-h-c7"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-08T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1:interpretation-r1",
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-09T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1"
+        ],
+        "run_ids": [
+          "f6b218217cda4957ab4f33747e98f9f8",
+          "508a022820d24e5791ceb7f97182bae1"
+        ],
+        "statement_locators": [
+          {
+            "run_id": "f6b218217cda4957ab4f33747e98f9f8",
+            "json_pointer": "/steps/0/detail/attempts/2/response_text",
+            "decoded_response_pointer": "/assessments/0/statement"
+          },
+          {
+            "run_id": "508a022820d24e5791ceb7f97182bae1",
+            "json_pointer": "/steps/0/detail/attempts/2/response_text",
+            "decoded_response_pointer": "/assessments/0/statement"
+          }
+        ],
+        "evidence_locators": [
+          "/input/program/flow_context/previous",
+          "/input/program/flow_context/latest",
+          "/assessment/fact_evidence"
+        ],
+        "alert_versions": null
+      }
+    },
+    {
+      "claim_id": "H-C8",
+      "case_id": "hormuz",
+      "categories": [
+        "record_correct"
+      ],
+      "scope": "告警和解释版本保存关系",
+      "correct_statement": "3月8日v6仅更新解释，当前3月9日v7未被覆盖或恢复；三个保存标志为physical_recovery=false、current_version_updated=false、rule_state_unchanged=true。告警ID尾日是过程起日。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/1/claim_reviews/5",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.2 霍尔木兹",
+        "claim_heading": "H-C8"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-h-c8"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-08T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1:interpretation-r1"
+        ],
+        "run_ids": [
+          "f6b218217cda4957ab4f33747e98f9f8"
+        ],
+        "statement_locators": [
+          {
+            "source_file": "ROUND6_DELIVERY.md",
+            "section": "第11项：错误解释与真实恢复混淆"
+          }
+        ],
+        "evidence_locators": [
+          "/interpretation_numeric_alert_changes/0",
+          "/status",
+          "/evidence_version",
+          "/latest_observation",
+          "/baseline",
+          "/resolved_on",
+          "/analysis/work_id"
+        ],
+        "alert_versions": [
+          {
+            "kind": "alert_version",
+            "id": "30cae7f8fa7944709c07a8c17345a139",
+            "evidence_version": 6
+          },
+          {
+            "kind": "alert_version",
+            "id": "6951f20f29e248249e889edd91e6bb10",
+            "evidence_version": 6
+          },
+          {
+            "kind": "alert",
+            "id": "pw_replay-fa414cc4-hormuz-portwatch_pw_lowflow_v1_2026-03-01",
+            "evidence_version": 7
+          }
+        ]
+      }
+    },
+    {
+      "claim_id": "H-C3-opposite-station-directions",
+      "case_id": "hormuz",
+      "categories": [
+        "current_error_confirmed",
+        "evidence_limitation"
+      ],
+      "scope": "当前工作第5次最终回答",
+      "correct_statement": "3月5日10:30两站C:S1P、dB-Hz、1秒均明确；BSHM四窗低于自身参考、KITG四窗高于自身参考，末答全部在范围内与已给事实矛盾。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/1/claim_reviews/6",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.2 霍尔木兹",
+        "claim_heading": "H-C3-opposite-station-directions"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-h-c3-opposite-station-directions"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1"
+        ],
+        "run_ids": [
+          "7fb664bb43974e8d874bbb8a8d69fdf3"
+        ],
+        "statement_locators": [
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+            "json_path": "$.attempts_detail[4].response_text",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.assessments[0].statement"
+          }
+        ],
+        "evidence_locators": [
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+            "json_path": "$.tool_results[1].result.result.concurrent_windows"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+            "json_path": "$.attempts_detail[3].request.messages[?(@.role==\"user\")].content",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.tool_results[1].result.station_reference_groups"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+            "json_path": "$.attempts_detail[4].request.messages[?(@.role==\"user\")].content",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.tool_results[1].result.facts"
+          }
+        ],
+        "alert_versions": null
+      }
+    },
+    {
+      "claim_id": "H-C3-mixed-window-directions",
+      "case_id": "hormuz",
+      "categories": [
+        "intermediate_error_confirmed",
+        "evidence_limitation"
+      ],
+      "scope": "当前工作第4次中间回答，非第5次最终句",
+      "correct_statement": "3月5日10:15第4次中间句不能代表末答。完整工具四窗存在站间方向变化，压缩输入提供分组计数和例窗；不能声称模型逐行读了全部中间窗。末答另见H-C5-0305-1015。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/1/claim_reviews/7",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.2 霍尔木兹",
+        "claim_heading": "H-C3-mixed-window-directions"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-h-c3-mixed-window-directions"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1"
+        ],
+        "run_ids": [
+          "fc1d271276b44082896e9c08eb5d8a16"
+        ],
+        "statement_locators": [
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.attempts_detail[3].response_text",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.assessments[0].statement"
+          }
+        ],
+        "evidence_locators": [
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.tool_results[1].result.result.concurrent_windows"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.attempts_detail[3].request.messages[?(@.role==\"user\")].content",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.tool_results[1].result.station_reference_groups"
+          }
+        ],
+        "alert_versions": null
+      }
+    },
+    {
+      "claim_id": "H-C3-NICO-receiver-units",
+      "case_id": "hormuz",
+      "categories": [
+        "record_correct",
+        "evidence_limitation"
+      ],
+      "scope": "NICO材料单位范围",
+      "correct_statement": "NICO有900历元和17信号；40 receiver_units且cnr_p10=null表示单位换算未确认，不是零信号或缺文件，该限制不能移植给单位明确的BSHM/KITG。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/1/claim_reviews/8",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.2 霍尔木兹",
+        "claim_heading": "H-C3-NICO-receiver-units"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-h-c3-nico-receiver-units"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1"
+        ],
+        "run_ids": [
+          "913d0467af754324a4657d6ca62573dc"
+        ],
+        "statement_locators": [
+          {
+            "file": "ROUND6_DELIVERY.md",
+            "section": "本轮解决的具体问题，第 2 项"
+          }
+        ],
+        "evidence_locators": [
+          {
+            "table": "materials",
+            "id": "67d6d6e3f6d640a18173d16f0c63182d",
+            "json_path": "$.archive.computed.signals[0]"
+          },
+          {
+            "table": "materials",
+            "id": "67d6d6e3f6d640a18173d16f0c63182d",
+            "json_path": "$.archive.computed.series[0:4]"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.input.program.observations[2].signal_directory[0]"
+          }
+        ],
+        "alert_versions": null
+      }
+    },
+    {
+      "claim_id": "H-C4-signal-switch",
+      "case_id": "hormuz",
+      "categories": [
+        "record_correct",
+        "error_quote_not_found",
+        "evidence_limitation"
+      ],
+      "scope": "实际信号选择及已审查原句范围",
+      "correct_statement": "3月2日两批工具选C:S5P，其余12批当前工作选C:S1P；摘要和工具数值不可互换。已审查响应未找到串成同信号连续趋势的原句。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/1/claim_reviews/9",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.2 霍尔木兹",
+        "claim_heading": "H-C4-signal-switch"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-h-c4-signal-switch"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1"
+        ],
+        "run_ids": [
+          "5ca788fdb00144e7b6e8ef4a490eef8d",
+          "091541c38c48499d818ffec7a147f9f4"
+        ],
+        "statement_locators": [
+          {
+            "file": "ROUND6_DELIVERY.md",
+            "section": "数据范围与解释"
+          }
+        ],
+        "evidence_locators": [
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.input.program.comparison_fragments[1]"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.tool_results[1].arguments"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.tool_results[1].result.result.station_signal_summaries[1]"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+            "json_path": "$.tool_results[1].result.result.station_signal_summaries[1]"
+          }
+        ],
+        "alert_versions": null
+      }
+    },
+    {
+      "claim_id": "H-C3-March2-unanswered-return",
+      "case_id": "hormuz",
+      "categories": [
+        "explanation_incomplete"
+      ],
+      "scope": "已送达和引用但未完成的关系解释",
+      "correct_statement": "3月2日10:15同窗工具已返回并被引用，但最终仍将两站一致或差异列作问题，没有解释已经提供的异向事实。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/1/claim_reviews/10",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.2 霍尔木兹",
+        "claim_heading": "H-C3-March2-unanswered-return"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-h-c3-march2-unanswered-return"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1"
+        ],
+        "run_ids": [
+          "5ca788fdb00144e7b6e8ef4a490eef8d"
+        ],
+        "statement_locators": [
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.assessment.evidence_gaps[0].question"
+          }
+        ],
+        "evidence_locators": [
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.tool_results[1].result.result.concurrent_windows"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.attempts_detail[3].request.messages[?(@.role==\"user\")].content",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.tool_results[1].result.facts"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.attempts_detail[3].request.messages[?(@.role==\"user\")].content",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.tool_results[1].result.station_reference_groups"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.assessment.fact_refs"
+          }
+        ],
+        "alert_versions": null
+      }
+    },
+    {
+      "claim_id": "H-C5-0303-1030",
+      "case_id": "hormuz",
+      "categories": [
+        "current_error_confirmed"
+      ],
+      "scope": "当前r1第5次最终回答",
+      "correct_statement": "第5次正文承认已算出范围关系，缺口却仍称样本不足以确定范围内外，当前回答内部矛盾；不足以作业务判断本身不是错误。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/1/claim_reviews/11",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.2 霍尔木兹",
+        "claim_heading": "H-C5-0303-1030"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-h-c5-0303-1030"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1"
+        ],
+        "run_ids": [
+          "913d0467af754324a4657d6ca62573dc"
+        ],
+        "statement_locators": [
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.attempts_detail[4].response_text",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.assessments[0].evidence_gaps[0].question"
+          }
+        ],
+        "evidence_locators": [
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.assessment.fact_evidence"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.attempts_detail[3].request.messages[?(@.role==\"user\")].content",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.tool_results[0].result.facts"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.attempts_detail[4].request.messages[?(@.role==\"user\")].content",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.tool_results[1].result.facts"
+          }
+        ],
+        "alert_versions": null
+      }
+    },
+    {
+      "claim_id": "H-C5-0305-1015",
+      "case_id": "hormuz",
+      "categories": [
+        "current_error_confirmed"
+      ],
+      "scope": "当前r1第5次最终回答",
+      "correct_statement": "第5次以缺少显著性检验否认已给数值的范围关系，并归为missing_observation；单位、观测和参考已提供。旧预算耗尽状态已被替代。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/1/claim_reviews/12",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.2 霍尔木兹",
+        "claim_heading": "H-C5-0305-1015"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-h-c5-0305-1015"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1"
+        ],
+        "run_ids": [
+          "fc1d271276b44082896e9c08eb5d8a16"
+        ],
+        "statement_locators": [
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.attempts_detail[4].response_text",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.assessments[0].evidence_gaps[0]"
+          }
+        ],
+        "evidence_locators": [
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.assessment.fact_evidence"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.attempts_detail[3].request.messages[?(@.role==\"user\")].content",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.tool_results"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.attempts_detail[4].request.messages[?(@.role==\"user\")].content",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.tool_results"
+          }
+        ],
+        "alert_versions": null
+      }
+    },
+    {
+      "claim_id": "H-C5-0305-1030",
+      "case_id": "hormuz",
+      "categories": [
+        "current_error_confirmed"
+      ],
+      "scope": "当前原工作第5次最终回答",
+      "correct_statement": "第5次称所有观测均在范围内，实际BSHM四窗低、KITG四窗高；又把已明确单位和采样称为未验证，与原数据及本答说明冲突。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/1/claim_reviews/13",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.2 霍尔木兹",
+        "claim_heading": "H-C5-0305-1030"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-h-c5-0305-1030"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1"
+        ],
+        "run_ids": [
+          "7fb664bb43974e8d874bbb8a8d69fdf3"
+        ],
+        "statement_locators": [
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+            "json_path": "$.attempts_detail[4].response_text",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.assessments[0]"
+          }
+        ],
+        "evidence_locators": [
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+            "json_path": "$.tool_results[1].result.result.concurrent_windows"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+            "json_path": "$.attempts_detail[4].request.messages[?(@.role==\"user\")].content",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.tool_results[1].result.station_signal_summaries"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+            "json_path": "$.attempts_detail[4].request.messages[?(@.role==\"user\")].content",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.tool_results[1].result.facts"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+            "json_path": "$.attempts_detail[4].response_text",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.assessments[0].evidence_gaps[0]"
+          }
+        ],
+        "alert_versions": null
+      }
+    },
+    {
+      "claim_id": "H-D-report-return-delivery-label",
+      "case_id": "hormuz",
+      "categories": [
+        "current_error_confirmed",
+        "record_correct",
+        "explanation_incomplete"
+      ],
+      "scope": "Round6报告标签的文档勘误，不是新的模型错误",
+      "correct_statement": "Round6表格的回到同一判断=否不能解释为未送达：三条工作实际收到工具结果，但最终解释不成立。送达、引用、解释须分开，原统计快照不回写。",
+      "round7": {
+        "file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+        "json_pointer": "/cases/1/claim_reviews/14",
+        "report": "reports/round7/ROUND7_DELIVERY.md",
+        "section": "4.2 霍尔木兹",
+        "claim_heading": "H-D-report-return-delivery-label"
+      },
+      "errata_location": {
+        "file": "reports/round8/ROUND8_DELIVERY.md",
+        "anchor": "r8-h-d-report-return-delivery-label"
+      },
+      "original_records": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1"
+        ],
+        "run_ids": [
+          "913d0467af754324a4657d6ca62573dc",
+          "fc1d271276b44082896e9c08eb5d8a16",
+          "7fb664bb43974e8d874bbb8a8d69fdf3"
+        ],
+        "statement_locators": [
+          {
+            "file": "reports/round6/ROUND6_HORMUZ_REPORT.md",
+            "section": "实际自主调查，工具表"
+          }
+        ],
+        "evidence_locators": [
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.attempts_detail[3].request.messages[?(@.role==\"user\")].content",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.tool_results"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.attempts_detail[3].request.messages[?(@.role==\"user\")].content",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.tool_results"
+          },
+          {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+            "json_path": "$.attempts_detail[3].request.messages[?(@.role==\"user\")].content",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.tool_results"
+          }
+        ],
+        "alert_versions": null
+      }
+    }
+  ]
+}
