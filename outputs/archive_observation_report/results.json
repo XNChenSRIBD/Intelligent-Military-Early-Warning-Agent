@@ -1,0 +1,3167 @@
+{
+  "title": "历史观测事实报告",
+  "sources": {
+    "K-C1": {
+      "source_file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+      "json_pointer": "/cases/0/claim_reviews/0",
+      "record_ids": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:kharkiv:2024-05-10T00:00:00+00:00:gnss_observation_quality:v1:round6_observation_v1"
+        ],
+        "run_ids": [
+          "97d718dc24b544d69eace3f54e3cf129"
+        ],
+        "material_versions": [
+          {
+            "id": "55f9a78bfed64428908abf1d80fc8e27",
+            "version": 1
+          },
+          {
+            "id": "0424fc1a126c4f249857702e1f107b46",
+            "version": 1
+          }
+        ]
+      },
+      "field_paths": [
+        "work $.assessment.model_interpretation；原文包含站名/信号拼写丢字，规范身份由已选结构化事实保留",
+        "work $.assessment.fact_evidence[0:4].comparison",
+        "work $.tool_results[0].result.result.current_windows[0]",
+        "work $.tool_results[0].result.result.current_windows[11]"
+      ],
+      "quotes": [
+        {
+          "label": "历史最终回答原文（保留原站名和信号拼写）",
+          "text": "BUCUROU 的 C:SIP 信号在有限历史样本范围外，同站同信号逐日可比样本支持实际历史偏离，但需进一步核查具体偏离原因。",
+          "locator": "work $.assessment.model_interpretation；原文包含站名/信号拼写丢字，规范身份由已选结构化事实保留",
+          "status": [
+            "record_correct",
+            "evidence_limitation"
+          ]
+        }
+      ],
+      "provenance_note": "仅摘录本地已保存的 Round7 事实与原文；原文当前分类沿用 Round8。未读取服务器、补取原始文件或重新判定。",
+      "classification_source": {
+        "source_file": "reports/round8/ROUND8_ERRATA_INDEX.json",
+        "json_pointer": "/entries/0/categories",
+        "categories": [
+          "record_correct",
+          "evidence_limitation"
+        ]
+      },
+      "review_note": {
+        "label": "Round7 核查意见",
+        "text": "所选首末窗口确实低于各自有限参考样本，故可保留描述性历史偏离。原文 BUCUROU/C:SIP 对应结构化 BUCU00ROU/C:S1P，不另造站点或信号。该事实没有说明异常原因、城市覆盖或冲突预警；本轮不改变 candidate/attention。首黄 p10=43.78，不能把末批 May11 报告中的 42.6 值移入首黄。"
+      },
+      "original_answer_version": {
+        "analysis_version": "round6_observation_v1",
+        "input_version": 1,
+        "current_completed_at": "2026-09-13T16:34:38.303741+00:00"
+      }
+    },
+    "K-C2": {
+      "source_file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+      "json_pointer": "/cases/0/claim_reviews/1",
+      "record_ids": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:kharkiv:2024-05-10T00:00:00+00:00:gnss_observation_quality:v1:round6_observation_v1"
+        ],
+        "run_ids": [
+          "97d718dc24b544d69eace3f54e3cf129"
+        ],
+        "material_versions": [
+          {
+            "id": "55f9a78bfed64428908abf1d80fc8e27",
+            "version": 1
+          },
+          {
+            "id": "0424fc1a126c4f249857702e1f107b46",
+            "version": 1
+          }
+        ],
+        "environment_material_versions": [
+          {
+            "id": "9e201e088b814c63a50271f84673c34d",
+            "version": 1
+          },
+          {
+            "id": "5a1a4506b89447dab04d93507f767d78",
+            "version": 1
+          }
+        ]
+      },
+      "field_paths": [
+        "ROUND6_DELIVERY.md:99；对应实际 run 四次请求及 work 最终评估",
+        "run $.steps[0].detail.attempts[0..3].request.messages[1].content（解码 JSON）.inputs[0].program.environment_context",
+        "work $.assessment.evidence_refs",
+        "work $.assessment.model_interpretation；同 run 最终 $.steps[0].detail.attempts[3].response_text"
+      ],
+      "quotes": [
+        {
+          "label": "原交付报告述评（不是模型排除自然因素的原句）",
+          "text": "哈尔科夫 as_of=2024-05-10 的四次真实请求已包含 05-08、05-09 指标，但最终论证只引用 GNSS 工具，不能写成已经排除自然因素。",
+          "locator": "ROUND6_DELIVERY.md:99；对应实际 run 四次请求及 work 最终评估",
+          "status": [
+            "explanation_incomplete",
+            "error_quote_not_found"
+          ]
+        }
+      ],
+      "provenance_note": "仅摘录本地已保存的 Round7 事实与原文；原文当前分类沿用 Round8。未读取服务器、补取原始文件或重新判定。",
+      "classification_source": {
+        "source_file": "reports/round8/ROUND8_ERRATA_INDEX.json",
+        "json_pointer": "/entries/1/categories",
+        "categories": [
+          "explanation_incomplete",
+          "error_quote_not_found"
+        ]
+      },
+      "review_note": {
+        "label": "Round7 核查意见",
+        "text": "这不是输入遗漏。两份 GFZ 指标的完整 Kp/ap 序列在 原 work.input.program.environment_context 及四次保存请求中均可读；但是没有成为所选事实，也没有自然因素分析。该数据本身是全球环境背景，缺 Dst、耀斑和射电暴观测，不能以 Ap=5 或没有相关字段推断自然因素已排除。没有实际原句宣称已排除自然因素，本项确认的是报告所述解释缺口。"
+      },
+      "original_answer_version": {
+        "analysis_version": "round6_observation_v1",
+        "input_version": 1,
+        "current_completed_at": "2026-09-13T16:34:38.303741+00:00"
+      }
+    },
+    "K-C3": {
+      "source_file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+      "json_pointer": "/cases/0/claim_reviews/2",
+      "record_ids": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:kharkiv:2024-05-10T00:00:00+00:00:gnss_observation_quality:v1:round6_observation_v1"
+        ],
+        "run_ids": [
+          "97d718dc24b544d69eace3f54e3cf129"
+        ],
+        "material_versions": [
+          {
+            "id": "55f9a78bfed64428908abf1d80fc8e27",
+            "version": 1
+          },
+          {
+            "id": "0424fc1a126c4f249857702e1f107b46",
+            "version": 1
+          }
+        ]
+      },
+      "field_paths": [
+        "run $.steps[0].detail.attempts[0].response_text（解码 JSON）.assessments[0].statement；这是同 run 中间回答，非当前最终回答",
+        "work $.tool_results[0].result.result.reference_groups[0]",
+        "work $.tool_results[0].result.result.reference_groups[1]",
+        "work $.assessment.fact_evidence[0:4].comparison"
+      ],
+      "quotes": [
+        {
+          "label": "历史第 1 次中间回答；同一运行的末答已修正该句",
+          "text": "BUCU00ROU 的 C:S1P 信号在有限历史样本范围外的窗口中，当前窗口的 P10 中位数为 42.39，参考窗口的中位数为 42.105，窗口差中位数为 0.15。这表明当前窗口的信号强度与参考窗口相比略有上升，但未超出参考样本的范围，因此不构成异常。",
+          "locator": "run $.steps[0].detail.attempts[0].response_text（解码 JSON）.assessments[0].statement；这是同 run 中间回答，非当前最终回答",
+          "status": [
+            "intermediate_error_corrected",
+            "evidence_limitation"
+          ]
+        }
+      ],
+      "provenance_note": "仅摘录本地已保存的 Round7 事实与原文；原文当前分类沿用 Round8。未读取服务器、补取原始文件或重新判定。",
+      "classification_source": {
+        "source_file": "reports/round8/ROUND8_ERRATA_INDEX.json",
+        "json_pointer": "/entries/2/categories",
+        "categories": [
+          "intermediate_error_corrected",
+          "evidence_limitation"
+        ]
+      },
+      "review_note": {
+        "label": "Round7 核查意见",
+        "text": "0.15 是 2023 年组的逐窗配对差中位数，不是每一窗都在参考范围内的证明；同组已存 136 个低于、153 个高于有限样本的窗口。2024 年 4 月组的对应差中位数是 -0.565，必须分组。两个中位数相减不必等于配对差的中位数，不能把 42.39−42.105 与 0.15 不等当程序算错。末次回答已经改为有限历史偏离，故该原句的矛盾有真实修订轨迹；仍不能把 1 日/3 日样本当稳定总体、显著性或事件概率。"
+      },
+      "original_answer_version": {
+        "analysis_version": "round6_observation_v1",
+        "input_version": 1,
+        "current_completed_at": "2026-09-13T16:34:38.303741+00:00"
+      },
+      "additional_source_locations": [
+        {
+          "source_file": "tools/numeric_explanation_check/inputs.json",
+          "json_pointer": "/tasks/4",
+          "source_mapping_file": "tools/numeric_explanation_check/source_mapping.json",
+          "source_mapping_pointer": "/entries/4",
+          "usage": "Round9 已保存的最少数值摘录及匿名身份映射；不采用模型回答充当事实。"
+        }
+      ]
+    },
+    "K-C4": {
+      "source_file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+      "json_pointer": "/cases/0/claim_reviews/3",
+      "record_ids": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:kharkiv:2024-05-10T00:00:00+00:00:gnss_observation_quality:v1:round6_observation_v1"
+        ],
+        "run_ids": [
+          "97d718dc24b544d69eace3f54e3cf129"
+        ],
+        "material_versions": [
+          {
+            "id": "55f9a78bfed64428908abf1d80fc8e27",
+            "version": 1
+          },
+          {
+            "id": "0424fc1a126c4f249857702e1f107b46",
+            "version": 1
+          }
+        ]
+      },
+      "field_paths": [
+        "ROUND6_DELIVERY.md:107；原工具窗口及保存的统计定义",
+        "work $.tool_results[0].result.result.current_windows[0].{window_start,window_end,epoch_count,valid_count,file_satellites,valid_ratio,missing_epoch_count,epoch_coverage_ratio}",
+        "work $.tool_results[0].result.result.current_windows[11]",
+        "material09615acaf400442b9ef4ccc72bb5e524 v1 $.archive.computed.valid_ratio_definition",
+        "work $.tool_results[0].result.result.reference_groups"
+      ],
+      "quotes": [
+        {
+          "label": "原交付报告限制说明（不是已发现的模型全天异常原句）",
+          "text": "不能把首个仅 18 秒、1 个有效历元的边界窗口当成全天持续异常。有效比例按卫星集合计算，也不是时间覆盖率。",
+          "locator": "ROUND6_DELIVERY.md:107；原工具窗口及保存的统计定义",
+          "status": [
+            "record_correct",
+            "evidence_limitation",
+            "error_quote_not_found"
+          ]
+        }
+      ],
+      "provenance_note": "仅摘录本地已保存的 Round7 事实与原文；原文当前分类沿用 Round8。未读取服务器、补取原始文件或重新判定。",
+      "classification_source": {
+        "source_file": "reports/round8/ROUND8_ERRATA_INDEX.json",
+        "json_pointer": "/entries/3/categories",
+        "categories": [
+          "record_correct",
+          "evidence_limitation",
+          "error_quote_not_found"
+        ]
+      },
+      "review_note": {
+        "label": "Round7 核查意见",
+        "text": "有效比例的分母包含整份文件出现过的卫星，不是卫星在每个窗口实际应可见的数量，也不是时间覆盖率。边界的 8/(1×29) 与末窗的 81/(9×29) 解释了两个比例；缺失历元为 0 只适用于已登记窗口定义。289 窗既有上偏又有下偏，不能用首末样例写全天持续下降。当前最终模型只作有限偏离陈述，没有记录支持把其直接判为声称全天持续异常；本项确认报告限制正确。"
+      },
+      "original_answer_version": {
+        "analysis_version": "round6_observation_v1",
+        "input_version": 1,
+        "current_completed_at": "2026-09-13T16:34:38.303741+00:00"
+      },
+      "additional_source_locations": [
+        {
+          "source_file": "tools/numeric_explanation_check/inputs.json",
+          "json_pointer": "/tasks/5",
+          "source_mapping_file": "tools/numeric_explanation_check/source_mapping.json",
+          "source_mapping_pointer": "/entries/5",
+          "usage": "Round9 已保存的最少数值摘录及匿名身份映射；不采用模型回答充当事实。"
+        }
+      ]
+    },
+    "K-C5": {
+      "source_file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+      "json_pointer": "/cases/0/claim_reviews/4",
+      "record_ids": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:kharkiv:2024-05-10T00:00:00+00:00:gnss_observation_quality:v1:round6_observation_v1"
+        ],
+        "run_ids": [
+          "97d718dc24b544d69eace3f54e3cf129"
+        ],
+        "material_versions": [
+          {
+            "id": "55f9a78bfed64428908abf1d80fc8e27",
+            "version": 1
+          },
+          {
+            "id": "0424fc1a126c4f249857702e1f107b46",
+            "version": 1
+          }
+        ]
+      },
+      "field_paths": [
+        "work $.tool_results[1].question；最终 $.assessment.model_interpretation 与 $.assessment.fact_refs",
+        "work $.tool_results[1].result.result.concurrent_windows",
+        "work $.tool_results[1].result.result.station_signal_summaries",
+        "work $.assessment.fact_evidence[4:8]",
+        "work $.assessment.model_interpretation"
+      ],
+      "quotes": [
+        {
+          "label": "历史多站调查问题原文",
+          "text": "BUCU00ROU, JOZE00POL 是否在真实相同 UTC 统计窗口出现同向、相反或不一致的历史变化？",
+          "locator": "work $.tool_results[1].question；最终 $.assessment.model_interpretation 与 $.assessment.fact_refs",
+          "status": [
+            "explanation_incomplete"
+          ]
+        }
+      ],
+      "provenance_note": "仅摘录本地已保存的 Round7 事实与原文；原文当前分类沿用 Round8。未读取服务器、补取原始文件或重新判定。",
+      "classification_source": {
+        "source_file": "reports/round8/ROUND8_ERRATA_INDEX.json",
+        "json_pointer": "/entries/4/categories",
+        "categories": [
+          "explanation_incomplete"
+        ]
+      },
+      "review_note": {
+        "label": "Round7 核查意见",
+        "text": "真实同窗返回已经发生，最终 8 个 fact_refs 中包含 tool2 的 4 条事实；不能写成多站没有调用或完全没被选用。但模型最终只解释 BUCU，未回答两站关系，evidence_gaps=[] 不能替代实际论证。首窗 4 月组一低一高，04:45 和 09:30 的 4 月组两站皆低，19:05 与末窗又一低一高；2023 组的方向和内外关系另有变化。因此不能写全天统一下降。六个例子是原工具按时间等距抽取，表中只是复述已存样例，不外推发生比例或显著性。"
+      },
+      "original_answer_version": {
+        "analysis_version": "round6_observation_v1",
+        "input_version": 1,
+        "current_completed_at": "2026-09-13T16:34:38.303741+00:00"
+      }
+    },
+    "H-C5-0303-1030": {
+      "source_file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+      "json_pointer": "/cases/1/claim_reviews/11",
+      "record_ids": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1"
+        ],
+        "run_ids": [
+          "913d0467af754324a4657d6ca62573dc"
+        ],
+        "material_versions": [
+          {
+            "id": "c9fc0a4fadd24c01beb9971237a2130e",
+            "version": 1,
+            "tool": "station_history"
+          },
+          {
+            "id": "4d1c3a6399884653a1c3fca224db6c47",
+            "version": 1,
+            "tool": "multistation_check"
+          }
+        ]
+      },
+      "field_paths": [
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "json_path": "$.attempts_detail[4].response_text",
+          "parse_content_as": "JSON",
+          "content_json_path": "$.assessments[0].evidence_gaps[0].question"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "json_path": "$.assessment.fact_evidence"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "json_path": "$.attempts_detail[3].request.messages[?(@.role==\"user\")].content",
+          "parse_content_as": "JSON",
+          "content_json_path": "$.tool_results[0].result.facts"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "json_path": "$.attempts_detail[4].request.messages[?(@.role==\"user\")].content",
+          "parse_content_as": "JSON",
+          "content_json_path": "$.tool_results[1].result.facts"
+        }
+      ],
+      "quotes": [
+        {
+          "label": "历史第 5 次最终回答中的缺口原文",
+          "text": "未提供足够的参考样本以明确该信号的异常是否超出有限样本范围",
+          "locator": {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.attempts_detail[4].response_text",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.assessments[0].evidence_gaps[0].question"
+          },
+          "status": [
+            "current_error_confirmed"
+          ]
+        }
+      ],
+      "provenance_note": "仅摘录本地已保存的 Round7 事实与原文；原文当前分类沿用 Round8。未读取服务器、补取原始文件或重新判定。",
+      "classification_source": {
+        "source_file": "reports/round8/ROUND8_ERRATA_INDEX.json",
+        "json_pointer": "/entries/16/categories",
+        "categories": [
+          "current_error_confirmed"
+        ]
+      },
+      "review_note": {
+        "label": "Round7 核查意见",
+        "text": "第五次 statement 接受已算关系，gap 却继续说无法明确是否超出，答案内部仍矛盾。保留 analysis_explanation_issue，不把 insufficient_evidence 本身视为错误，不追加请求。"
+      },
+      "original_answer_version": {
+        "work_current": true,
+        "analysis_version": "round6_observation_v1",
+        "input_version": 3,
+        "interpretation_of": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+        "work_result_quality": "analysis_explanation_issue"
+      },
+      "additional_source_locations": [
+        {
+          "source_file": "tools/numeric_explanation_check/inputs.json",
+          "json_pointer": "/tasks/0",
+          "source_mapping_file": "tools/numeric_explanation_check/source_mapping.json",
+          "source_mapping_pointer": "/entries/0",
+          "usage": "Round9 已保存的最少数值摘录及匿名身份映射；不采用模型回答充当事实。"
+        }
+      ]
+    },
+    "H-C5-0305-1015": {
+      "source_file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+      "json_pointer": "/cases/1/claim_reviews/12",
+      "record_ids": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1"
+        ],
+        "run_ids": [
+          "fc1d271276b44082896e9c08eb5d8a16"
+        ],
+        "material_versions": [
+          {
+            "id": "1719f83a7eb44567be6c96ada283ed09",
+            "version": 1,
+            "tool": "station_history"
+          },
+          {
+            "id": "f75294126fa9410da617a0baa91a5857",
+            "version": 1,
+            "tool": "multistation_check"
+          }
+        ]
+      },
+      "field_paths": [
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "json_path": "$.attempts_detail[4].response_text",
+          "parse_content_as": "JSON",
+          "content_json_path": "$.assessments[0].evidence_gaps[0]"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "json_path": "$.assessment.fact_evidence"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "json_path": "$.attempts_detail[3].request.messages[?(@.role==\"user\")].content",
+          "parse_content_as": "JSON",
+          "content_json_path": "$.tool_results"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "json_path": "$.attempts_detail[4].request.messages[?(@.role==\"user\")].content",
+          "parse_content_as": "JSON",
+          "content_json_path": "$.tool_results"
+        }
+      ],
+      "quotes": [
+        {
+          "label": "历史第 5 次最终回答中的缺口原文",
+          "text": "未提供足够的统计显著性检验，无法确认该信号的异常是否超出有限样本范围",
+          "locator": {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.attempts_detail[4].response_text",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.assessments[0].evidence_gaps[0]"
+          },
+          "status": [
+            "current_error_confirmed"
+          ]
+        }
+      ],
+      "provenance_note": "仅摘录本地已保存的 Round7 事实与原文；原文当前分类沿用 Round8。未读取服务器、补取原始文件或重新判定。",
+      "classification_source": {
+        "source_file": "reports/round8/ROUND8_ERRATA_INDEX.json",
+        "json_pointer": "/entries/17/categories",
+        "categories": [
+          "current_error_confirmed"
+        ]
+      },
+      "review_note": {
+        "label": "Round7 核查意见",
+        "text": "缺少显著性检验限制的是业务推断，不会让已给 min/max 与当前值的大小关系未知；gap 还被标成 missing_observation，与 observation_present=true 及实测窗口不符。原技术性 budget_exhausted 已被修订替代，当前版本实际收到第五次纠正仍有语义矛盾。"
+      },
+      "original_answer_version": {
+        "work_current": true,
+        "analysis_version": "round6_observation_v1",
+        "input_version": 3,
+        "interpretation_of": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+        "work_result_quality": "analysis_explanation_issue"
+      },
+      "additional_source_locations": [
+        {
+          "source_file": "tools/numeric_explanation_check/inputs.json",
+          "json_pointer": "/tasks/1",
+          "source_mapping_file": "tools/numeric_explanation_check/source_mapping.json",
+          "source_mapping_pointer": "/entries/1",
+          "usage": "Round9 已保存的最少数值摘录及匿名身份映射；不采用模型回答充当事实。"
+        }
+      ]
+    },
+    "H-C5-0305-1030": {
+      "source_file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+      "json_pointer": "/cases/1/claim_reviews/13",
+      "record_ids": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1"
+        ],
+        "run_ids": [
+          "7fb664bb43974e8d874bbb8a8d69fdf3"
+        ],
+        "material_versions": [
+          {
+            "id": "51740db5d202414b9765e1dd07c4055c",
+            "version": 1,
+            "tool": "station_history"
+          },
+          {
+            "id": "f4b44ef1e3be468192a7700c2d08cd9e",
+            "version": 1,
+            "tool": "multistation_check"
+          }
+        ]
+      },
+      "field_paths": [
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+          "json_path": "$.attempts_detail[4].response_text",
+          "parse_content_as": "JSON",
+          "content_json_path": "$.assessments[0]"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+          "json_path": "$.tool_results[1].result.result.concurrent_windows"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+          "json_path": "$.attempts_detail[4].request.messages[?(@.role==\"user\")].content",
+          "parse_content_as": "JSON",
+          "content_json_path": "$.tool_results[1].result.station_signal_summaries"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+          "json_path": "$.attempts_detail[4].request.messages[?(@.role==\"user\")].content",
+          "parse_content_as": "JSON",
+          "content_json_path": "$.tool_results[1].result.facts"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+          "json_path": "$.attempts_detail[4].response_text",
+          "parse_content_as": "JSON",
+          "content_json_path": "$.assessments[0].evidence_gaps[0]"
+        }
+      ],
+      "quotes": [
+        {
+          "label": "历史第 5 次最终回答原文",
+          "text": "现有观测数据在有限样本范围内，未超出参考范围，不构成业务异常。",
+          "locator": {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+            "json_path": "$.attempts_detail[4].response_text",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.assessments[0]"
+          },
+          "status": [
+            "current_error_confirmed"
+          ]
+        },
+        {
+          "label": "同一次第 5 次回答的缺口原文",
+          "text": "信号单位和采样一致性未完全验证",
+          "locator": {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+            "json_path": "$.attempts_detail[4].response_text",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.assessments[0].evidence_gaps[0].question"
+          },
+          "status": [
+            "current_error_confirmed"
+          ]
+        }
+      ],
+      "provenance_note": "仅摘录本地已保存的 Round7 事实与原文；原文当前分类沿用 Round8。未读取服务器、补取原始文件或重新判定。",
+      "classification_source": {
+        "source_file": "reports/round8/ROUND8_ERRATA_INDEX.json",
+        "json_pointer": "/entries/18/categories",
+        "categories": [
+          "current_error_confirmed"
+        ]
+      },
+      "review_note": {
+        "label": "Round7 核查意见",
+        "text": "已有输入支持描述性偏离且两站异向，不支持‘未超出参考范围’。NICO 未知单位不能否定所选两站的明确单位。这条实际第五次后仍错，保持原问题状态；不生成新预警。"
+      },
+      "original_answer_version": {
+        "work_current": true,
+        "analysis_version": "round6_observation_v1",
+        "input_version": 3,
+        "interpretation_of": null,
+        "work_result_quality": "analysis_explanation_issue"
+      },
+      "additional_source_locations": [
+        {
+          "source_file": "tools/numeric_explanation_check/inputs.json",
+          "json_pointer": "/tasks/2",
+          "source_mapping_file": "tools/numeric_explanation_check/source_mapping.json",
+          "source_mapping_pointer": "/entries/2",
+          "usage": "Round9 已保存的最少数值摘录及匿名身份映射；不采用模型回答充当事实。"
+        }
+      ]
+    },
+    "H-C3-opposite-station-directions": {
+      "source_file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+      "json_pointer": "/cases/1/claim_reviews/6",
+      "record_ids": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1"
+        ],
+        "run_ids": [
+          "7fb664bb43974e8d874bbb8a8d69fdf3"
+        ],
+        "material_versions": [
+          {
+            "id": "51740db5d202414b9765e1dd07c4055c",
+            "version": 1,
+            "tool": "station_history"
+          },
+          {
+            "id": "f4b44ef1e3be468192a7700c2d08cd9e",
+            "version": 1,
+            "tool": "multistation_check"
+          }
+        ]
+      },
+      "field_paths": [
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+          "json_path": "$.attempts_detail[4].response_text",
+          "parse_content_as": "JSON",
+          "content_json_path": "$.assessments[0].statement"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+          "json_path": "$.tool_results[1].result.result.concurrent_windows"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+          "json_path": "$.attempts_detail[3].request.messages[?(@.role==\"user\")].content",
+          "parse_content_as": "JSON",
+          "content_json_path": "$.tool_results[1].result.station_reference_groups"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+          "json_path": "$.attempts_detail[4].request.messages[?(@.role==\"user\")].content",
+          "parse_content_as": "JSON",
+          "content_json_path": "$.tool_results[1].result.facts"
+        }
+      ],
+      "quotes": [
+        {
+          "label": "历史第 5 次最终回答原文",
+          "text": "现有观测数据在有限样本范围内，未超出参考范围，不构成业务异常。",
+          "locator": {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+            "json_path": "$.attempts_detail[4].response_text",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.assessments[0].statement"
+          },
+          "status": [
+            "current_error_confirmed",
+            "evidence_limitation"
+          ]
+        }
+      ],
+      "provenance_note": "仅摘录本地已保存的 Round7 事实与原文；原文当前分类沿用 Round8。未读取服务器、补取原始文件或重新判定。",
+      "classification_source": {
+        "source_file": "reports/round8/ROUND8_ERRATA_INDEX.json",
+        "json_pointer": "/entries/11/categories",
+        "categories": [
+          "current_error_confirmed",
+          "evidence_limitation"
+        ]
+      },
+      "review_note": {
+        "label": "Round7 核查意见",
+        "text": "有限样本偏离及两站异向是已计算事实。它们既不支持‘所有值仍在范围内’，也不能单独推出区域原因、显著性或业务异常。本轮只记录文本矛盾，不生成颜色。"
+      },
+      "original_answer_version": {
+        "work_current": true,
+        "analysis_version": "round6_observation_v1",
+        "input_version": 3,
+        "interpretation_of": null,
+        "work_result_quality": "analysis_explanation_issue"
+      }
+    },
+    "H-C3-mixed-window-directions": {
+      "source_file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+      "json_pointer": "/cases/1/claim_reviews/7",
+      "record_ids": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1"
+        ],
+        "run_ids": [
+          "fc1d271276b44082896e9c08eb5d8a16"
+        ],
+        "material_versions": [
+          {
+            "id": "1719f83a7eb44567be6c96ada283ed09",
+            "version": 1,
+            "tool": "station_history"
+          },
+          {
+            "id": "f75294126fa9410da617a0baa91a5857",
+            "version": 1,
+            "tool": "multistation_check"
+          }
+        ]
+      },
+      "field_paths": [
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "json_path": "$.attempts_detail[3].response_text",
+          "parse_content_as": "JSON",
+          "content_json_path": "$.assessments[0].statement"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "json_path": "$.tool_results[1].result.result.concurrent_windows"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "json_path": "$.attempts_detail[3].request.messages[?(@.role==\"user\")].content",
+          "parse_content_as": "JSON",
+          "content_json_path": "$.tool_results[1].result.station_reference_groups"
+        }
+      ],
+      "quotes": [
+        {
+          "label": "历史第 4 次中间回答；与第 5 次回答分列",
+          "text": "有效比例和P10值在参考窗口内保持稳定，但未提供足够的历史对比数据以支持异常判定。",
+          "locator": {
+            "table": "records",
+            "kind": "work",
+            "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+            "json_path": "$.attempts_detail[3].response_text",
+            "parse_content_as": "JSON",
+            "content_json_path": "$.assessments[0].statement"
+          },
+          "status": [
+            "intermediate_error_confirmed",
+            "evidence_limitation"
+          ]
+        }
+      ],
+      "provenance_note": "仅摘录本地已保存的 Round7 事实与原文；原文当前分类沿用 Round8。未读取服务器、补取原始文件或重新判定。",
+      "classification_source": {
+        "source_file": "reports/round8/ROUND8_ERRATA_INDEX.json",
+        "json_pointer": "/entries/12/categories",
+        "categories": [
+          "intermediate_error_confirmed",
+          "evidence_limitation"
+        ]
+      },
+      "review_note": {
+        "label": "Round7 核查意见",
+        "text": "原工具有四窗逐站信息；模型压缩输入明确提供两站分组计数和首窗两站事实，但未逐条展开全部四窗。完整先同向后异向序列由本轮审查原工具返回得到；不把未逐行送入模型的中间窗误记成模型逐行阅读过。已有输入仍足以排除‘全部无偏离’的描述。"
+      },
+      "original_answer_version": {
+        "work_current": true,
+        "analysis_version": "round6_observation_v1",
+        "input_version": 3,
+        "interpretation_of": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-05T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+        "work_result_quality": "analysis_explanation_issue"
+      }
+    },
+    "H-C3-NICO-receiver-units": {
+      "source_file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+      "json_pointer": "/cases/1/claim_reviews/8",
+      "record_ids": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1"
+        ],
+        "run_ids": [
+          "913d0467af754324a4657d6ca62573dc"
+        ],
+        "material_versions": [
+          {
+            "id": "67d6d6e3f6d640a18173d16f0c63182d",
+            "version": 1
+          }
+        ]
+      },
+      "field_paths": [
+        {
+          "file": "ROUND6_DELIVERY.md",
+          "section": "本轮解决的具体问题，第 2 项"
+        },
+        {
+          "table": "materials",
+          "id": "67d6d6e3f6d640a18173d16f0c63182d",
+          "json_path": "$.archive.computed.signals[0]"
+        },
+        {
+          "table": "materials",
+          "id": "67d6d6e3f6d640a18173d16f0c63182d",
+          "json_path": "$.archive.computed.series[0:4]"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "json_path": "$.input.program.observations[2].signal_directory[0]"
+        }
+      ],
+      "quotes": [
+        {
+          "label": "原交付报告述评；不是新增的模型错误原句",
+          "text": "NICO 的部分原件使用 receiver_units，解析成功但不能作为 dB-Hz 比较。",
+          "locator": {
+            "file": "ROUND6_DELIVERY.md",
+            "section": "本轮解决的具体问题，第 2 项"
+          },
+          "status": [
+            "record_correct",
+            "evidence_limitation"
+          ]
+        }
+      ],
+      "provenance_note": "仅摘录本地已保存的 Round7 事实与原文；原文当前分类沿用 Round8。未读取服务器、补取原始文件或重新判定。",
+      "classification_source": {
+        "source_file": "reports/round8/ROUND8_ERRATA_INDEX.json",
+        "json_pointer": "/entries/13/categories",
+        "categories": [
+          "record_correct",
+          "evidence_limitation"
+        ]
+      },
+      "review_note": {
+        "label": "Round7 核查意见",
+        "text": "本例 NICO 材料中的单位限制属实，原件和观测存在。没有校准／明确单位依据，不能将 40 receiver_units 改写成 40 dB-Hz，也不能利用这项局部限制声称已明确单位的 BSHM/KITG 缺观测。"
+      },
+      "original_answer_version": {
+        "work_current": true,
+        "analysis_version": "round6_observation_v1",
+        "input_version": 3,
+        "interpretation_of": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-03T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+        "work_result_quality": "analysis_explanation_issue"
+      },
+      "additional_source_locations": [
+        {
+          "source_file": "tools/numeric_explanation_check/inputs.json",
+          "json_pointer": "/tasks/6",
+          "source_mapping_file": "tools/numeric_explanation_check/source_mapping.json",
+          "source_mapping_pointer": "/entries/6",
+          "usage": "Round9 已保存的最少数值摘录及匿名身份映射；不采用模型回答充当事实。"
+        }
+      ]
+    },
+    "H-C4-signal-switch": {
+      "source_file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+      "json_pointer": "/cases/1/claim_reviews/9",
+      "record_ids": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1"
+        ],
+        "run_ids": [
+          "5ca788fdb00144e7b6e8ef4a490eef8d",
+          "091541c38c48499d818ffec7a147f9f4"
+        ]
+      },
+      "field_paths": [
+        {
+          "file": "ROUND6_DELIVERY.md",
+          "section": "数据范围与解释"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "json_path": "$.input.program.comparison_fragments[1]"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "json_path": "$.tool_results[1].arguments"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "json_path": "$.tool_results[1].result.result.station_signal_summaries[1]"
+        },
+        {
+          "table": "records",
+          "kind": "work",
+          "id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+          "json_path": "$.tool_results[1].result.result.station_signal_summaries[1]"
+        }
+      ],
+      "quotes": [
+        {
+          "label": "原交付报告述评；不是新增的模型错误原句",
+          "text": "GNSS 的 03-02 工具选择为 C:S5P，其他多日为 C:S1P，不能直接拼接成同一信号的连续趋势。",
+          "locator": {
+            "file": "ROUND6_DELIVERY.md",
+            "section": "数据范围与解释"
+          },
+          "status": [
+            "record_correct",
+            "error_quote_not_found",
+            "evidence_limitation"
+          ]
+        }
+      ],
+      "provenance_note": "仅摘录本地已保存的 Round7 事实与原文；原文当前分类沿用 Round8。未读取服务器、补取原始文件或重新判定。",
+      "classification_source": {
+        "source_file": "reports/round8/ROUND8_ERRATA_INDEX.json",
+        "json_pointer": "/entries/14/categories",
+        "categories": [
+          "record_correct",
+          "error_quote_not_found",
+          "evidence_limitation"
+        ]
+      },
+      "review_note": {
+        "label": "Round7 核查意见",
+        "text": "已检查 14 条当前 model_interpretation，没有查到明确把 03-02 C:S5P 与其他日 C:S1P 串成同一信号连续趋势的原句；因此不捏造该错误已经发生。报告提醒有依据，且应明确摘要与实际工具的区别。对应信号选择目录另附，不以泛称‘该信号’补造跨日证据。"
+      },
+      "original_answer_version": [
+        {
+          "work_id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:15:00+00:00:gnss_observation_quality:v3:round6_observation_v1:interpretation-r1",
+          "as_of": "2026-03-02T10:15:00+00:00",
+          "run_id": "5ca788fdb00144e7b6e8ef4a490eef8d",
+          "analysis_version": "round6_observation_v1",
+          "input_version": 3,
+          "work_current": true
+        },
+        {
+          "work_id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-02T10:30:00+00:00:gnss_observation_quality:v3:round6_observation_v1",
+          "as_of": "2026-03-02T10:30:00+00:00",
+          "run_id": "091541c38c48499d818ffec7a147f9f4",
+          "analysis_version": "round6_observation_v1",
+          "input_version": 3,
+          "work_current": true
+        }
+      ]
+    },
+    "H-C6-old": {
+      "source_file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+      "json_pointer": "/cases/1/claim_reviews/2",
+      "record_ids": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-08T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1"
+        ],
+        "run_ids": [
+          "009531a82ec64f58b21b844d8d9f1620"
+        ],
+        "material_versions": [
+          {
+            "id": "31ce5092cae24fd78243ba7a092f0343",
+            "version": 1
+          },
+          {
+            "id": "877a684702aa40fcb621dddb4de22315",
+            "version": 1
+          },
+          {
+            "id": "3561d612e72e41b292cab606179ca8cd",
+            "version": 1
+          }
+        ],
+        "alert_versions": [
+          {
+            "kind": "alert_version",
+            "id": "30cae7f8fa7944709c07a8c17345a139",
+            "evidence_version": null
+          }
+        ]
+      },
+      "field_paths": [
+        {
+          "record_kind": "run",
+          "json_pointer": "/steps/0/detail/attempts/2/response_text",
+          "decoded_response_pointer": "/assessments/0/statement",
+          "role": "final_response"
+        },
+        "/assessment/fact_evidence",
+        "/steps/0/detail/attempts/2/request/messages/1/content",
+        "/tool_results/0/result/materials/0/text [JSON decoded] /rows"
+      ],
+      "quotes": [
+        {
+          "label": "已被解释修订替代的旧最终回答",
+          "text": "本次观测中，总名义运力从143上升至102414，变化幅度达71518.18%。历史参考中，总名义运力从3044613下降至1314529，变化幅度为-56.82%。这表明本次观测的名义运力显著高于历史平均水平，可能反映近期航运活动的异常增加。",
+          "locator": {
+            "record_kind": "run",
+            "json_pointer": "/steps/0/detail/attempts/2/response_text",
+            "decoded_response_pointer": "/assessments/0/statement",
+            "role": "final_response"
+          },
+          "status": [
+            "superseded_error_confirmed"
+          ]
+        }
+      ],
+      "provenance_note": "仅摘录本地已保存的 Round7 事实与原文；原文当前分类沿用 Round8。未读取服务器、补取原始文件或重新判定。",
+      "classification_source": {
+        "source_file": "reports/round8/ROUND8_ERRATA_INDEX.json",
+        "json_pointer": "/entries/7/categories",
+        "categories": [
+          "superseded_error_confirmed"
+        ]
+      },
+      "review_note": {
+        "label": "Round7 核查意见",
+        "text": "旧回答的数字抄录正确，解释把相对增幅混同绝对水平；该解释不受所选同字段历史事实支持。名义运力的原绝对单位未核定，也不能解释为实载货量。"
+      },
+      "original_answer_version": {
+        "work_current": false,
+        "analysis_version": "round6_observation_v1",
+        "input_version": 3,
+        "interpretation_of": null,
+        "work_result_quality": "assessed"
+      },
+      "additional_source_locations": [
+        {
+          "source_file": "tools/numeric_explanation_check/inputs.json",
+          "json_pointer": "/tasks/3",
+          "source_mapping_file": "tools/numeric_explanation_check/source_mapping.json",
+          "source_mapping_pointer": "/entries/3",
+          "usage": "Round9 已保存的最少数值摘录及匿名身份映射；不采用模型回答充当事实。"
+        }
+      ]
+    },
+    "H-C6-revision": {
+      "source_file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+      "json_pointer": "/cases/1/claim_reviews/3",
+      "record_ids": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-08T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1:interpretation-r1"
+        ],
+        "run_ids": [
+          "f6b218217cda4957ab4f33747e98f9f8"
+        ],
+        "material_versions": [
+          {
+            "id": "31ce5092cae24fd78243ba7a092f0343",
+            "version": 1
+          },
+          {
+            "id": "877a684702aa40fcb621dddb4de22315",
+            "version": 1
+          },
+          {
+            "id": "3561d612e72e41b292cab606179ca8cd",
+            "version": 1
+          }
+        ],
+        "alert_versions": [
+          {
+            "kind": "alert_version",
+            "id": "6951f20f29e248249e889edd91e6bb10",
+            "evidence_version": null
+          }
+        ]
+      },
+      "field_paths": [
+        {
+          "record_kind": "run",
+          "json_pointer": "/steps/0/detail/attempts/2/response_text",
+          "decoded_response_pointer": "/assessments/0/statement",
+          "role": "final_response"
+        },
+        "/assessment/fact_evidence",
+        "/input/program/flow_context",
+        "/input/program/rule",
+        "/tool_results/0/result/materials/0/text",
+        "/steps/0/detail/attempts/2/request/messages/1/content"
+      ],
+      "quotes": [
+        {
+          "label": "解释修订 r1 的最终回答；原名义运力问题仍未解释完整",
+          "text": "本次总船次(n_total)从2上升至3，变化50.0%；历史总船次(n_total)从69下降至67，变化-2.898551%。两者变化方向不同，但均未达到显著异常水平。",
+          "locator": {
+            "record_kind": "run",
+            "json_pointer": "/steps/0/detail/attempts/2/response_text",
+            "decoded_response_pointer": "/assessments/0/statement",
+            "role": "final_response"
+          },
+          "status": [
+            "explanation_incomplete",
+            "evidence_limitation"
+          ]
+        }
+      ],
+      "provenance_note": "仅摘录本地已保存的 Round7 事实与原文；原文当前分类沿用 Round8。未读取服务器、补取原始文件或重新判定。",
+      "classification_source": {
+        "source_file": "reports/round8/ROUND8_ERRATA_INDEX.json",
+        "json_pointer": "/entries/8/categories",
+        "categories": [
+          "explanation_incomplete",
+          "evidence_limitation"
+        ]
+      },
+      "review_note": {
+        "label": "Round7 核查意见",
+        "text": "修订纠正了原错误表述的直接呈现，却改为n_total比较，不能登记为名义运力问题已解决。所存pw_lowflow_v1是连续低船次的工程规则，不是对该两日变化的显著性检验。no_anomaly不能据此解释为解除规则红色。"
+      },
+      "original_answer_version": {
+        "work_current": true,
+        "analysis_version": "round6_observation_v1",
+        "input_version": 3,
+        "interpretation_of": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-08T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1",
+        "work_result_quality": "assessed"
+      },
+      "additional_source_locations": [
+        {
+          "source_file": "tools/numeric_explanation_check/inputs.json",
+          "json_pointer": "/tasks/3",
+          "source_mapping_file": "tools/numeric_explanation_check/source_mapping.json",
+          "source_mapping_pointer": "/entries/3",
+          "usage": "Round9 已保存的最少数值摘录及匿名身份映射；不采用模型回答充当事实。"
+        }
+      ]
+    },
+    "H-C7": {
+      "source_file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+      "json_pointer": "/cases/1/claim_reviews/4",
+      "record_ids": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-08T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1:interpretation-r1",
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-09T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1"
+        ],
+        "run_ids": [
+          "f6b218217cda4957ab4f33747e98f9f8",
+          "508a022820d24e5791ceb7f97182bae1"
+        ],
+        "material_versions": [
+          {
+            "id": "31ce5092cae24fd78243ba7a092f0343",
+            "version": 1,
+            "observation_date": "2026-03-06"
+          },
+          {
+            "id": "877a684702aa40fcb621dddb4de22315",
+            "version": 1,
+            "observation_date": "2026-03-07"
+          },
+          {
+            "id": "1b4ee1b91c4f4942862350a088de2acf",
+            "version": 1,
+            "observation_date": "2026-03-08"
+          }
+        ]
+      },
+      "field_paths": [
+        {
+          "run_id": "f6b218217cda4957ab4f33747e98f9f8",
+          "json_pointer": "/steps/0/detail/attempts/2/response_text",
+          "decoded_response_pointer": "/assessments/0/statement"
+        },
+        {
+          "run_id": "508a022820d24e5791ceb7f97182bae1",
+          "json_pointer": "/steps/0/detail/attempts/2/response_text",
+          "decoded_response_pointer": "/assessments/0/statement"
+        },
+        "/input/program/flow_context/previous",
+        "/input/program/flow_context/latest",
+        "/assessment/fact_evidence"
+      ],
+      "quotes": [
+        {
+          "label": "历史相邻日比较的最终回答",
+          "text": "本次总船次(n_total)从2上升至3，变化50.0%；历史总船次(n_total)从69下降至67，变化-2.898551%。两者变化方向不同，但均未达到显著异常水平。",
+          "locator": {
+            "run_id": "f6b218217cda4957ab4f33747e98f9f8",
+            "json_pointer": "/steps/0/detail/attempts/2/response_text",
+            "decoded_response_pointer": "/assessments/0/statement"
+          },
+          "status": [
+            "record_correct",
+            "evidence_limitation"
+          ]
+        },
+        {
+          "label": "历史相邻日比较的最终回答",
+          "text": "本次总船次从3下降至2，变化-33.33%；历史同期总船次从69下降至67，变化-2.89%。两者均显示下降趋势，但本次下降幅度更大，可能反映近期流量异常，但历史数据未显示显著变化，需结合其他指标综合判断。",
+          "locator": {
+            "run_id": "508a022820d24e5791ceb7f97182bae1",
+            "json_pointer": "/steps/0/detail/attempts/2/response_text",
+            "decoded_response_pointer": "/assessments/0/statement"
+          },
+          "status": [
+            "record_correct",
+            "evidence_limitation"
+          ]
+        }
+      ],
+      "provenance_note": "仅摘录本地已保存的 Round7 事实与原文；原文当前分类沿用 Round8。未读取服务器、补取原始文件或重新判定。",
+      "classification_source": {
+        "source_file": "reports/round8/ROUND8_ERRATA_INDEX.json",
+        "json_pointer": "/entries/9/categories",
+        "categories": [
+          "record_correct",
+          "evidence_limitation"
+        ]
+      },
+      "review_note": {
+        "label": "Round7 核查意见",
+        "text": "as_of=3月8日使用3月7日及其前日；as_of=3月9日使用3月8日及其前日。资料日与回放截止相差一天，必须分列。末答另将2019年11月称为历史同期，并使用无检验的显著变化措辞；该文字不由两日日期关系或数值支持。"
+      },
+      "original_answer_version": [
+        {
+          "work_id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-08T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1:interpretation-r1",
+          "as_of": "2026-03-08T00:00:00+00:00",
+          "run_id": "f6b218217cda4957ab4f33747e98f9f8",
+          "analysis_version": "round6_observation_v1",
+          "input_version": 3,
+          "work_current": true
+        },
+        {
+          "work_id": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-09T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1",
+          "as_of": "2026-03-09T00:00:00+00:00",
+          "run_id": "508a022820d24e5791ceb7f97182bae1",
+          "analysis_version": "round6_observation_v1",
+          "input_version": 3,
+          "work_current": true
+        }
+      ],
+      "additional_source_locations": [
+        {
+          "source_file": "tools/numeric_explanation_check/inputs.json",
+          "json_pointer": "/tasks/7",
+          "source_mapping_file": "tools/numeric_explanation_check/source_mapping.json",
+          "source_mapping_pointer": "/entries/7",
+          "usage": "Round9 已保存的最少数值摘录及匿名身份映射；不采用模型回答充当事实。"
+        }
+      ]
+    },
+    "H-C8": {
+      "source_file": "reports/round7/ROUND7_EVIDENCE_REVIEW.json",
+      "json_pointer": "/cases/1/claim_reviews/5",
+      "record_ids": {
+        "work_ids": [
+          "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-08T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1:interpretation-r1"
+        ],
+        "run_ids": [
+          "f6b218217cda4957ab4f33747e98f9f8"
+        ],
+        "alert_versions": {
+          "before": {
+            "kind": "alert_version",
+            "id": "30cae7f8fa7944709c07a8c17345a139",
+            "evidence_version": 6
+          },
+          "after": {
+            "kind": "alert_version",
+            "id": "6951f20f29e248249e889edd91e6bb10",
+            "evidence_version": 6
+          },
+          "current": {
+            "kind": "alert",
+            "id": "pw_replay-fa414cc4-hormuz-portwatch_pw_lowflow_v1_2026-03-01",
+            "evidence_version": 7
+          }
+        }
+      },
+      "field_paths": [
+        {
+          "source_file": "ROUND6_DELIVERY.md",
+          "section": "第11项：错误解释与真实恢复混淆"
+        },
+        "/interpretation_numeric_alert_changes/0",
+        "/status",
+        "/evidence_version",
+        "/latest_observation",
+        "/baseline",
+        "/resolved_on",
+        "/analysis/work_id"
+      ],
+      "quotes": [
+        {
+          "label": "原交付报告对解释版本关系的述评",
+          "text": "已保存的解释通过定向修订纠正；保留旧工作、模型返回和告警版本，当前地图与报告一起更新。",
+          "locator": {
+            "source_file": "ROUND6_DELIVERY.md",
+            "section": "第11项：错误解释与真实恢复混淆"
+          },
+          "status": [
+            "record_correct"
+          ]
+        }
+      ],
+      "provenance_note": "仅摘录本地已保存的 Round7 事实与原文；原文当前分类沿用 Round8。未读取服务器、补取原始文件或重新判定。",
+      "classification_source": {
+        "source_file": "reports/round8/ROUND8_ERRATA_INDEX.json",
+        "json_pointer": "/entries/10/categories",
+        "categories": [
+          "record_correct"
+        ]
+      },
+      "review_note": {
+        "label": "Round7 核查意见",
+        "text": "原数值规则和冻结参考保持，修改仅落在v6解释；当前v7没有倒退、解除或被标为物理恢复。旧错误回答仍可定位。模型no_anomaly与程序warning是不同字段，不能以模型解释覆盖已成立的低船次提醒。"
+      },
+      "original_answer_version": {
+        "work_current": true,
+        "analysis_version": "round6_observation_v1",
+        "input_version": 3,
+        "interpretation_of": "replay:fa414cc4276140ad9e3c2cb7981dd312:hormuz:2026-03-08T00:00:00+00:00:maritime_visible_flow:v3:round6_observation_v1",
+        "work_result_quality": "assessed"
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "kharkiv",
+      "title": "哈尔科夫 · 历史观测事实",
+      "subtitle": "已保存的代表窗口与汇总",
+      "period": "2024 年 5 月已保存观测；参考为 2023 年 5 月和 2024 年 4 月",
+      "scope": "BUCU、JOZE 接收站的代表窗口、有限参考组及 GFZ 环境资料。",
+      "original_goal_status": "not_demonstrated",
+      "strict_lead_hours": null,
+      "historical_availability_status": "unknown",
+      "remaining": [
+        "两组参考分别只有 1 日和 3 日，全天变化、稳定总体和具体原因仍缺少充分依据。",
+        "18 秒窗口的有效值比例和历元覆盖率都只对应该窗口；29 颗卫星是文件中出现过的集合，并非该窗理论应可见数。",
+        "多站之间的共同变化与差异、环境因素对观测的影响，尚未解释完整。未找到原回答明确宣称已排除自然因素的原句。",
+        "历史来源何时可得尚缺时间证明，原业务目标仍为 not_demonstrated，严格提前量未知。"
+      ],
+      "sections": [
+        {
+          "id": "first-window",
+          "title": "已保存的代表窗口与汇总",
+          "kind": "comparison",
+          "lead": "BUCU 接收站的同一观测窗口，分别对照两个参考日期组。",
+          "rows": [
+            {
+              "id": "bucu-first-1",
+              "object": "BUCU00ROU",
+              "metric": "载噪比 P10",
+              "window_start": "2024-05-08T23:59:42Z",
+              "window_end": "2024-05-09T00:00:00Z",
+              "window_label": "首个被引用窗口",
+              "as_of": "2024-05-10T00:00:00+00:00",
+              "value": 43.78,
+              "lower": 46.78,
+              "upper": 46.78,
+              "reference_group": "2023-05",
+              "reference_dates": [
+                "2023-05-10"
+              ],
+              "sample_days": 1,
+              "unit": "dB-Hz",
+              "signal": "C:S1P",
+              "sampling_seconds": 30,
+              "comparison_allowed": true,
+              "origin": "structured_excerpt",
+              "field_status": {
+                "unit": "provided",
+                "signal": "provided",
+                "sampling": "provided",
+                "time": "provided"
+              },
+              "source_claim_id": "K-C1",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/0/claim_reviews/0/facts/0",
+              "reference_median": 46.78,
+              "calculated": {
+                "relation": "below",
+                "text": "低于参考值",
+                "boundary_difference": -3.0,
+                "comparisons": [
+                  {
+                    "boundary": "lower",
+                    "difference": -3.0,
+                    "relation": "below"
+                  },
+                  {
+                    "boundary": "upper",
+                    "difference": -3.0,
+                    "relation": "below"
+                  }
+                ],
+                "unprovided_boundaries": [],
+                "missing_fields": [],
+                "input_ref": "/cases/0/sections/0/rows/0"
+              }
+            },
+            {
+              "id": "bucu-first-2",
+              "object": "BUCU00ROU",
+              "metric": "载噪比 P10",
+              "window_start": "2024-05-08T23:59:42Z",
+              "window_end": "2024-05-09T00:00:00Z",
+              "window_label": "首个被引用窗口",
+              "as_of": "2024-05-10T00:00:00+00:00",
+              "value": 43.78,
+              "lower": 45.99,
+              "upper": 47.05,
+              "reference_group": "2024-04",
+              "reference_dates": [
+                "2024-04-10",
+                "2024-04-11",
+                "2024-04-12"
+              ],
+              "sample_days": 3,
+              "unit": "dB-Hz",
+              "signal": "C:S1P",
+              "sampling_seconds": 30,
+              "comparison_allowed": true,
+              "origin": "structured_excerpt",
+              "field_status": {
+                "unit": "provided",
+                "signal": "provided",
+                "sampling": "provided",
+                "time": "provided"
+              },
+              "source_claim_id": "K-C1",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/0/claim_reviews/0/facts/1",
+              "reference_median": 46.84,
+              "calculated": {
+                "relation": "below",
+                "text": "低于参考下界",
+                "boundary_difference": -2.21,
+                "comparisons": [
+                  {
+                    "boundary": "lower",
+                    "difference": -2.21,
+                    "relation": "below"
+                  },
+                  {
+                    "boundary": "upper",
+                    "difference": -3.27,
+                    "relation": "below"
+                  }
+                ],
+                "unprovided_boundaries": [],
+                "missing_fields": [],
+                "input_ref": "/cases/0/sections/0/rows/1"
+              }
+            }
+          ],
+          "notes": [
+            "首个被引用窗口为 43.78 dB-Hz；后一天约 42.6 dB-Hz 的值属于另一窗口。"
+          ],
+          "source_claim_ids": [
+            "K-C1"
+          ]
+        },
+        {
+          "id": "reference-groups",
+          "title": "两个参考日期组，分别统计",
+          "kind": "groups",
+          "lead": "展示已保存的逐窗差值中位数和范围外窗口计数。",
+          "rows": [
+            {
+              "object": "BUCU00ROU · C:S1P",
+              "reference_group": "2023-05",
+              "reference_dates": [
+                "2023-05-10"
+              ],
+              "reference_days": 1,
+              "window_count": 289,
+              "difference_median": 0.15,
+              "unit": "dB",
+              "below_count": 136,
+              "above_count": 153,
+              "current_window_p10_median": 42.39,
+              "reference_window_medians_median": 42.105,
+              "source_claim_id": "K-C3",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/0/claim_reviews/2/grouped_full_span_statistics/0",
+              "origin": "declared_summary",
+              "calculated": {
+                "origin": "来源声明",
+                "recomputed": false,
+                "input_ref": "/cases/0/sections/1/rows/0"
+              }
+            },
+            {
+              "object": "BUCU00ROU · C:S1P",
+              "reference_group": "2024-04",
+              "reference_dates": [
+                "2024-04-10",
+                "2024-04-11",
+                "2024-04-12"
+              ],
+              "reference_days": 3,
+              "window_count": 289,
+              "difference_median": -0.565,
+              "unit": "dB",
+              "below_count": 104,
+              "above_count": 89,
+              "current_window_p10_median": 42.39,
+              "reference_window_medians_median": 42.255,
+              "source_claim_id": "K-C3",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/0/claim_reviews/2/grouped_full_span_statistics/1",
+              "origin": "declared_summary",
+              "calculated": {
+                "origin": "来源声明",
+                "recomputed": false,
+                "input_ref": "/cases/0/sections/1/rows/1"
+              }
+            }
+          ],
+          "notes": [
+            "逐窗差值中位数：先计算各窗的本次值减本站参考中位数，再取这些差值的中位数。",
+            "289 窗的计数和统计值来自已保存的分组汇总。",
+            "原第 1 次中间回答的统计解释已被同一运行的末答修正；两次表述见来源。"
+          ],
+          "source_claim_ids": [
+            "K-C3"
+          ]
+        },
+        {
+          "id": "boundary-coverage",
+          "title": "18 秒窗口与两个不同的比例",
+          "kind": "coverage",
+          "lead": "有效值比例和历元覆盖率有不同分母。",
+          "rows": [
+            {
+              "object": "BUCU00ROU · C:S1P",
+              "window_start": "2024-05-08T23:59:42Z",
+              "window_end": "2024-05-09T00:00:00Z",
+              "window_seconds": 18,
+              "epoch_count": 1,
+              "valid_count": 8,
+              "denominator_factors": [
+                1,
+                29
+              ],
+              "denominator_definition": "有效值8个；分母为1个历元乘29，29是整份文件中该信号出现过的卫星集合数量",
+              "epoch_coverage_ratio": 1.0,
+              "epoch_coverage_definition": "按这个已定义的18秒窗口没有缺历元",
+              "source_claim_id": "K-C4",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/0/claim_reviews/3/boundary_window",
+              "calculated": {
+                "denominator": 29.0,
+                "valid_ratio": 0.27586206896551724,
+                "valid_percent": 27.586206896551722,
+                "input_ref": "/cases/0/sections/2/rows/0"
+              }
+            }
+          ],
+          "notes": [
+            "29 是整份文件中该信号出现过的卫星集合数量。",
+            "两个比例对应这个已定义的 18 秒窗口。"
+          ],
+          "source_claim_ids": [
+            "K-C4"
+          ]
+        },
+        {
+          "id": "two-stations",
+          "title": "同一个窗口，两站各用自己的参考",
+          "kind": "comparison",
+          "lead": "BUCU 和 JOZE 的比较范围分别来自本站历史样本。",
+          "rows": [
+            {
+              "id": "BUCU00ROU-2023-05",
+              "object": "BUCU00ROU",
+              "metric": "载噪比 P10",
+              "window_start": "2024-05-08T23:59:42Z",
+              "window_end": "2024-05-09T00:00:00Z",
+              "window_label": "同一 UTC 首窗",
+              "as_of": "2024-05-10T00:00:00+00:00",
+              "value": 43.78,
+              "lower": 46.78,
+              "upper": 46.78,
+              "reference_group": "2023-05",
+              "reference_dates": [
+                "2023-05-10"
+              ],
+              "sample_days": 1,
+              "unit": "dB-Hz",
+              "signal": "C:S1P",
+              "sampling_seconds": 30,
+              "comparison_allowed": true,
+              "origin": "structured_excerpt",
+              "field_status": {
+                "unit": "provided",
+                "signal": "provided",
+                "sampling": "provided",
+                "time": "provided",
+                "reference_dates": "provided"
+              },
+              "source_claim_id": "K-C5",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/0/claim_reviews/4/first_window/BUCU00ROU/2023-05",
+              "calculated": {
+                "relation": "below",
+                "text": "低于参考值",
+                "boundary_difference": -3.0,
+                "comparisons": [
+                  {
+                    "boundary": "lower",
+                    "difference": -3.0,
+                    "relation": "below"
+                  },
+                  {
+                    "boundary": "upper",
+                    "difference": -3.0,
+                    "relation": "below"
+                  }
+                ],
+                "unprovided_boundaries": [],
+                "missing_fields": [],
+                "input_ref": "/cases/0/sections/3/rows/0"
+              }
+            },
+            {
+              "id": "BUCU00ROU-2024-04",
+              "object": "BUCU00ROU",
+              "metric": "载噪比 P10",
+              "window_start": "2024-05-08T23:59:42Z",
+              "window_end": "2024-05-09T00:00:00Z",
+              "window_label": "同一 UTC 首窗",
+              "as_of": "2024-05-10T00:00:00+00:00",
+              "value": 43.78,
+              "lower": 45.99,
+              "upper": 47.05,
+              "reference_group": "2024-04",
+              "reference_dates": [
+                "2024-04-10",
+                "2024-04-11",
+                "2024-04-12"
+              ],
+              "sample_days": 3,
+              "unit": "dB-Hz",
+              "signal": "C:S1P",
+              "sampling_seconds": 30,
+              "comparison_allowed": true,
+              "origin": "structured_excerpt",
+              "field_status": {
+                "unit": "provided",
+                "signal": "provided",
+                "sampling": "provided",
+                "time": "provided",
+                "reference_dates": "provided"
+              },
+              "source_claim_id": "K-C5",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/0/claim_reviews/4/first_window/BUCU00ROU/2024-04",
+              "calculated": {
+                "relation": "below",
+                "text": "低于参考下界",
+                "boundary_difference": -2.21,
+                "comparisons": [
+                  {
+                    "boundary": "lower",
+                    "difference": -2.21,
+                    "relation": "below"
+                  },
+                  {
+                    "boundary": "upper",
+                    "difference": -3.27,
+                    "relation": "below"
+                  }
+                ],
+                "unprovided_boundaries": [],
+                "missing_fields": [],
+                "input_ref": "/cases/0/sections/3/rows/1"
+              }
+            },
+            {
+              "id": "JOZE00POL-2023-05",
+              "object": "JOZE00POL",
+              "metric": "载噪比 P10",
+              "window_start": "2024-05-08T23:59:42Z",
+              "window_end": "2024-05-09T00:00:00Z",
+              "window_label": "同一 UTC 首窗",
+              "as_of": "2024-05-10T00:00:00+00:00",
+              "value": 42.4368,
+              "lower": 41.5898,
+              "upper": 44.123,
+              "reference_group": "2023-05",
+              "reference_dates": [],
+              "sample_days": null,
+              "unit": "dB-Hz",
+              "signal": "C:S1P",
+              "sampling_seconds": 30,
+              "comparison_allowed": true,
+              "origin": "structured_excerpt",
+              "field_status": {
+                "unit": "provided",
+                "signal": "provided",
+                "sampling": "provided",
+                "time": "provided",
+                "reference_dates": "not_provided_in_excerpt"
+              },
+              "source_claim_id": "K-C5",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/0/claim_reviews/4/first_window/JOZE00POL/2023-05",
+              "calculated": {
+                "relation": "within",
+                "text": "位于给定参考范围内",
+                "boundary_difference": null,
+                "comparisons": [
+                  {
+                    "boundary": "lower",
+                    "difference": 0.847,
+                    "relation": "above"
+                  },
+                  {
+                    "boundary": "upper",
+                    "difference": -1.6862,
+                    "relation": "below"
+                  }
+                ],
+                "unprovided_boundaries": [],
+                "missing_fields": [],
+                "input_ref": "/cases/0/sections/3/rows/2"
+              }
+            },
+            {
+              "id": "JOZE00POL-2024-04",
+              "object": "JOZE00POL",
+              "metric": "载噪比 P10",
+              "window_start": "2024-05-08T23:59:42Z",
+              "window_end": "2024-05-09T00:00:00Z",
+              "window_label": "同一 UTC 首窗",
+              "as_of": "2024-05-10T00:00:00+00:00",
+              "value": 42.4368,
+              "lower": 25.0788,
+              "upper": 40.0922,
+              "reference_group": "2024-04",
+              "reference_dates": [],
+              "sample_days": null,
+              "unit": "dB-Hz",
+              "signal": "C:S1P",
+              "sampling_seconds": 30,
+              "comparison_allowed": true,
+              "origin": "structured_excerpt",
+              "field_status": {
+                "unit": "provided",
+                "signal": "provided",
+                "sampling": "provided",
+                "time": "provided",
+                "reference_dates": "not_provided_in_excerpt"
+              },
+              "source_claim_id": "K-C5",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/0/claim_reviews/4/first_window/JOZE00POL/2024-04",
+              "calculated": {
+                "relation": "above",
+                "text": "高于参考上界",
+                "boundary_difference": 2.3446,
+                "comparisons": [
+                  {
+                    "boundary": "lower",
+                    "difference": 17.358,
+                    "relation": "above"
+                  },
+                  {
+                    "boundary": "upper",
+                    "difference": 2.3446,
+                    "relation": "above"
+                  }
+                ],
+                "unprovided_boundaries": [],
+                "missing_fields": [],
+                "input_ref": "/cases/0/sections/3/rows/3"
+              }
+            }
+          ],
+          "notes": [
+            "两站分别使用本站、同一信号和相同 UTC 窗口的参考。",
+            "JOZE 摘录列出了年月组及范围，具体参考日期和天数未列。"
+          ],
+          "source_claim_ids": [
+            "K-C5"
+          ]
+        },
+        {
+          "id": "environment",
+          "title": "环境指标已有记录，原因解释仍空缺",
+          "kind": "environment",
+          "lead": "环境资料的存在、引用和解释分开呈现。",
+          "rows": [
+            {
+              "label": "GFZ 环境指标 · 2024-05-08",
+              "values": {
+                "指标所属日期": "2024-05-08",
+                "Ap": 5,
+                "F10.7 原观测值": 227.1,
+                "F10.7 距离调整值": 231.4,
+                "原摘录指标单位": null,
+                "确定值标记": 2
+              },
+              "source_claim_id": "K-C2",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/0/claim_reviews/1/gfz_materials/0",
+              "calculated": {
+                "origin": "来源声明",
+                "recomputed": false,
+                "input_ref": "/cases/0/sections/4/rows/0"
+              }
+            },
+            {
+              "label": "GFZ 环境指标 · 2024-05-09",
+              "values": {
+                "指标所属日期": "2024-05-09",
+                "Ap": 5,
+                "F10.7 原观测值": 233.2,
+                "F10.7 距离调整值": 237.7,
+                "原摘录指标单位": null,
+                "确定值标记": 2
+              },
+              "source_claim_id": "K-C2",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/0/claim_reviews/1/gfz_materials/1",
+              "calculated": {
+                "origin": "来源声明",
+                "recomputed": false,
+                "input_ref": "/cases/0/sections/4/rows/1"
+              }
+            },
+            {
+              "label": "环境资料与结论的关系",
+              "values": {
+                "资料已提供": true,
+                "最终引用 GFZ": false,
+                "已有环境因素论证": false,
+                "已排除自然因素": false
+              },
+              "source_claim_id": "K-C2",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/0/claim_reviews/1/interpreted",
+              "calculated": {
+                "origin": "来源声明",
+                "recomputed": false,
+                "input_ref": "/cases/0/sections/4/rows/2"
+              }
+            }
+          ],
+          "notes": [
+            "原摘录给出各日指标数值，绝对单位未列。",
+            "历史回答已有这两日环境资料，最终仅引用了 GNSS 材料。"
+          ],
+          "source_claim_ids": [
+            "K-C2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hormuz",
+      "title": "霍尔木兹 · 历史观测事实",
+      "subtitle": "GNSS 代表窗口、航运相邻日值与解释版本",
+      "period": "2026 年 3 月已保存观测；GNSS 参考为 2 月两日，名义运力对照为 2019 年 11 月两日",
+      "scope": "分别呈现接收站信号、同字段航运数值和历史解释记录。",
+      "original_goal_status": "not_demonstrated",
+      "strict_lead_hours": null,
+      "historical_availability_status": "unknown",
+      "remaining": [
+        "三条历史最终回答仍有样本范围关系矛盾；原话分别保留，窗口原值与边界由本报告直接比较。",
+        "现有代表窗和四窗汇总尚不足以确定共同原因或总体统计显著性；缺少总体检验不影响已给数值的大小比较。",
+        "名义运力解释修订改用了船次，原绝对水平问题仍未回答完整，两日变化也缺少显著性检验依据。",
+        "不同信号、单位和日期需要分别解释；NICO 的单位换算缺口仅对应该站。",
+        "历史来源何时可得尚缺时间证明，原业务目标仍为 not_demonstrated，严格提前量未知。"
+      ],
+      "sections": [
+        {
+          "id": "comparison-n1",
+          "title": "2026-03-03 10:30 UTC · 已保存例窗",
+          "kind": "comparison",
+          "lead": "当前值与各自有限参考的原始数值分列。",
+          "rows": [
+            {
+              "id": "N1-r1",
+              "object": "BSHM00ISR",
+              "metric": "载噪比 P10",
+              "window_start": null,
+              "window_end": null,
+              "window_label": "首窗",
+              "as_of": "2026-03-03T10:30:00+00:00",
+              "value": 22.719,
+              "lower": 29.4848,
+              "upper": null,
+              "reference_group": "2026-02 两日有限参考",
+              "reference_dates": [
+                "2026-02-11",
+                "2026-02-26"
+              ],
+              "sample_days": 2,
+              "unit": "dB-Hz",
+              "signal": "C:S1P",
+              "sampling_seconds": null,
+              "comparison_allowed": true,
+              "origin": "structured_excerpt",
+              "field_status": {
+                "unit": "provided",
+                "signal": "provided",
+                "sampling": "not_provided_in_selected_excerpt",
+                "time": "exact_window_not_provided"
+              },
+              "source_claim_id": "H-C5-0303-1030",
+              "source_field": "tools/numeric_explanation_check/inputs.json#/tasks/0/rows/0",
+              "query_window_start": "2026-03-03T10:14:42Z",
+              "query_window_end": "2026-03-03T10:29:42Z",
+              "supporting_source_fields": [
+                "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/11/actual_facts",
+                "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/signal_selection_review/rows/9/actual_tools"
+              ],
+              "calculated": {
+                "relation": "below_lower",
+                "text": "低于已知下界",
+                "boundary_difference": -6.7658,
+                "comparisons": [
+                  {
+                    "boundary": "lower",
+                    "difference": -6.7658,
+                    "relation": "below"
+                  }
+                ],
+                "unprovided_boundaries": [
+                  "upper"
+                ],
+                "missing_fields": [
+                  "sampling_seconds",
+                  "window_start",
+                  "window_end"
+                ],
+                "input_ref": "/cases/1/sections/0/rows/0"
+              }
+            },
+            {
+              "id": "N1-r2",
+              "object": "BSHM00ISR",
+              "metric": "载噪比 P10",
+              "window_start": null,
+              "window_end": null,
+              "window_label": "末窗",
+              "as_of": "2026-03-03T10:30:00+00:00",
+              "value": 22.219,
+              "lower": 33.469,
+              "upper": null,
+              "reference_group": "2026-02 两日有限参考",
+              "reference_dates": [
+                "2026-02-11",
+                "2026-02-26"
+              ],
+              "sample_days": 2,
+              "unit": "dB-Hz",
+              "signal": "C:S1P",
+              "sampling_seconds": null,
+              "comparison_allowed": true,
+              "origin": "structured_excerpt",
+              "field_status": {
+                "unit": "provided",
+                "signal": "provided",
+                "sampling": "not_provided_in_selected_excerpt",
+                "time": "exact_window_not_provided"
+              },
+              "source_claim_id": "H-C5-0303-1030",
+              "source_field": "tools/numeric_explanation_check/inputs.json#/tasks/0/rows/1",
+              "query_window_start": "2026-03-03T10:14:42Z",
+              "query_window_end": "2026-03-03T10:29:42Z",
+              "supporting_source_fields": [
+                "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/11/actual_facts",
+                "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/signal_selection_review/rows/9/actual_tools"
+              ],
+              "calculated": {
+                "relation": "below_lower",
+                "text": "低于已知下界",
+                "boundary_difference": -11.25,
+                "comparisons": [
+                  {
+                    "boundary": "lower",
+                    "difference": -11.25,
+                    "relation": "below"
+                  }
+                ],
+                "unprovided_boundaries": [
+                  "upper"
+                ],
+                "missing_fields": [
+                  "sampling_seconds",
+                  "window_start",
+                  "window_end"
+                ],
+                "input_ref": "/cases/1/sections/0/rows/1"
+              }
+            },
+            {
+              "id": "N1-r3",
+              "object": "KITG00UZB",
+              "metric": "载噪比 P10",
+              "window_start": null,
+              "window_end": null,
+              "window_label": "首窗",
+              "as_of": "2026-03-03T10:30:00+00:00",
+              "value": 38.25,
+              "lower": null,
+              "upper": 33.4284,
+              "reference_group": "2026-02 两日有限参考",
+              "reference_dates": [
+                "2026-02-11",
+                "2026-02-26"
+              ],
+              "sample_days": 2,
+              "unit": "dB-Hz",
+              "signal": "C:S1P",
+              "sampling_seconds": null,
+              "comparison_allowed": true,
+              "origin": "structured_excerpt",
+              "field_status": {
+                "unit": "provided",
+                "signal": "provided",
+                "sampling": "not_provided_in_selected_excerpt",
+                "time": "exact_window_not_provided"
+              },
+              "source_claim_id": "H-C5-0303-1030",
+              "source_field": "tools/numeric_explanation_check/inputs.json#/tasks/0/rows/2",
+              "query_window_start": "2026-03-03T10:14:42Z",
+              "query_window_end": "2026-03-03T10:29:42Z",
+              "supporting_source_fields": [
+                "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/11/actual_facts",
+                "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/signal_selection_review/rows/9/actual_tools"
+              ],
+              "calculated": {
+                "relation": "above_upper",
+                "text": "高于已知上界",
+                "boundary_difference": 4.8216,
+                "comparisons": [
+                  {
+                    "boundary": "upper",
+                    "difference": 4.8216,
+                    "relation": "above"
+                  }
+                ],
+                "unprovided_boundaries": [
+                  "lower"
+                ],
+                "missing_fields": [
+                  "sampling_seconds",
+                  "window_start",
+                  "window_end"
+                ],
+                "input_ref": "/cases/1/sections/0/rows/2"
+              }
+            }
+          ],
+          "notes": [
+            "各站使用自身参考；空值表示该侧边界未提供。",
+            "摘录提供首末窗标签和分析截止时间，未列子窗具体起止。"
+          ],
+          "source_claim_ids": [
+            "H-C5-0303-1030"
+          ]
+        },
+        {
+          "id": "comparison-n2",
+          "title": "2026-03-05 10:15 UTC · 已保存例窗",
+          "kind": "comparison",
+          "lead": "当前值与各自有限参考的原始数值分列。",
+          "rows": [
+            {
+              "id": "N2-r1",
+              "object": "BSHM00ISR",
+              "metric": "载噪比 P10",
+              "window_start": null,
+              "window_end": null,
+              "window_label": "首窗",
+              "as_of": "2026-03-05T10:15:00+00:00",
+              "value": 32.4875,
+              "lower": 33.9063,
+              "upper": null,
+              "reference_group": "2026-02 两日有限参考",
+              "reference_dates": [
+                "2026-02-11",
+                "2026-02-26"
+              ],
+              "sample_days": 2,
+              "unit": "dB-Hz",
+              "signal": "C:S1P",
+              "sampling_seconds": 1,
+              "comparison_allowed": true,
+              "origin": "structured_excerpt",
+              "field_status": {
+                "unit": "provided",
+                "signal": "provided",
+                "sampling": "provided",
+                "time": "exact_window_not_provided"
+              },
+              "source_claim_id": "H-C5-0305-1015",
+              "source_field": "tools/numeric_explanation_check/inputs.json#/tasks/1/rows/0",
+              "query_window_start": "2026-03-05T09:59:42Z",
+              "query_window_end": "2026-03-05T10:14:42Z",
+              "supporting_source_fields": [
+                "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/12/actual_facts",
+                "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/signal_selection_review/rows/12/actual_tools"
+              ],
+              "calculated": {
+                "relation": "below_lower",
+                "text": "低于已知下界",
+                "boundary_difference": -1.4188,
+                "comparisons": [
+                  {
+                    "boundary": "lower",
+                    "difference": -1.4188,
+                    "relation": "below"
+                  }
+                ],
+                "unprovided_boundaries": [
+                  "upper"
+                ],
+                "missing_fields": [
+                  "window_start",
+                  "window_end"
+                ],
+                "input_ref": "/cases/1/sections/1/rows/0"
+              }
+            },
+            {
+              "id": "N2-r2",
+              "object": "BSHM00ISR",
+              "metric": "载噪比 P10",
+              "window_start": null,
+              "window_end": null,
+              "window_label": "末窗",
+              "as_of": "2026-03-05T10:15:00+00:00",
+              "value": 24.438,
+              "lower": 33.125,
+              "upper": null,
+              "reference_group": "2026-02 两日有限参考",
+              "reference_dates": [
+                "2026-02-11",
+                "2026-02-26"
+              ],
+              "sample_days": 2,
+              "unit": "dB-Hz",
+              "signal": "C:S1P",
+              "sampling_seconds": 1,
+              "comparison_allowed": true,
+              "origin": "structured_excerpt",
+              "field_status": {
+                "unit": "provided",
+                "signal": "provided",
+                "sampling": "provided",
+                "time": "exact_window_not_provided"
+              },
+              "source_claim_id": "H-C5-0305-1015",
+              "source_field": "tools/numeric_explanation_check/inputs.json#/tasks/1/rows/1",
+              "query_window_start": "2026-03-05T09:59:42Z",
+              "query_window_end": "2026-03-05T10:14:42Z",
+              "supporting_source_fields": [
+                "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/12/actual_facts",
+                "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/signal_selection_review/rows/12/actual_tools"
+              ],
+              "calculated": {
+                "relation": "below_lower",
+                "text": "低于已知下界",
+                "boundary_difference": -8.687,
+                "comparisons": [
+                  {
+                    "boundary": "lower",
+                    "difference": -8.687,
+                    "relation": "below"
+                  }
+                ],
+                "unprovided_boundaries": [
+                  "upper"
+                ],
+                "missing_fields": [
+                  "window_start",
+                  "window_end"
+                ],
+                "input_ref": "/cases/1/sections/1/rows/1"
+              }
+            },
+            {
+              "id": "N2-r3",
+              "object": "KITG00UZB",
+              "metric": "载噪比 P10",
+              "window_start": null,
+              "window_end": null,
+              "window_label": "首窗",
+              "as_of": "2026-03-05T10:15:00+00:00",
+              "value": 31.6875,
+              "lower": 34.1533,
+              "upper": null,
+              "reference_group": "2026-02 两日有限参考",
+              "reference_dates": [
+                "2026-02-11",
+                "2026-02-26"
+              ],
+              "sample_days": 2,
+              "unit": "dB-Hz",
+              "signal": "C:S1P",
+              "sampling_seconds": 1,
+              "comparison_allowed": true,
+              "origin": "structured_excerpt",
+              "field_status": {
+                "unit": "provided",
+                "signal": "provided",
+                "sampling": "provided",
+                "time": "exact_window_not_provided"
+              },
+              "source_claim_id": "H-C5-0305-1015",
+              "source_field": "tools/numeric_explanation_check/inputs.json#/tasks/1/rows/2",
+              "query_window_start": "2026-03-05T09:59:42Z",
+              "query_window_end": "2026-03-05T10:14:42Z",
+              "supporting_source_fields": [
+                "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/12/actual_facts",
+                "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/signal_selection_review/rows/12/actual_tools"
+              ],
+              "calculated": {
+                "relation": "below_lower",
+                "text": "低于已知下界",
+                "boundary_difference": -2.4658,
+                "comparisons": [
+                  {
+                    "boundary": "lower",
+                    "difference": -2.4658,
+                    "relation": "below"
+                  }
+                ],
+                "unprovided_boundaries": [
+                  "upper"
+                ],
+                "missing_fields": [
+                  "window_start",
+                  "window_end"
+                ],
+                "input_ref": "/cases/1/sections/1/rows/2"
+              }
+            }
+          ],
+          "notes": [
+            "各站使用自身参考；空值表示该侧边界未提供。",
+            "摘录提供首末窗标签和分析截止时间，未列子窗具体起止。"
+          ],
+          "source_claim_ids": [
+            "H-C5-0305-1015"
+          ]
+        },
+        {
+          "id": "comparison-n3",
+          "title": "2026-03-05 10:30 UTC · 已保存例窗",
+          "kind": "comparison",
+          "lead": "当前值与各自有限参考的原始数值分列。",
+          "rows": [
+            {
+              "id": "N3-r1",
+              "object": "BSHM00ISR",
+              "metric": "载噪比 P10",
+              "window_start": "2026-03-05T10:14:42Z",
+              "window_end": "2026-03-05T10:15:00Z",
+              "window_label": "W首窗",
+              "as_of": "2026-03-05T10:30:00+00:00",
+              "value": 19.9935,
+              "lower": 29.4848,
+              "upper": 33.3967,
+              "reference_group": "2026-02 两日有限参考",
+              "reference_dates": [
+                "2026-02-11",
+                "2026-02-26"
+              ],
+              "sample_days": 2,
+              "unit": "dB-Hz",
+              "signal": "C:S1P",
+              "sampling_seconds": 1,
+              "comparison_allowed": true,
+              "origin": "structured_excerpt",
+              "field_status": {
+                "unit": "provided",
+                "signal": "provided",
+                "sampling": "provided",
+                "time": "provided"
+              },
+              "source_claim_id": "H-C5-0305-1030",
+              "source_field": "tools/numeric_explanation_check/inputs.json#/tasks/2/rows/0",
+              "query_window_start": "2026-03-05T10:14:42Z",
+              "query_window_end": "2026-03-05T10:29:42Z",
+              "supporting_source_fields": [
+                "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/13/actual_facts",
+                "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/signal_selection_review/rows/13/actual_tools"
+              ],
+              "calculated": {
+                "relation": "below",
+                "text": "低于参考下界",
+                "boundary_difference": -9.4913,
+                "comparisons": [
+                  {
+                    "boundary": "lower",
+                    "difference": -9.4913,
+                    "relation": "below"
+                  },
+                  {
+                    "boundary": "upper",
+                    "difference": -13.4032,
+                    "relation": "below"
+                  }
+                ],
+                "unprovided_boundaries": [],
+                "missing_fields": [],
+                "input_ref": "/cases/1/sections/2/rows/0"
+              }
+            },
+            {
+              "id": "N3-r2",
+              "object": "KITG00UZB",
+              "metric": "载噪比 P10",
+              "window_start": "2026-03-05T10:14:42Z",
+              "window_end": "2026-03-05T10:15:00Z",
+              "window_label": "W首窗",
+              "as_of": "2026-03-05T10:30:00+00:00",
+              "value": 37.5217,
+              "lower": 33.0,
+              "upper": 33.4284,
+              "reference_group": "2026-02 两日有限参考",
+              "reference_dates": [
+                "2026-02-11",
+                "2026-02-26"
+              ],
+              "sample_days": 2,
+              "unit": "dB-Hz",
+              "signal": "C:S1P",
+              "sampling_seconds": 1,
+              "comparison_allowed": true,
+              "origin": "structured_excerpt",
+              "field_status": {
+                "unit": "provided",
+                "signal": "provided",
+                "sampling": "provided",
+                "time": "provided"
+              },
+              "source_claim_id": "H-C5-0305-1030",
+              "source_field": "tools/numeric_explanation_check/inputs.json#/tasks/2/rows/1",
+              "query_window_start": "2026-03-05T10:14:42Z",
+              "query_window_end": "2026-03-05T10:29:42Z",
+              "supporting_source_fields": [
+                "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/13/actual_facts",
+                "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/signal_selection_review/rows/13/actual_tools"
+              ],
+              "calculated": {
+                "relation": "above",
+                "text": "高于参考上界",
+                "boundary_difference": 4.0933,
+                "comparisons": [
+                  {
+                    "boundary": "lower",
+                    "difference": 4.5217,
+                    "relation": "above"
+                  },
+                  {
+                    "boundary": "upper",
+                    "difference": 4.0933,
+                    "relation": "above"
+                  }
+                ],
+                "unprovided_boundaries": [],
+                "missing_fields": [],
+                "input_ref": "/cases/1/sections/2/rows/1"
+              }
+            }
+          ],
+          "notes": [
+            "两站按本站参考比较；信号 C:S1P、单位 dB-Hz、1 秒采样及相同窗口均有记录。"
+          ],
+          "source_claim_ids": [
+            "H-C5-0305-1030",
+            "H-C3-opposite-station-directions"
+          ]
+        },
+        {
+          "id": "groups-mixed",
+          "title": "3 月 5 日早一批 · 四窗汇总",
+          "kind": "groups",
+          "lead": "按本站参考记录各窗计数，保留窗口顺序已知的分组。",
+          "rows": [
+            {
+              "object": "BSHM00ISR",
+              "signal": "C:S1P",
+              "sampling_seconds": 1,
+              "window_start": "2026-03-05T09:59:42Z",
+              "window_end": "2026-03-05T10:14:42Z",
+              "as_of": "2026-03-05T10:15:00+00:00",
+              "reference_group": "各站自身 2026-02 两日参考",
+              "reference_dates": [
+                "2026-02-11",
+                "2026-02-26"
+              ],
+              "reference_days": 2,
+              "window_count": 4,
+              "difference_median": null,
+              "unit": "dB-Hz",
+              "below_count": 4,
+              "above_count": 0,
+              "source_claim_id": "H-C3-mixed-window-directions",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/7/actual_facts",
+              "origin": "declared_summary",
+              "calculated": {
+                "origin": "来源声明",
+                "recomputed": false,
+                "input_ref": "/cases/1/sections/3/rows/0"
+              }
+            },
+            {
+              "object": "KITG00UZB",
+              "signal": "C:S1P",
+              "sampling_seconds": 1,
+              "window_start": "2026-03-05T09:59:42Z",
+              "window_end": "2026-03-05T10:14:42Z",
+              "as_of": "2026-03-05T10:15:00+00:00",
+              "reference_group": "各站自身 2026-02 两日参考",
+              "reference_dates": [
+                "2026-02-11",
+                "2026-02-26"
+              ],
+              "reference_days": 2,
+              "window_count": 4,
+              "difference_median": null,
+              "unit": "dB-Hz",
+              "below_count": 2,
+              "above_count": 2,
+              "source_claim_id": "H-C3-mixed-window-directions",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/7/actual_facts",
+              "origin": "declared_summary",
+              "ordered_groups": [
+                {
+                  "windows": "前两窗",
+                  "relation": "低于自身参考"
+                },
+                {
+                  "windows": "后两窗",
+                  "relation": "高于自身参考"
+                }
+              ],
+              "calculated": {
+                "origin": "来源声明",
+                "recomputed": false,
+                "input_ref": "/cases/1/sections/3/rows/1"
+              }
+            }
+          ],
+          "notes": [
+            "四窗计数来自已保存的分组汇总；有序分组保留了前两窗与后两窗的区别。",
+            "稳定性原话来自第 4 次中间回答；第 5 次范围关系原话另列来源。"
+          ],
+          "source_claim_ids": [
+            "H-C3-mixed-window-directions"
+          ]
+        },
+        {
+          "id": "groups-opposite",
+          "title": "3 月 5 日后一批 · 四窗汇总",
+          "kind": "groups",
+          "lead": "按本站参考记录各窗计数，保留窗口顺序已知的分组。",
+          "rows": [
+            {
+              "object": "BSHM00ISR",
+              "signal": "C:S1P",
+              "sampling_seconds": 1,
+              "window_start": "2026-03-05T10:14:42Z",
+              "window_end": "2026-03-05T10:29:42Z",
+              "as_of": "2026-03-05T10:30:00+00:00",
+              "reference_group": "各站自身 2026-02 两日参考",
+              "reference_dates": [
+                "2026-02-11",
+                "2026-02-26"
+              ],
+              "reference_days": 2,
+              "window_count": 4,
+              "difference_median": null,
+              "unit": "dB-Hz",
+              "below_count": 4,
+              "above_count": 0,
+              "source_claim_id": "H-C3-opposite-station-directions",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/6/actual_facts",
+              "origin": "declared_summary",
+              "calculated": {
+                "origin": "来源声明",
+                "recomputed": false,
+                "input_ref": "/cases/1/sections/4/rows/0"
+              }
+            },
+            {
+              "object": "KITG00UZB",
+              "signal": "C:S1P",
+              "sampling_seconds": 1,
+              "window_start": "2026-03-05T10:14:42Z",
+              "window_end": "2026-03-05T10:29:42Z",
+              "as_of": "2026-03-05T10:30:00+00:00",
+              "reference_group": "各站自身 2026-02 两日参考",
+              "reference_dates": [
+                "2026-02-11",
+                "2026-02-26"
+              ],
+              "reference_days": 2,
+              "window_count": 4,
+              "difference_median": null,
+              "unit": "dB-Hz",
+              "below_count": 0,
+              "above_count": 4,
+              "source_claim_id": "H-C3-opposite-station-directions",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/6/actual_facts",
+              "origin": "declared_summary",
+              "calculated": {
+                "origin": "来源声明",
+                "recomputed": false,
+                "input_ref": "/cases/1/sections/4/rows/1"
+              }
+            }
+          ],
+          "notes": [
+            "四窗计数来自已保存的分组汇总，代表窗口的原值另表列出。"
+          ],
+          "source_claim_ids": [
+            "H-C3-opposite-station-directions"
+          ]
+        },
+        {
+          "id": "receiver-units",
+          "title": "NICO：有观测，但载噪比单位未确认",
+          "kind": "units",
+          "lead": "原强度和可比较的载噪比字段分别列出。",
+          "rows": [
+            {
+              "label": "NICO · C:S1P",
+              "values": {
+                "观测开始 UTC": "2026-03-03T10:14:42Z",
+                "观测结束 UTC": "2026-03-03T10:29:42Z",
+                "历元数": 900,
+                "信号数": 17,
+                "信号": "C:S1P",
+                "原强度 P10": 40,
+                "原单位": "receiver_units",
+                "cnr_p10": null,
+                "空值含义": "没有确认到dB-Hz的换算依据"
+              },
+              "source_claim_id": "H-C3-NICO-receiver-units",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/8/factual_examples",
+              "calculated": {
+                "origin": "来源声明",
+                "recomputed": false,
+                "input_ref": "/cases/1/sections/5/rows/0"
+              }
+            }
+          ],
+          "notes": [
+            "原强度为 40 receiver_units；cnr_p10 为空，原因是 dB-Hz 换算依据未确认。",
+            "这份材料保存了 900 个历元和 17 个信号。"
+          ],
+          "source_claim_ids": [
+            "H-C3-NICO-receiver-units"
+          ]
+        },
+        {
+          "id": "signal-selection",
+          "title": "信号切换，分开阅读",
+          "kind": "records",
+          "lead": "3 月 2 日的实际比较选择与初始片段分列。",
+          "rows": [
+            {
+              "label": "3 月 2 日 · 10:15 UTC",
+              "values": {
+                "回放截止": "2026-03-02T10:15:00+00:00",
+                "实际比较开始 UTC": "2026-03-02T09:59:42Z",
+                "实际比较结束 UTC": "2026-03-02T10:14:42Z",
+                "初始 KITG 片段信号": "C:S1P",
+                "实际共同比较信号": "C:S5P"
+              },
+              "source_claim_id": "H-C4-signal-switch",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/signal_selection_review/rows/6",
+              "calculated": {
+                "origin": "来源声明",
+                "recomputed": false,
+                "input_ref": "/cases/1/sections/6/rows/0"
+              }
+            },
+            {
+              "label": "3 月 2 日 · 10:30 UTC",
+              "values": {
+                "回放截止": "2026-03-02T10:30:00+00:00",
+                "实际比较开始 UTC": "2026-03-02T10:14:42Z",
+                "实际比较结束 UTC": "2026-03-02T10:29:42Z",
+                "初始 KITG 片段信号": "C:S1P",
+                "实际共同比较信号": "C:S5P"
+              },
+              "source_claim_id": "H-C4-signal-switch",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/signal_selection_review/rows/7",
+              "calculated": {
+                "origin": "来源声明",
+                "recomputed": false,
+                "input_ref": "/cases/1/sections/6/rows/1"
+              }
+            },
+            {
+              "label": "跨日信号口径",
+              "values": {
+                "3 月 2 日两批信号": "C:S5P",
+                "其余已复核 12 批信号": "C:S1P",
+                "已发现明确拼接两信号为连续趋势的原句": false
+              },
+              "source_claim_id": "H-C4-signal-switch",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/9/review",
+              "calculated": {
+                "origin": "来源声明",
+                "recomputed": false,
+                "input_ref": "/cases/1/sections/6/rows/2"
+              }
+            }
+          ],
+          "notes": [
+            "C:S5P 和 C:S1P 是不同信号，分别记录。",
+            "已保存的复核记录中，未找到明确将两者拼成连续趋势的原句。"
+          ],
+          "source_claim_ids": [
+            "H-C4-signal-switch"
+          ]
+        },
+        {
+          "id": "nominal-capacity",
+          "title": "名义运力：相对变化与绝对水平",
+          "kind": "change",
+          "lead": "比较同一 capacity 字段，不将名义运力改写为实际装载货量。",
+          "rows": [
+            {
+              "object": "霍尔木兹海峡",
+              "metric": "名义运力 capacity",
+              "unit": null,
+              "field_status": {
+                "unit": "not_provided"
+              },
+              "comparison_allowed": true,
+              "observations": [
+                {
+                  "date": "2026-03-06",
+                  "value": 143
+                },
+                {
+                  "date": "2026-03-07",
+                  "value": 102414
+                }
+              ],
+              "references": [
+                {
+                  "date": "2019-11-01",
+                  "value": 3044613
+                },
+                {
+                  "date": "2019-11-02",
+                  "value": 1314529
+                }
+              ],
+              "source_claim_id": "H-C6-old",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/2/visible_facts",
+              "calculated": {
+                "status": "same_field_comparison",
+                "changes": [
+                  {
+                    "start": {
+                      "date": "2026-03-06",
+                      "value": 143
+                    },
+                    "end": {
+                      "date": "2026-03-07",
+                      "value": 102414
+                    },
+                    "difference": 102271.0,
+                    "relative_change_percent": 71518.18181818182,
+                    "relative_change_note": null
+                  }
+                ],
+                "reference_comparisons": [
+                  {
+                    "final_date": "2026-03-07",
+                    "reference_date": "2019-11-01",
+                    "final_value": 102414,
+                    "reference_value": 3044613,
+                    "relation": "below",
+                    "text": "低于参考值",
+                    "boundary_difference": -2942199.0,
+                    "comparisons": [
+                      {
+                        "boundary": "lower",
+                        "difference": -2942199.0,
+                        "relation": "below"
+                      },
+                      {
+                        "boundary": "upper",
+                        "difference": -2942199.0,
+                        "relation": "below"
+                      }
+                    ],
+                    "unprovided_boundaries": []
+                  },
+                  {
+                    "final_date": "2026-03-07",
+                    "reference_date": "2019-11-02",
+                    "final_value": 102414,
+                    "reference_value": 1314529,
+                    "relation": "below",
+                    "text": "低于参考值",
+                    "boundary_difference": -1212115.0,
+                    "comparisons": [
+                      {
+                        "boundary": "lower",
+                        "difference": -1212115.0,
+                        "relation": "below"
+                      },
+                      {
+                        "boundary": "upper",
+                        "difference": -1212115.0,
+                        "relation": "below"
+                      }
+                    ],
+                    "unprovided_boundaries": []
+                  }
+                ],
+                "input_ref": "/cases/1/sections/7/rows/0"
+              }
+            }
+          ],
+          "notes": [
+            "数值均来自同一 capacity 字段，原表未注明绝对单位。",
+            "历史对照为 2019 年 11 月 1 日和 2 日两个日值。",
+            "旧回答已有后续解释修订，旧原文仍保留在来源中。"
+          ],
+          "source_claim_ids": [
+            "H-C6-old"
+          ]
+        },
+        {
+          "id": "revision-field",
+          "title": "修订回答改用船次，原运力问题仍在",
+          "kind": "change",
+          "lead": "这是另一数量字段，保留它的日期、数值和历史对照。",
+          "rows": [
+            {
+              "object": "霍尔木兹海峡",
+              "metric": "总船次 n_total",
+              "unit": "艘次",
+              "comparison_allowed": true,
+              "observations": [
+                {
+                  "date": "2026-03-06",
+                  "value": 2
+                },
+                {
+                  "date": "2026-03-07",
+                  "value": 3
+                }
+              ],
+              "references": [
+                {
+                  "date": "2019-11-01",
+                  "value": 69
+                },
+                {
+                  "date": "2019-11-02",
+                  "value": 67
+                }
+              ],
+              "source_claim_id": "H-C6-revision",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/3/visible_facts",
+              "calculated": {
+                "status": "same_field_comparison",
+                "changes": [
+                  {
+                    "start": {
+                      "date": "2026-03-06",
+                      "value": 2
+                    },
+                    "end": {
+                      "date": "2026-03-07",
+                      "value": 3
+                    },
+                    "difference": 1.0,
+                    "relative_change_percent": 50.0,
+                    "relative_change_note": null
+                  }
+                ],
+                "reference_comparisons": [
+                  {
+                    "final_date": "2026-03-07",
+                    "reference_date": "2019-11-01",
+                    "final_value": 3,
+                    "reference_value": 69,
+                    "relation": "below",
+                    "text": "低于参考值",
+                    "boundary_difference": -66.0,
+                    "comparisons": [
+                      {
+                        "boundary": "lower",
+                        "difference": -66.0,
+                        "relation": "below"
+                      },
+                      {
+                        "boundary": "upper",
+                        "difference": -66.0,
+                        "relation": "below"
+                      }
+                    ],
+                    "unprovided_boundaries": []
+                  },
+                  {
+                    "final_date": "2026-03-07",
+                    "reference_date": "2019-11-02",
+                    "final_value": 3,
+                    "reference_value": 67,
+                    "relation": "below",
+                    "text": "低于参考值",
+                    "boundary_difference": -64.0,
+                    "comparisons": [
+                      {
+                        "boundary": "lower",
+                        "difference": -64.0,
+                        "relation": "below"
+                      },
+                      {
+                        "boundary": "upper",
+                        "difference": -64.0,
+                        "relation": "below"
+                      }
+                    ],
+                    "unprovided_boundaries": []
+                  }
+                ],
+                "input_ref": "/cases/1/sections/8/rows/0"
+              }
+            }
+          ],
+          "notes": [
+            "修订 r1 比较总船次 n_total，使用 3 月 6—7 日和 2019 年 11 月 1—2 日的值。"
+          ],
+          "source_claim_ids": [
+            "H-C6-revision"
+          ]
+        },
+        {
+          "id": "adjacent-days",
+          "title": "三天船次，两个相邻区间",
+          "kind": "intervals",
+          "lead": "观测日期与回放截止日期分开列出。",
+          "rows": [
+            {
+              "object": "霍尔木兹海峡",
+              "metric": "总船次 n_total",
+              "unit": "艘次",
+              "intervals": [
+                {
+                  "start": {
+                    "date": "2026-03-06",
+                    "value": 2,
+                    "material_id": "31ce5092cae24fd78243ba7a092f0343",
+                    "material_version": 1
+                  },
+                  "end": {
+                    "date": "2026-03-07",
+                    "value": 3,
+                    "material_id": "877a684702aa40fcb621dddb4de22315",
+                    "material_version": 1
+                  },
+                  "version": null,
+                  "as_of": "2026-03-08T00:00:00+00:00"
+                },
+                {
+                  "start": {
+                    "date": "2026-03-07",
+                    "value": 3,
+                    "material_id": "877a684702aa40fcb621dddb4de22315",
+                    "material_version": 1
+                  },
+                  "end": {
+                    "date": "2026-03-08",
+                    "value": 2,
+                    "material_id": "1b4ee1b91c4f4942862350a088de2acf",
+                    "material_version": 1
+                  },
+                  "version": null,
+                  "as_of": "2026-03-09T00:00:00+00:00"
+                }
+              ],
+              "date_value_consistency": {
+                "shared_date": "2026-03-07",
+                "values": [
+                  3,
+                  3
+                ],
+                "status": "to_be_computed"
+              },
+              "comparability": "interval_version_not_provided",
+              "common_date_material": {
+                "date": "2026-03-07",
+                "material_id": "877a684702aa40fcb621dddb4de22315",
+                "material_version": 1
+              },
+              "source_claim_id": "H-C7",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/4/visible_facts/by_observation_date",
+              "calculated": {
+                "adjacent_changes": [
+                  {
+                    "start": {
+                      "date": "2026-03-06",
+                      "value": 2,
+                      "material_id": "31ce5092cae24fd78243ba7a092f0343",
+                      "material_version": 1
+                    },
+                    "end": {
+                      "date": "2026-03-07",
+                      "value": 3,
+                      "material_id": "877a684702aa40fcb621dddb4de22315",
+                      "material_version": 1
+                    },
+                    "difference": 1.0,
+                    "relative_change_percent": 50.0,
+                    "relative_change_note": null
+                  },
+                  {
+                    "start": {
+                      "date": "2026-03-07",
+                      "value": 3,
+                      "material_id": "877a684702aa40fcb621dddb4de22315",
+                      "material_version": 1
+                    },
+                    "end": {
+                      "date": "2026-03-08",
+                      "value": 2,
+                      "material_id": "1b4ee1b91c4f4942862350a088de2acf",
+                      "material_version": 1
+                    },
+                    "difference": -1.0,
+                    "relative_change_percent": -33.333333333333336,
+                    "relative_change_note": null
+                  }
+                ],
+                "shared_dates": [
+                  {
+                    "date": "2026-03-07",
+                    "occurrences": [
+                      {
+                        "value": 3,
+                        "interval_index": 0,
+                        "version": 1,
+                        "material_id": "877a684702aa40fcb621dddb4de22315"
+                      },
+                      {
+                        "value": 3,
+                        "interval_index": 1,
+                        "version": 1,
+                        "material_id": "877a684702aa40fcb621dddb4de22315"
+                      }
+                    ],
+                    "values_equal": true,
+                    "version_comparison": "consistent"
+                  }
+                ],
+                "principle": "比较共同日期的记录值及版本，不比较两段差值符号是否相同。",
+                "input_ref": "/cases/1/sections/9/rows/0"
+              }
+            }
+          ],
+          "notes": [
+            "各观测日保存的材料版本均为 v1；全区间版本未单独登记。",
+            "两个比较区间共享 3 月 7 日这一观测日期。"
+          ],
+          "source_claim_ids": [
+            "H-C7"
+          ]
+        },
+        {
+          "id": "version-history",
+          "title": "v6 解释修订与 v7 记录分列",
+          "kind": "records",
+          "lead": "保留旧值、修订值与较后日期的记录关系。",
+          "rows": [
+            {
+              "label": "3 月 8 日 · 解释修订前",
+              "values": {
+                "证据版本": 6,
+                "回放截止": "2026-03-08T00:00:00+00:00",
+                "观测日期": "2026-03-07",
+                "总船次": 3,
+                "冻结参考": 69,
+                "记录状态": "active",
+                "解除日期": null
+              },
+              "source_claim_id": "H-C8",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/5/visible_facts/before",
+              "calculated": {
+                "origin": "来源声明",
+                "recomputed": false,
+                "input_ref": "/cases/1/sections/10/rows/0"
+              }
+            },
+            {
+              "label": "3 月 8 日 · 解释修订后",
+              "values": {
+                "证据版本": 6,
+                "回放截止": "2026-03-08T00:00:00+00:00",
+                "观测日期": "2026-03-07",
+                "总船次": 3,
+                "冻结参考": 69,
+                "记录状态": "active",
+                "解除日期": null
+              },
+              "source_claim_id": "H-C8",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/5/visible_facts/after",
+              "calculated": {
+                "origin": "来源声明",
+                "recomputed": false,
+                "input_ref": "/cases/1/sections/10/rows/1"
+              }
+            },
+            {
+              "label": "3 月 9 日 · 已保存的较后版本",
+              "values": {
+                "证据版本": 7,
+                "回放截止": "2026-03-09T00:00:00+00:00",
+                "观测日期": "2026-03-08",
+                "总船次": 2,
+                "冻结参考": 69,
+                "记录状态": "active",
+                "解除日期": null,
+                "冻结参考开始": "2026-02-01",
+                "冻结参考结束": "2026-02-28",
+                "参考有效天数": 28
+              },
+              "source_claim_id": "H-C8",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/5/visible_facts/current",
+              "calculated": {
+                "origin": "来源声明",
+                "recomputed": false,
+                "input_ref": "/cases/1/sections/10/rows/2"
+              }
+            },
+            {
+              "label": "解释修订的保存关系",
+              "values": {
+                "较后证据版本被覆盖": false,
+                "登记为物理恢复": false,
+                "原数值规则状态保持": true
+              },
+              "source_claim_id": "H-C8",
+              "source_field": "reports/round7/ROUND7_EVIDENCE_REVIEW.json#/cases/1/claim_reviews/5/visible_facts/saved_change",
+              "calculated": {
+                "origin": "来源声明",
+                "recomputed": false,
+                "input_ref": "/cases/1/sections/10/rows/3"
+              }
+            }
+          ],
+          "notes": [
+            "v6 分别保留原解释与修订解释；3 月 9 日记录仍为 v7。"
+          ],
+          "source_claim_ids": [
+            "H-C8"
+          ]
+        }
+      ]
+    }
+  ],
+  "round9_context": {
+    "source_file": "reports/round9/ROUND9_NUMERIC_EXPLANATION_RESULTS.json",
+    "comparison_counts": {
+      "A": {
+        "model_responses": 8,
+        "item_readings_completed": 8,
+        "outcomes": {
+          "pass": 0,
+          "incorrect": 4,
+          "incomplete": 4,
+          "review_needed": 0
+        },
+        "numbers_and_relations": {
+          "fail": 4,
+          "pass": 4
+        },
+        "json_structure_pass": 8,
+        "row_ids_exist_pass": 8
+      },
+      "B": {
+        "model_responses": 8,
+        "item_readings_completed": 8,
+        "outcomes": {
+          "pass": 2,
+          "incorrect": 1,
+          "incomplete": 4,
+          "review_needed": 1
+        },
+        "numbers_and_relations": {
+          "pass": 7,
+          "fail": 1
+        },
+        "json_structure_pass": 8,
+        "row_ids_exist_pass": 8
+      }
+    },
+    "new_model_calls": 0
+  },
+  "generation": {
+    "generated_at": "2026-09-14T05:14:33.261816+00:00",
+    "attribution": "本次事实说明由程序按已存资料生成",
+    "original_goal_status": "not_demonstrated",
+    "strict_lead_hours": null,
+    "runtime_modified": false,
+    "new_model_calls": 0
+  },
+  "checks": {
+    "scope": "本次计算、既有八题输入、生成页面的本地链接和字段来源",
+    "status": "passed",
+    "model_calls": 0,
+    "source_review": {
+      "status": "passed",
+      "source_pointers": 16,
+      "classification_pointers": 16,
+      "additional_source_and_mapping_pointers": 18,
+      "row_source_fields": 35,
+      "supporting_fields": 16,
+      "verbatim_quotes": 18,
+      "preserved_review_notes": 16
+    },
+    "browser_review": {
+      "status": "blocked_by_browser_url_policy",
+      "attempted_entry": "index.html",
+      "opened_pages": [],
+      "interaction_checked": false,
+      "reason": "应用内浏览器拒绝访问 file:// 本地页面，未绕过限制；页面及包内链接已完成静态检查。"
+    }
+  }
+}
