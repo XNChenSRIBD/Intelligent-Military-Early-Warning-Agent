@@ -298,6 +298,19 @@ async def replay_resource(resource_id: str):
     return record
 
 
+@app.get('/api/replay/cases/{case_id}/gnss-observations')
+async def replay_gnss_observations(case_id: str, date: str | None = None):
+    if settings.pipeline_mode != 'case_replay':
+        raise HTTPException(404, '当前不是历史回放实例')
+    try:
+        record = await asyncio.to_thread(app.state.pipeline.gnss_observations, case_id, date)
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
+    if record is None:
+        raise HTTPException(404, '找不到该回放案例')
+    return record
+
+
 @app.get('/api/replay/cases/{case_id}/snapshots/{revision}')
 async def replay_snapshot(case_id: str, revision: str):
     if settings.pipeline_mode != 'case_replay':

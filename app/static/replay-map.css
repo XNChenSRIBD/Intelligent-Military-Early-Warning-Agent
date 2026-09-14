@@ -264,6 +264,17 @@ body.replay-map-app {
 .replay-map-app .report-table td { padding: 10px 7px; border-bottom: 1px solid #29465270; color: #9bb8c6; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
 .replay-map-app .report-table th:first-child { width: 43%; }
 .replay-map-app .report-table th:nth-child(2) { width: 25%; }
+.replay-map-app .gnss-date-controls { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; margin-bottom: 14px; }
+.replay-map-app .gnss-date-controls .report-select { margin: 0; }
+.replay-map-app .gnss-date-controls button { padding: 8px 6px; font-size: 12px; white-space: nowrap; }
+.replay-map-app .gnss-station-table th:first-child { width: 33%; }
+.replay-map-app .gnss-station-table th:nth-child(2) { width: 24%; }
+.replay-map-app .gnss-station-table small { display: block; margin-top: 5px; font-size: 10px; line-height: 1.7; }
+.replay-map-app .gnss-station-table .text-button { padding: 0; text-align: left; font-size: 12px; overflow-wrap: anywhere; }
+.replay-map-app .gnss-station-table .gnss-near-reference { color: #72dea2; }
+.replay-map-app .gnss-station-table .gnss-below-reference { color: #f4d16f; }
+.replay-map-app .gnss-window-table th:first-child { width: 34%; }
+.replay-map-app .gnss-window-table th:nth-child(2) { width: 22%; }
 .replay-map-app .report-chart { min-width: 0; max-width: 100%; padding: 14px 10px 11px; margin: 18px 0; border: 1px solid #35566763; border-radius: 7px; background: #0b1a25; overflow: auto; }
 .replay-map-app .report-chart svg { display: block; width: 100%; max-width: 100%; height: auto; }
 .replay-map-app .report-chart svg text { fill: #759baa; font-family: inherit; font-size: 11px; }

@@ -737,6 +737,40 @@ class CaseReplay(Pipeline):
         from .gnss import compact_gnss
         return compact_gnss(result)
 
+    def gnss_observations(self, case_id, date=None):
+        """Browse saved GNSS observations independently of the map's primary frame."""
+        if case_id not in self.definitions:
+            return None
+        with self.store.connect() as db:
+            catalog = db.execute("""SELECT DISTINCT
+                substr(json_extract(data, '$.window_start'), 1, 10) AS date,
+                json_extract(data, '$.station') AS station FROM records
+                WHERE kind='gnss_result' AND json_extract(data, '$.case_id')=?
+                AND COALESCE(json_extract(data, '$.role'), '')!='baseline'
+                AND json_extract(data, '$.window_start') IS NOT NULL""", (case_id,)).fetchall()
+            dates = sorted({item['date'] for item in catalog})
+            if date is not None and date not in dates:
+                raise ValueError('该日期没有已保存的 GNSS 观测')
+            selected = date or (dates[0] if dates else None)
+            saved = [json.loads(item['data']) for item in db.execute("""SELECT data FROM records
+                WHERE kind='gnss_result' AND json_extract(data, '$.case_id')=?
+                AND COALESCE(json_extract(data, '$.role'), '')!='baseline'
+                AND substr(json_extract(data, '$.window_start'), 1, 10)=?""", (case_id, selected))]
+        files, series = [], []
+        for item in sorted(saved, key=lambda row: (row['window_start'], row.get('station', ''))):
+            files.append({key: item.get(key) for key in
+                          ('station', 'window_start', 'window_end', 'signals', 'material_id',
+                           'resource_id', 'source_filename')})
+            for row in item.get('series', []):
+                series.append(dict(row, station=item['station'], material_id=item.get('material_id'),
+                                   resource_id=item.get('resource_id')))
+        return {'case_id': case_id, 'dates': dates, 'selected_date': selected,
+                'stations': sorted({item['station'] for item in catalog}),
+                'files': files, 'series': series,
+                'reference_dates': sorted({reference_date for row in series
+                    for group in row.get('reference_groups', [])
+                    for reference_date in group.get('dates', [])})}
+
     def gnss_results(self, case_id, as_of, baseline_only=False, full=True, stations=None):
         selected_stations = set(stations) if stations is not None else None
         saved = [result for result in self.store.all('gnss_result') if result.get('case_id') == case_id

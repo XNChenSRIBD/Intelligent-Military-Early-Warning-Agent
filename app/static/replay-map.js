@@ -4,6 +4,7 @@
   const $ = (id) => document.getElementById(id);
   const state = {caseId:'kharkiv', metadata:null, current:null, map:null,
     request:0, detailRequest:0, popup:null, reportTab:'overview', station:null, busy:false, at:null,
+    gnssArchive:null, gnssRequest:0, gnssInitialDate:null,
     layerChoice:{gnss:true,shipping:true,aircraft:false}};
   const layers = {};
   const finite = (value) => typeof value === 'number' && Number.isFinite(value);
@@ -316,7 +317,7 @@
     }
   }
 
-  function plot(rows,series,parent,unit) {
+  function plot(rows,series,parent,unit,timeLabel=day) {
     const good=rows.filter((row)=>Number.isFinite(Date.parse(row.time))), values=good.flatMap((row)=>series.map((s)=>row[s.key]).filter(finite));
     if(!values.length){parent.append(node('p','report-empty','当前资料中没有可绘制的观测。'));return;}
     const ns='http://www.w3.org/2000/svg';
@@ -333,7 +334,7 @@
       const contiguous=previous && !row.gap && !previous.gap && Date.parse(row.time)-Date.parse(previous.time)<=cadence*1.5;
       path+=`${contiguous?'L':'M'}${x(row).toFixed(1)},${y(row[line.key]).toFixed(1)} `;previous=row;
     });chart.append(svg('path',{d:path,fill:'none',stroke:line.color,'stroke-width':1.7,...(line.dashed?{'stroke-dasharray':'5 4'}:{})}));});
-    [good[0],good.at(-1)].forEach((row,i)=>chart.append(svg('text',{x:i?width-right:left,y:height-12,'text-anchor':i?'end':'start'},day(row.time))));
+    [good[0],good.at(-1)].forEach((row,i)=>chart.append(svg('text',{x:i?width-right:left,y:height-12,'text-anchor':i?'end':'start'},timeLabel(row.time))));
     const wrap=node('div','report-chart');wrap.append(chart);parent.append(wrap);
     const legend=node('div','chart-legend');series.forEach((line)=>{const item=node('span','',line.title);item.style.color=line.color;legend.append(item);});legend.append(node('span','',unit));parent.append(legend);
   }
@@ -411,7 +412,118 @@
     }
     const wrap=node('div','observation-table-wrap');wrap.append(table);history.append(wrap);
   }
+  function renderSavedGnss() {
+    const block=section('IGS 接收站：往日与本次');
+    const mainDate=day(state.current?.decision?.primary?.observation_start || state.current?.decision?.primary?.as_of);
+    const key=`${state.caseId}:${mainDate}`, caseId=state.caseId;
+    if(state.gnssArchive?.key!==key)state.gnssArchive={key,data:null};
+    const clock=(value)=>String(value || '').slice(11,16);
+    const sourceRows=(data,station,signal)=>(data.series || [])
+      .filter((row)=>row.station===station && (!signal || row.signal===signal))
+      .sort((a,b)=>String(a.window_start).localeCompare(String(b.window_start)));
+    const value=(row)=>row?.unit==='dB-Hz'?row.cnr_p10:row?.strength_p10;
+    const unit=(row)=>row?.unit==='dB-Hz'?'dB-Hz':'接收机原始单位';
+    const signalsFor=(data,station)=>[...new Set([
+      ...sourceRows(data,station).map((row)=>row.signal),
+      ...(data.files || []).filter((file)=>file.station===station).flatMap((file)=>(file.signals || []).map((item)=>item.signal))
+    ])].filter(Boolean).sort();
+    const preferredSignal=(signals,station)=>['BSHM00ISR','KITG00UZB'].includes(station) && signals.includes('C:S1P')?'C:S1P':signals[0];
+    const representative=(rows)=>rows.find((row)=>finite(value(row)) && Date.parse(row.window_end)-Date.parse(row.window_start)>=300000)
+      || rows.find((row)=>finite(value(row))) || rows[0];
+    function renderSignal(data,station,signal,parent) {
+      const rows=sourceRows(data,station,signal),sample=representative(rows);
+      parent.append(node('h3','',`${station} · ${signal}`));
+      if(rows.length) {
+        const groups=[...new Set(rows.flatMap((row)=>(row.reference_groups || []).map((group)=>group.date_group)))];
+        const drawing=rows.map((row)=>({time:row.window_start,current:value(row),
+          ...Object.fromEntries((row.reference_groups || []).map((group)=>[`ref_${group.date_group}`,group.sample_median]))}));
+        const references=groups.map((name,index)=>{
+          const dates=[...new Set(rows.flatMap((row)=>(row.reference_groups || []).filter((group)=>group.date_group===name).flatMap((group)=>group.dates || [])))];
+          return {key:`ref_${name}`,title:`往日 ${dates.join('、') || name}`,color:index?'#9ea9dc':'#bf9f79',dashed:true};
+        });
+        plot(drawing,[{key:'current',title:`本次 ${data.selected_date}`,color:'#73d7d0'},...references],parent,unit(sample),clock);
+        parent.append(node('p','report-date',`观测时间 ${data.selected_date} ${clock(rows[0].window_start)}–${clock(rows.at(-1).window_end)} UTC。${sample?.unit==='dB-Hz'?'载噪比（信号偏弱部分）。':'信号强度使用接收机原始单位。'}`));
+        const numbers=disclosure('展开各时段数值',parent),table=node('table','report-table gnss-window-table'),head=node('tr');
+        ['时间（UTC）','往日','本次','变化'].forEach((label)=>head.append(node('th','',label)));table.append(head);
+        for(const row of rows) {
+          const groups=row.reference_groups?.length?row.reference_groups:[null];
+          for(const group of groups) {
+            const current=finite(group?.current_p10)?group.current_p10:value(row),reference=group?.sample_median;
+            const delta=finite(current) && finite(reference)?current-reference:null;
+            const tr=node('tr');tr.append(node('td','',`${clock(row.window_start)}–${clock(row.window_end)}`),
+              node('td','',number(reference)),node('td','',number(current)),node('td','',finite(delta)?`${delta>0?'+':''}${number(delta)}`:'—'));table.append(tr);
+          }
+        }
+        numbers.append(table,node('p','report-date',`数值单位：${unit(sample)}；变化为同一时段本次值减去往日值。`));
+      } else parent.append(node('p','report-empty','这条信号只有文件汇总，可打开原始资料查看。'));
+      const files=(data.files || []).filter((file)=>file.station===station && (file.signals || []).some((item)=>item.signal===signal));
+      const seen=new Set();
+      for(const file of files)if(file.material_id && !seen.has(file.material_id)) {
+        seen.add(file.material_id);parent.append(button(`原始资料 · ${file.source_filename || `${station} ${clock(file.window_start)}`}`,()=>openMaterial(file.material_id)));
+      }
+    }
+    function draw(data) {
+      block.replaceChildren(node('h3','','IGS 接收站：往日与本次'));
+      const control=node('div','gnss-date-controls'),select=node('select','report-select');
+      select.setAttribute('aria-label','选择 GNSS 观测日期');
+      (data.dates || []).forEach((date)=>select.add(new Option(date,date)));select.value=data.selected_date;
+      select.addEventListener('change',()=>load(select.value));
+      const index=(data.dates || []).indexOf(data.selected_date);
+      const previous=button('前一天',()=>load(data.dates[index-1]),'text-button'),next=button('后一天',()=>load(data.dates[index+1]),'text-button');
+      previous.disabled=index<=0;next.disabled=index<0 || index>=data.dates.length-1;
+      control.append(previous,select,next);block.append(node('label','report-label','GNSS 观测日期'),control);
+      block.append(node('p','report-date',`GNSS 观测日期：${data.selected_date}；主卡航运日期：${mainDate}。`));
+      if(!data.series?.length && !data.files?.length){block.append(node('p','report-empty','这一天尚无接收站观测资料。'));return;}
+      block.append(node('p','report-date','点击站点查看全部信号、往日对照曲线和原始资料。'));
+      const stations=[...new Set([...(data.stations || []),...(data.files || []).map((file)=>file.station),...(data.series || []).map((row)=>row.station)])].sort();
+      const table=node('table','report-table gnss-station-table'),head=node('tr'),detailContainer=node('div');
+      ['站点 / 信号','往日','本次','变化'].forEach((label)=>head.append(node('th','',label)));table.append(head);
+      for(const station of stations) {
+        const signals=signalsFor(data,station),signal=preferredSignal(signals,station),rows=sourceRows(data,station,signal),sample=representative(rows);
+        const group=(sample?.reference_groups || []).find((item)=>finite(item.sample_median));
+        const current=finite(group?.current_p10)?group.current_p10:value(sample),reference=group?.sample_median;
+        const delta=finite(current) && finite(reference)?current-reference:null;
+        const details=disclosure(`${station} · 信号曲线与原始资料`,detailContainer);
+        const choices=node('select','report-select');choices.setAttribute('aria-label',`${station} 的卫星信号`);
+        choices.add(new Option('全部信号',''));signals.forEach((item)=>choices.add(new Option(item,item)));choices.value=signal || '';
+        const charts=node('div');details.append(choices,charts);
+        const drawSignals=()=>{charts.replaceChildren();(choices.value?[choices.value]:signals).forEach((item)=>renderSignal(data,station,item,charts));};
+        choices.addEventListener('change',drawSignals);
+        details.addEventListener('toggle',()=>{if(details.open && !charts.childNodes.length)drawSignals();});
+        if(state.station===station)details.open=true;
+        const tr=node('tr'),label=node('td'),past=node('td','',number(reference)),now=node('td','',number(current)),change=node('td','',finite(delta)?`${delta>0?'+':''}${number(delta)}`:'—');
+        label.append(button(station,()=>{details.open=true;drawSignals();details.scrollIntoView({block:'nearest',behavior:'smooth'});},'text-button'),node('small','',signal || '信号未注明'));
+        if(sample)label.append(node('small','',`${clock(sample.window_start)}–${clock(sample.window_end)} UTC`));
+        if(group?.outside_sample_range===false)label.append(node('small','gnss-near-reference','与往日接近'));
+        else if(finite(current) && finite(group?.sample_min) && current<group.sample_min)label.append(node('small','gnss-below-reference','低于往日'));
+        past.append(node('small','',(group?.dates || []).join('、') || '暂无同期参考'));
+        now.append(node('small','',unit(sample)));if(finite(delta))change.append(node('small','',sample?.unit==='dB-Hz'?'dB':'接收机原始单位'));
+        if(sample?.unit==='receiver_units')now.append(node('small','','原件未标物理单位'));
+        tr.append(label,past,now,change);table.append(tr);
+      }
+      const wrap=node('div','observation-table-wrap');wrap.append(table);block.append(wrap);
+      block.append(node('p','report-date','载噪比（信号偏弱部分）：往日与本次使用同站、同信号、同一时段。表内列出当日首个完整五分钟的观测。'));
+      if(data.reference_dates?.length)block.append(node('p','report-date',`参考日期：${data.reference_dates.join('、')}。`));
+      block.append(detailContainer);
+    }
+    async function load(date=null) {
+      const request=++state.gnssRequest;
+      block.replaceChildren(node('p','report-empty','正在读取 GNSS 观测…'));
+      try {
+        let data=await get(`/api/replay/cases/${encodeURIComponent(caseId)}/gnss-observations${date?`?date=${encodeURIComponent(date)}`:''}`);
+        const preferredDate=state.gnssInitialDate || mainDate;
+        if(!date && data.dates?.includes(preferredDate) && data.selected_date!==preferredDate)data=await get(`/api/replay/cases/${encodeURIComponent(caseId)}/gnss-observations?date=${encodeURIComponent(preferredDate)}`);
+        if(request!==state.gnssRequest || !block.isConnected || state.caseId!==caseId)return;
+        state.gnssInitialDate=null;state.gnssArchive={key,data};draw(data);
+      } catch {
+        if(request!==state.gnssRequest || !block.isConnected)return;
+        block.replaceChildren(node('p','report-empty','GNSS 观测暂时无法读取。'),button('重新读取',()=>load(date)));
+      }
+    }
+    if(state.gnssArchive.data)draw(state.gnssArchive.data);else load();
+  }
   function renderGnss() {
+    if(state.caseId==='hormuz') {renderSavedGnss();return;}
     if(observation()?.station_rows) {
       renderStationObservations();return;
     }
@@ -609,7 +721,11 @@
     window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{state.map.invalidateSize();fitCase();},120);});
     if(window.innerWidth<700)$('layer-fold').open=false;
     const parameters=new URLSearchParams(location.search),initial=parameters.get('case');
-    await selectCase(state.metadata.cases[initial]?initial:'kharkiv',parameters.get('at'));setInterval(refresh,15000);
+    await selectCase(state.metadata.cases[initial]?initial:'kharkiv',parameters.get('at'));
+    if(state.caseId==='hormuz' && parameters.get('report')==='gnss') {
+      state.gnssInitialDate=parameters.get('gnss_date');openReport('gnss');
+    }
+    setInterval(refresh,15000);
   }
   start().catch(showError);
 })();
