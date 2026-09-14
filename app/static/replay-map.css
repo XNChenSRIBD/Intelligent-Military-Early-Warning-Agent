@@ -217,6 +217,8 @@ body.replay-map-app {
 .replay-map-app .report-section { margin: 0 0 28px; min-width: 0; }
 .replay-map-app .report-section + .report-section { padding-top: 23px; border-top: 1px solid #29445173; }
 .replay-map-app .report-section h3 { margin: 0 0 12px; color: #b2cdd7; font-size: 16px; line-height: 1.6; font-weight: 500; }
+.replay-map-app .report-disclosure > summary { cursor: pointer; color: #83ccc6; font-size: 14px; line-height: 1.8; }
+.replay-map-app .report-disclosure[open] > summary { margin-bottom: 14px; }
 .replay-map-app .report-section p,
 .replay-map-app .report-section li { margin-top: 0; margin-bottom: 12px; color: #8eacba; font-size: 15px; line-height: 1.95; white-space: pre-line; overflow-wrap: anywhere; }
 .replay-map-app .report-section ul { padding-left: 20px; }

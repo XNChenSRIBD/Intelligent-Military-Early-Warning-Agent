@@ -1,6 +1,7 @@
 """Persisted, object-scoped historical judgments; no collection or model calls."""
 
 from copy import deepcopy
+from datetime import date, datetime, timedelta, timezone
 
 
 RISK_OBJECTS = {
@@ -33,6 +34,124 @@ def _tool_result(tool):
 
 def _strings(values):
     return list(dict.fromkeys(value for value in values if isinstance(value, str) and value))
+
+
+def _card_day(value):
+    if not value:
+        return ''
+    day = date.fromisoformat(str(value)[:10])
+    return f'{day.month}月{day.day}日'
+
+
+def _card_window(compared):
+    values = [compared.get('window_start'), compared.get('window_end')]
+    if not all(values):
+        return ''
+    start, end = [datetime.fromisoformat(value.replace('Z', '+00:00')) for value in values]
+    if start.tzinfo is None or end.tzinfo is None:
+        return ''
+    start, end = start.astimezone(timezone.utc), end.astimezone(timezone.utc)
+    end_format = '%H:%M:%S' if start.date() == end.date() else '%Y-%m-%d %H:%M:%S'
+    return f"观测时间：{start:%Y-%m-%d %H:%M:%S} 至 {end.strftime(end_format)}，UTC。"
+
+
+def present_decision(decision):
+    """Describe saved observations; change only the three card text fields."""
+    if decision is None:
+        return None
+    presented = dict(decision)
+    program = (decision.get('report') or {}).get('program') or {}
+    assessment = (decision.get('report') or {}).get('assessment') or {}
+    availability = decision.get('availability') or {}
+    support = decision.get('supported_by') or (decision.get('evidence_relations') or {}).get('support') or []
+    state, risk = decision.get('state'), decision.get('risk_object')
+    brief = []
+    if risk == 'gnss_observation_quality':
+        compared = next((item for item in support if item.get('station')
+                         and item.get('unit') == 'dB-Hz'
+                         and isinstance(item.get('current_p10'), (int, float))), None)
+        if state == 'normal':
+            title, summary = '接收站观测正常', '本次接收站卫星信号观测平稳。'
+        elif state == 'attention':
+            title, summary = '接收站信号出现变化', '本次接收站卫星信号与往日观测存在差异。'
+        elif state == 'warning':
+            title, summary = '接收站信号异常', '本次接收站卫星信号出现明确异常。'
+        elif availability.get('observation_present'):
+            title, summary = '接收站观测尚待核实', '已有接收站观测，信号变化仍待核实。'
+            if assessment.get('decision') == 'no_anomaly':
+                title, summary = '暂未发现明确的信号异常', '本次对比尚未发现明确的接收站信号异常。'
+        else:
+            title, summary = '暂无接收站观测', '当前时段尚无接收站观测资料。'
+        if compared:
+            station = compared['station']
+            direction = compared.get('sample_relation')
+            if state == 'attention' and direction in ('below', 'above'):
+                title = f"{station[:4]} 站载噪比{'下降' if direction == 'below' else '升高'}"
+                summary = f"IGS 接收站 {station} 的卫星信号较往日{'减弱' if direction == 'below' else '增强'}。"
+            current = compared['current_p10']
+            median = compared.get('sample_median')
+            low, high = compared.get('sample_min'), compared.get('sample_max')
+            if median is None and low is not None and low == high:
+                median = low
+            if isinstance(median, (int, float)):
+                reference = f'往日同一时段：{median:.1f} dB-Hz'
+                if isinstance(low, (int, float)) and isinstance(high, (int, float)) and low != high:
+                    reference = f'往日同一时段：中位数 {median:.1f} dB-Hz'
+                    if f'{low:.1f}' != f'{high:.1f}':
+                        reference += f'（范围 {low:.1f}～{high:.1f}）'
+                brief.append(reference + '。')
+                difference = current - median
+                change = '与往日相当' if round(abs(difference), 1) == 0 else (
+                    f"{'下降' if difference < 0 else '升高'} {abs(difference):.1f} dB")
+                brief.append(f'本次观测：{current:.1f} dB-Hz，{change}。')
+            else:
+                if isinstance(low, (int, float)) and isinstance(high, (int, float)):
+                    reference = f'{low:.1f}' if f'{low:.1f}' == f'{high:.1f}' else f'{low:.1f}～{high:.1f}'
+                    brief.append(f'往日同一时段：{reference} dB-Hz。')
+                brief.append(f'本次观测：{current:.1f} dB-Hz。')
+            window = _card_window(compared)
+            if window:
+                brief.append(window)
+    elif risk == 'maritime_visible_flow':
+        place = '霍尔木兹海峡' if decision.get('case_id') == 'hormuz' else '海峡'
+        value, baseline = program.get('latest_value'), program.get('baseline')
+        observed_day = _card_day(program.get('latest_observed_date'))
+        if state == 'warning':
+            title, summary = f'{place}通行船次大幅减少', '海峡通行船次持续偏低。'
+        elif state == 'attention':
+            title, summary = f'{place}通行船次减少', '当日通过海峡的船次较往日减少。'
+        elif state == 'normal':
+            title, summary = f'{place}通行正常', '当日海峡通行未见持续偏低。'
+            if program.get('current_status') == 'resolved':
+                title, summary = f'{place}通行量回升', '通过海峡的船次已回升。'
+        else:
+            title, summary = '海峡通行情况尚待核实', '当前时段的通行量或往日对照资料不足。'
+        if isinstance(baseline, (int, float)) and baseline > 0:
+            start, end = _card_day(program.get('baseline_start')), _card_day(program.get('baseline_end'))
+            period = f'（{start}至{end}）' if start and end else ''
+            brief.append(f'历史参考{period}：日通行量中位数 {baseline:g} 艘次。')
+        if isinstance(value, (int, float)):
+            current_text = f'{observed_day}通过 {value:g} 艘次' if observed_day else f'最新日通行 {value:g} 艘次'
+            summary = current_text + '。'
+            brief.append(f'当日通行：{observed_day}，{value:g} 艘次。' if observed_day else f'最新日通行：{value:g} 艘次。')
+            if isinstance(baseline, (int, float)) and baseline > 0:
+                difference = (value / baseline - 1) * 100
+                if round(abs(difference)) == 0:
+                    summary = f'{current_text}，与历史参考的日通行量中位数 {baseline:g} 艘次相当。'
+                else:
+                    change = f"{'减少' if difference < 0 else '增加'}约 {abs(difference):.0f}%"
+                    summary = f'{current_text}，较历史参考的日通行量中位数 {baseline:g} 艘次{change}。'
+        trigger = program.get('trigger_observations') or (program.get('candidate') or {}).get('trigger_observations') or []
+        low_days = sorted({row['observed_date'] for row in trigger
+                           if row.get('observed_date') and row.get('validity') == 'valid'})
+        if state in ('attention', 'warning') and len(low_days) > 1:
+            dates = [date.fromisoformat(day) for day in low_days]
+            if all(second - first == timedelta(days=1) for first, second in zip(dates, dates[1:])):
+                brief.append(f'{_card_day(low_days[0])}至{_card_day(low_days[-1])}连续 {len(low_days)} 天通行偏低。')
+    else:
+        return presented
+    presented.update(title=title, summary=summary, brief_evidence=brief[:3])
+    return presented
 
 
 def explanation_coverage(work):
@@ -203,7 +322,7 @@ def build_decision(work, evidence, previous=None):
     if state is not None and state not in first_states:
         first_states[state] = {'as_of': as_of, 'published_at': timestamp,
                               'observation_end': work['input'].get('observation_end')}
-    return dict(judgment, id='decision:' + work['id'], case_id=work['case_id'], risk_object=risk,
+    decision = dict(judgment, id='decision:' + work['id'], case_id=work['case_id'], risk_object=risk,
         risk_label=OBJECT_LABELS[risk], analysis_version=work['analysis_version'],
         as_of=as_of, evidence_version=work['input_version'], work_id=work['id'],
         batch_index=work['batch_index'], revision_id=work['id'], scope_limit=SPATIAL_LIMITS[risk],
@@ -238,3 +357,4 @@ def build_decision(work, evidence, previous=None):
                 'material_ids': [material['id'] for material in evidence],
                 'observation_material_ids': list(work.get('material_ids', []))},
         created_at=timestamp, published_at=timestamp, superseded=False)
+    return present_decision(decision)

@@ -11,7 +11,7 @@ from uuid import uuid4
 from .config import ROOT
 from .monitoring import evaluate
 from .pipeline import Pipeline, alert_summary, instant, material_input, material_ref
-from .replay_decisions import RISK_OBJECTS, OBJECT_LABELS, SPATIAL_LIMITS, build_decision, successful_tools
+from .replay_decisions import RISK_OBJECTS, OBJECT_LABELS, SPATIAL_LIMITS, build_decision, successful_tools, present_decision
 from .store import now
 
 
@@ -1397,6 +1397,7 @@ class CaseReplay(Pipeline):
     def timeline(self, case_id, *, decision_ids=None):
         items = ([self.store.get('replay_decision', identifier) for identifier in decision_ids]
                  if decision_ids is not None else self.decisions(case_id))
+        items = [present_decision(item) for item in items if item]
         return [{key: item.get(key) for key in ('id', 'risk_object', 'risk_label', 'as_of', 'state', 'title',
                  'summary', 'brief_evidence', 'transition', 'first_states', 'timing', 'revision_id',
                  'evidence_refs', 'availability')} for item in items if item]
@@ -1410,7 +1411,8 @@ class CaseReplay(Pipeline):
             record = self.store.get('replay_snapshot', identifier)
         if not record or record['case_id'] != case_id:
             return None
-        objects = {risk: self.store.get('replay_decision', decision_id) for risk, decision_id in record['decision_ids'].items()}
+        objects = {risk: present_decision(self.store.get('replay_decision', decision_id))
+                   for risk, decision_id in record['decision_ids'].items()}
         series, summaries = [], []
         for material_id in record['gnss_material_ids']:
             material = self.store.get_material(material_id)
