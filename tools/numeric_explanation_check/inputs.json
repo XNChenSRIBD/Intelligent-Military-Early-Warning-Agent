@@ -1,0 +1,76 @@
+{
+  "tasks": [
+    {
+      "id": "N1",
+      "question": "对象A、B的这些给定窗口分别位于各自参考边界的哪一侧？没有总体显著性检验，是否会改变已经能计算的范围关系？未给出的另一侧边界保持未知。",
+      "rows": [
+        {"row_id":"r1","kind":"bounds","object":"A","window":"首窗","value":22.719,"lower":29.4848,"upper":null,"unit":"dB-Hz","comparison_allowed":true},
+        {"row_id":"r2","kind":"bounds","object":"A","window":"末窗","value":22.219,"lower":33.469,"upper":null,"unit":"dB-Hz","comparison_allowed":true},
+        {"row_id":"r3","kind":"bounds","object":"B","window":"首窗","value":38.25,"lower":null,"upper":33.4284,"unit":"dB-Hz","comparison_allowed":true},
+        {"row_id":"r4","kind":"metadata","field_definition":"value为窗口载噪比p10，lower/upper为给定参考下界/上界；null为该边界未提供","overall_significance_test":null}
+      ]
+    },
+    {
+      "id": "N2",
+      "question": "分别说明已有观测和参考的大小关系、分组汇总说明了什么、总体检验是否提供。仅给出例窗和汇总时，能否声称逐行读到了其余窗口？",
+      "rows": [
+        {"row_id":"r1","kind":"bounds","object":"A","window":"首窗","value":32.4875,"lower":33.9063,"upper":null,"unit":"dB-Hz","comparison_allowed":true},
+        {"row_id":"r2","kind":"bounds","object":"A","window":"末窗","value":24.438,"lower":33.125,"upper":null,"unit":"dB-Hz","comparison_allowed":true},
+        {"row_id":"r3","kind":"bounds","object":"B","window":"首窗","value":31.6875,"lower":34.1533,"upper":null,"unit":"dB-Hz","comparison_allowed":true},
+        {"row_id":"r4","kind":"summary","object":"A","window_count":4,"below_own_reference":4,"detail_level":"已提供的分组汇总，不是四行原始数值"},
+        {"row_id":"r5","kind":"summary","object":"B","window_count":4,"ordered_groups":[{"windows":"前两窗","relation":"低于自身参考"},{"windows":"后两窗","relation":"高于自身参考"}],"detail_level":"已提供的分组汇总，不是四行原始数值"},
+        {"row_id":"r6","kind":"metadata","field_definition":"value为窗口载噪比p10；lower为下界；upper=null为上界未提供","overall_significance_test":null}
+      ]
+    },
+    {
+      "id": "N3",
+      "question": "分别描述对象A、B的数值方向，说明哪些可比元数据已经明确、哪些原因解释没有提供。按各自参考比较，不把其他对象的单位缺口带入本题，也不要声称读取了未给出的全部窗口数值。",
+      "rows": [
+        {"row_id":"r1","kind":"bounds","object":"A","window":"W首窗","value":19.9935,"lower":29.4848,"upper":33.3967,"unit":"dB-Hz","comparison_allowed":true},
+        {"row_id":"r2","kind":"bounds","object":"B","window":"W首窗","value":37.5217,"lower":33.0,"upper":33.4284,"unit":"dB-Hz","comparison_allowed":true},
+        {"row_id":"r3","kind":"metadata","objects":["A","B"],"signal":"C:S1P","unit":"dB-Hz","sampling_seconds":1,"same_window":true,"field_definition":"窗口载噪比p10；各自对照自己的参考范围","cause_evidence":null},
+        {"row_id":"r4","kind":"summary","object":"A","window_count":4,"below_own_reference":4,"detail_level":"分组汇总，仅首窗提供逐行数值"},
+        {"row_id":"r5","kind":"summary","object":"B","window_count":4,"above_own_reference":4,"detail_level":"分组汇总，仅首窗提供逐行数值"}
+      ]
+    },
+    {
+      "id": "N4",
+      "question": "只比较同一名义容量字段：算出本次增量和相对增幅，并分别比较最终绝对值与两个历史值。说明这些计算为何不是统计显著性结论，不改答其他数量指标。",
+      "rows": [
+        {"row_id":"r1","kind":"series","field":"名义容量","unit":"原表同一字段，绝对单位未注明","comparison_allowed":true,"observations":[{"label":"前值","value":143},{"label":"后值","value":102414}],"references":[{"label":"历史值1","value":3044613},{"label":"历史值2","value":1314529}]},
+        {"row_id":"r2","kind":"metadata","overall_significance_test":null,"statistical_threshold":null}
+      ]
+    },
+    {
+      "id": "C1",
+      "question": "分别说明两个参考组的窗口计数和逐窗差值中位数。中位数接近零能否推出每个窗口都在参考范围内？说明这两组能否合并为稳定总体；不要把逐窗差值的中位数换成两个中位数之差。",
+      "rows": [
+        {"row_id":"r1","kind":"summary","reference_group":"组1","reference_days":1,"paired_windows":289,"paired_difference_median":0.15,"unit":"dB","below_own_reference":136,"above_own_reference":153},
+        {"row_id":"r2","kind":"summary","reference_group":"组2","reference_days":3,"paired_windows":289,"paired_difference_median":-0.565,"unit":"dB","below_own_reference":104,"above_own_reference":89},
+        {"row_id":"r3","kind":"metadata","field_definition":"paired_difference_median为同窗当前值减参考值所得差值的中位数；两个参考组分别统计","population_stability_evidence":null,"remaining_window_categories":null}
+      ]
+    },
+    {
+      "id": "C2",
+      "question": "计算有效比例，解释它和epoch_coverage_ratio各在表达什么。18秒、1历元和这两个比例，能否推成全天时间覆盖或全天持续变化？",
+      "rows": [
+        {"row_id":"r1","kind":"ratio","window_seconds":18,"epoch_count":1,"numerator":8,"denominator_factors":[1,29],"definition":"有效值8个；分母为1个历元乘29，29是整份文件中该信号出现过的卫星集合数量","epoch_coverage_ratio":1.0,"epoch_coverage_definition":"按这个已定义的18秒窗口没有缺历元"}
+      ]
+    },
+    {
+      "id": "C3",
+      "question": "区分此处的单位换算未确认、数值为零、缺文件和缺观测。说明40 receiver_units与cnr_p10=null各是什么意思，不自行补出dB-Hz单位。",
+      "rows": [
+        {"row_id":"r1","kind":"missing_fields","epoch_count":900,"signal_count":17,"raw_signal_strength":40,"raw_unit":"receiver_units","cnr_p10":null,"null_reason":"没有确认到dB-Hz的换算依据"}
+      ]
+    },
+    {
+      "id": "C4",
+      "question": "一份说明比较D1到D2，另一份比较D2到D3。它们是否存在数值冲突？写清各自日期范围和变化，不引入显著性或原因解释。",
+      "rows": [
+        {"row_id":"r1","kind":"series","field":"计数","unit":"次","comparison_allowed":true,"observations":[{"label":"D1","value":2},{"label":"D2","value":3},{"label":"D3","value":2}],"references":[]},
+        {"row_id":"r2","kind":"metadata","first_comparison":["D1","D2"],"second_comparison":["D2","D3"],"date_relation":"三个相邻观测日"}
+      ]
+    }
+  ]
+}

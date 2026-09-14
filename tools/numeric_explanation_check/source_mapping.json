@@ -1,0 +1,183 @@
+{
+  "source": "reports/round8/ROUND8_DELIVERY.md",
+  "usage": "本地溯源，run.py不读取，不进入模型输入；不是历史完整上下文复现",
+  "duplicate_note": "N3只计一次；H-C3-opposite-station-directions与H-C5-0305-1030属于同一末答",
+  "retention_note": "C1原中间错误已修正，本轮是保持检查，不将其称为当前末答错误",
+  "entries": [
+    {
+      "task_id": "N1",
+      "sources": [
+        {
+          "claim_id": "H-C5-0303-1030",
+          "round8_location": {
+            "file": "reports/round8/ROUND8_DELIVERY.md",
+            "anchor": "r8-h-c5-0303-1030"
+          },
+          "run_ids": [
+            "913d0467af754324a4657d6ca62573dc"
+          ],
+          "round7_locator": "/cases/1/claim_reviews/11"
+        }
+      ],
+      "anonymous_aliases": {
+        "A": "BSHM",
+        "B": "KITG"
+      }
+    },
+    {
+      "task_id": "N2",
+      "sources": [
+        {
+          "claim_id": "H-C5-0305-1015",
+          "round8_location": {
+            "file": "reports/round8/ROUND8_DELIVERY.md",
+            "anchor": "r8-h-c5-0305-1015"
+          },
+          "run_ids": [
+            "fc1d271276b44082896e9c08eb5d8a16"
+          ],
+          "round7_locator": "/cases/1/claim_reviews/12"
+        }
+      ],
+      "anonymous_aliases": {
+        "A": "BSHM",
+        "B": "KITG"
+      }
+    },
+    {
+      "task_id": "N3",
+      "sources": [
+        {
+          "claim_id": "H-C5-0305-1030",
+          "round8_location": {
+            "file": "reports/round8/ROUND8_DELIVERY.md",
+            "anchor": "r8-h-c5-0305-1030"
+          },
+          "run_ids": [
+            "7fb664bb43974e8d874bbb8a8d69fdf3"
+          ],
+          "round7_locator": "/cases/1/claim_reviews/13"
+        }
+      ],
+      "anonymous_aliases": {
+        "A": "BSHM",
+        "B": "KITG",
+        "W首窗": "2026-03-05T10:14:42Z/2026-03-05T10:15:00Z"
+      }
+    },
+    {
+      "task_id": "N4",
+      "sources": [
+        {
+          "claim_id": "H-C6-old",
+          "round8_location": {
+            "file": "reports/round8/ROUND8_DELIVERY.md",
+            "anchor": "r8-h-c6-old"
+          },
+          "run_ids": [
+            "009531a82ec64f58b21b844d8d9f1620"
+          ],
+          "round7_locator": "/cases/1/claim_reviews/2"
+        },
+        {
+          "claim_id": "H-C6-revision",
+          "round8_location": {
+            "file": "reports/round8/ROUND8_DELIVERY.md",
+            "anchor": "r8-h-c6-revision"
+          },
+          "run_ids": [
+            "f6b218217cda4957ab4f33747e98f9f8"
+          ],
+          "round7_locator": "/cases/1/claim_reviews/3"
+        }
+      ],
+      "anonymous_aliases": {
+        "前值": "2026-03-06",
+        "后值": "2026-03-07",
+        "历史值1": "2019-11-01",
+        "历史值2": "2019-11-02",
+        "名义容量": "原报告名义运力capacity"
+      }
+    },
+    {
+      "task_id": "C1",
+      "sources": [
+        {
+          "claim_id": "K-C3",
+          "round8_location": {
+            "file": "reports/round8/ROUND8_DELIVERY.md",
+            "anchor": "r8-k-c3"
+          },
+          "run_ids": [
+            "97d718dc24b544d69eace3f54e3cf129"
+          ],
+          "round7_locator": "/cases/0/claim_reviews/2"
+        }
+      ],
+      "anonymous_aliases": {
+        "组1": "2023-05-10，1天",
+        "组2": "2024-04-10、11、12，3天"
+      }
+    },
+    {
+      "task_id": "C2",
+      "sources": [
+        {
+          "claim_id": "K-C4",
+          "round8_location": {
+            "file": "reports/round8/ROUND8_DELIVERY.md",
+            "anchor": "r8-k-c4"
+          },
+          "run_ids": [
+            "97d718dc24b544d69eace3f54e3cf129"
+          ],
+          "round7_locator": "/cases/0/claim_reviews/3"
+        }
+      ],
+      "anonymous_aliases": {
+        "窗口": "BUCU00ROU首个18秒边界窗口"
+      }
+    },
+    {
+      "task_id": "C3",
+      "sources": [
+        {
+          "claim_id": "H-C3-NICO-receiver-units",
+          "round8_location": {
+            "file": "reports/round8/ROUND8_DELIVERY.md",
+            "anchor": "r8-h-c3-nico-receiver-units"
+          },
+          "run_ids": [
+            "913d0467af754324a4657d6ca62573dc"
+          ],
+          "round7_locator": "/cases/1/claim_reviews/8"
+        }
+      ],
+      "anonymous_aliases": {
+        "原文件": "NICO材料"
+      }
+    },
+    {
+      "task_id": "C4",
+      "sources": [
+        {
+          "claim_id": "H-C7",
+          "round8_location": {
+            "file": "reports/round8/ROUND8_DELIVERY.md",
+            "anchor": "r8-h-c7"
+          },
+          "run_ids": [
+            "f6b218217cda4957ab4f33747e98f9f8",
+            "508a022820d24e5791ceb7f97182bae1"
+          ],
+          "round7_locator": "/cases/1/claim_reviews/4"
+        }
+      ],
+      "anonymous_aliases": {
+        "D1": "2026-03-06",
+        "D2": "2026-03-07",
+        "D3": "2026-03-08"
+      }
+    }
+  ]
+}
