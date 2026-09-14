@@ -79,6 +79,19 @@ body.replay-map-app {
 .replay-map-app .map-brand h1 { margin: 0; color: #d8e8ee; font-size: 20px; line-height: 1.45; font-weight: 500; letter-spacing: .5px; }
 .replay-map-app .map-brand :is(p, small) { display: block; margin: 4px 0 0; color: #6d919f; font-size: 9px; letter-spacing: 2px; line-height: 1.5; }
 .replay-map-app .case-navigation { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--map-line); }
+.replay-map-app .observation-controls { margin-bottom: 17px; padding-bottom: 13px; border-bottom: 1px solid var(--map-line); }
+.replay-map-app .observation-controls label { display:block; margin-bottom:8px; color:#b9d1da; font-size:12px; }
+.replay-map-app #observation-time { width:100%; min-height:35px; padding:6px; font:inherit; font-size:11px; border:1px solid var(--map-line); border-radius:5px; background:#102734; color:var(--map-ink); }
+.replay-map-app .observation-step { display:flex; gap:5px; margin-top:7px; }
+.replay-map-app .observation-step button { flex:1; padding:6px 2px; font-size:10px; }
+.replay-map-app .observation-controls .text-button { margin-top:5px; }
+.replay-map-app .observation-state { font-size:11px; white-space:nowrap; }
+.replay-map-app [data-observation-state="warning"] { color:var(--map-warning); }
+.replay-map-app [data-observation-state="attention"] { color:var(--map-attention); }
+.replay-map-app [data-observation-state="normal"] { color:var(--map-normal); }
+.replay-map-app .observation-table-wrap { max-width:100%; overflow-x:auto; }
+.replay-map-app .observation-table-wrap th { white-space:nowrap; }
+.replay-map-app #case-menu-toggle { display:none; }
 .replay-map-app .case-switch { display: flex; flex-direction: column; min-width: 0; gap: 4px; padding: 4px; border: 1px solid #3452616b; border-radius: 7px; background: #08151fcc; }
 .replay-map-app .case-button { width: 100%; min-width: 0; min-height: 38px; padding: 8px 12px; text-align: left; border-color: transparent; border-radius: 4px; background: transparent; color: #91a9b6; font-size: 13px; white-space: nowrap; }
 .replay-map-app .case-button:hover { background: #162c39; border-color: transparent; color: #d7e8ed; }
@@ -306,7 +319,9 @@ body.replay-map-app {
   .replay-map-app .map-brand :is(p, small) { font-size: 8px; letter-spacing: 1.4px; }
   .replay-map-app .case-button { min-height: 34px; padding: 7px 10px; font-size: 12px; }
   .replay-map-app #case-date { grid-column: 2; grid-row: 1; max-width: 130px; font-size: 10px; }
-  .replay-map-app .layer-panel { top: auto; left: 14px; bottom: 73px; width: 176px; max-height: calc(100dvh - 250px); padding: 13px 14px; overflow: auto; scrollbar-width: thin; scrollbar-color: #36586a transparent; }
+  .replay-map-app #case-menu-toggle { display:block; position:absolute; top:88px; left:14px; z-index:600; padding:7px 12px; background:#102532ed; font-size:12px; }
+  .replay-map-app .layer-panel { display:none; top:132px; left:14px; bottom:auto; width:200px; max-height:calc(100dvh - 210px); padding:13px 14px; overflow:auto; scrollbar-width:thin; scrollbar-color:#36586a transparent; }
+  .replay-map-app.case-menu-open .layer-panel { display:block; }
   .replay-map-app .layer-panel :is(h2, h3),
   .replay-map-app .layer-panel > summary { font-size: 12px; }
   .replay-map-app .layer-row { padding: 10px 0; gap: 2px 6px; font-size: 12px; }

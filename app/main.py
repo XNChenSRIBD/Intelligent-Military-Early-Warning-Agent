@@ -276,10 +276,13 @@ async def pipeline_state():
 
 
 @app.get('/api/replay/cases/{case_id}')
-async def replay_case(case_id: str):
+async def replay_case(case_id: str, at: str | None = None):
     if settings.pipeline_mode != 'case_replay':
         raise HTTPException(404, '当前不是历史回放实例')
-    record = app.state.pipeline.case_view(case_id)
+    try:
+        record = await asyncio.to_thread(app.state.pipeline.case_view, case_id, at=at)
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
     if record is None:
         raise HTTPException(404, '找不到该回放案例')
     return record

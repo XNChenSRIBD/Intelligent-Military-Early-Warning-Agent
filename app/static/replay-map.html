@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>开源情报分析系统</title>
   <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
-  <link rel="stylesheet" href="/static/replay-map.css?v=8">
+  <link rel="stylesheet" href="/static/replay-map.css?v=10">
   <script defer src="/static/vendor/leaflet/leaflet.js"></script>
-  <script defer src="/static/replay-map.js?v=8"></script>
+  <script defer src="/static/replay-map.js?v=10"></script>
 </head>
 <body class="replay-map-app">
   <main id="replay-map-scene">
@@ -16,10 +16,17 @@
       <div class="map-brand"><span class="brand-symbol" aria-hidden="true">◈</span><div><h1>开源情报分析系统</h1><p>OPEN SOURCE INTELLIGENCE</p></div></div>
       <div id="case-date" class="case-date">历史案例</div>
     </header>
+    <button id="case-menu-toggle" type="button" aria-controls="layer-panel" aria-expanded="false">案例与时点 ☰</button>
     <aside id="layer-panel" class="layer-panel">
       <section class="case-navigation" aria-labelledby="case-navigation-title">
         <h2 id="case-navigation-title">历史案例</h2>
         <nav class="case-switch" aria-label="切换历史案例"><button class="case-button active" data-case="kharkiv" type="button" aria-pressed="true">哈尔科夫</button><button class="case-button" data-case="hormuz" type="button" aria-pressed="false">霍尔木兹</button></nav>
+      </section>
+      <section id="observation-controls" class="observation-controls" hidden>
+        <label for="observation-time">观测时点 · UTC</label>
+        <select id="observation-time" aria-label="选择历史观测时点"></select>
+        <div class="observation-step"><button id="observation-prev" type="button">← 上一时点</button><button id="observation-next" type="button">下一时点 →</button></div>
+        <button id="observation-first" class="text-button" type="button">首次明显异常</button>
       </section>
       <details open id="layer-fold"><summary>情报图层 <span>LAYERS</span></summary>
         <label class="layer-row"><input id="layer-gnss" type="checkbox" checked><span class="layer-symbol gnss-symbol" aria-hidden="true"></span><span>IGS 观测站<small id="gnss-layer-status">GNSS</small></span></label>

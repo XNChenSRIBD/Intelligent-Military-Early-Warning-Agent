@@ -1,0 +1,17 @@
+{
+  "source": "IMF PortWatch / Daily Chokepoints Data",
+  "source_url": "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/ArcGIS/rest/services/Daily_Chokepoints_Data/FeatureServer/0",
+  "original_file": "iran_20260228/portwatch_wto/portwatch_hormuz_2026-02-14_2026-03-14.csv",
+  "retrieved_at": "2026-08-05T04:22:50.3008088Z",
+  "observation_start": "2026-02-14",
+  "observation_end": "2026-03-14",
+  "time_basis": "历史观测日；数据快照取得于 2026 年 8 月",
+  "capacity_unit": "源数据名义运力单位",
+  "capacity_definition": "PortWatch AIS 可见船舶的名义运力字段；每船平均名义运力由合计运力除以对应船次计算。",
+  "baseline": "逐日使用此前最多 28 个已保存观测日；至少 21 日后开始判定。",
+  "baseline_file": "baseline.csv",
+  "baseline_origin": "既有 .16 回放数据库保存的 2026-01-26 至 2026-02-13 PortWatch 日值",
+  "baseline_database": "/home/xnchen/gnss_public_data/early_warning_runtime/replays/round6/demo.sqlite3",
+  "baseline_table": "portwatch_daily",
+  "baseline_available_at": null
+}

@@ -13,6 +13,7 @@ from .monitoring import evaluate
 from .pipeline import Pipeline, alert_summary, instant, material_input, material_ref
 from .replay_decisions import RISK_OBJECTS, OBJECT_LABELS, SPATIAL_LIMITS, build_decision, successful_tools, present_decision
 from .store import now
+from .replay_observations import observation_snapshot
 
 
 def utc(value):
@@ -1402,7 +1403,11 @@ class CaseReplay(Pipeline):
                  'summary', 'brief_evidence', 'transition', 'first_states', 'timing', 'revision_id',
                  'evidence_refs', 'availability')} for item in items if item]
 
-    def decision_snapshot(self, case_id, identifier=None):
+    def decision_snapshot(self, case_id, identifier=None, *, at=None):
+        if identifier is None and case_id in self.definitions:
+            observed = observation_snapshot(case_id, at)
+            if observed is not None:
+                return observed
         if identifier is None:
             snapshots = [item for item in self.store.all('replay_snapshot')
                          if item.get('case_id') == case_id and not item.get('superseded')]
@@ -1499,11 +1504,11 @@ class CaseReplay(Pipeline):
                     'gnss': results, 'baseline': case.get('baseline_status'),
                     'alerts': [alert for alert in self.recent_alerts(200) if alert.get('case_id') == case['case_id']]})
 
-    def case_view(self, case_id):
+    def case_view(self, case_id, *, at=None):
         case = self.store.get('replay_case', case_id)
         if not case:
             return None
-        return dict(self.case_summary(case), decision_snapshot=self.decision_snapshot(case_id))
+        return dict(self.case_summary(case), decision_snapshot=self.decision_snapshot(case_id, at=at))
 
     def resource_view(self, identifier):
         resource = self.store.get('replay_resource', identifier)

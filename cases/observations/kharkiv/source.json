@@ -1,0 +1,19 @@
+{
+  "source_csv": "public_data_chasing_lightning/processed/prewarning_rca_ukraine_kharkiv_anchor_20260617/event_vs_control_slot_comparison.csv",
+  "rule_source": "public_data_chasing_lightning/scripts/prewarning_ukraine_kharkiv_anchor_eval.py:quick_flag,strong_flag,sync_table",
+  "baseline_method": "同一IGS接收站、同一卫星系统、同一UTC十五分钟时段的历史CNR第10百分位均值。",
+  "baseline_dates": ["2023-05-08", "2023-05-09", "2023-05-10", "2024-04-10", "2024-04-11", "2024-04-12"],
+  "baseline_sources": [
+    "public_data_chasing_lightning/processed/ukraine_kharkiv_20240510_season2023_control_system_screen_interval30/metrics_15min_by_system.csv",
+    "public_data_chasing_lightning/processed/ukraine_kharkiv_20240510_far2024_control_system_screen_interval30/metrics_15min_by_system.csv"
+  ],
+  "metric": "snr_p10",
+  "metric_label": "载噪比第10百分位（较弱信号）",
+  "metric_unit": "dB-Hz",
+  "comparison_unit": "dB",
+  "selection": "保留原比较表全部正常及异常观测行；仅去除路径、重复日期和事件分组列。",
+  "quick_rule": {"delta_snr_p10_lte": -3.0, "delta_low30_gte": 0.03, "or_delta_active_sv_lte": -1.5},
+  "strong_rule": {"delta_snr_p10_lte": -5.0, "delta_low30_gte": 0.05, "or_delta_active_sv_lte": -2.0},
+  "synchrony": "同一UTC时段、同一卫星系统满足strong规则的独立站点数。",
+  "state_mapping": {"warning": "同一卫星系统至少3站同步满足strong规则", "attention": "有站点满足quick规则，但未达到多站strong条件", "normal": "本窗口没有站点满足quick规则"}
+}
